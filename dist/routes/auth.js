@@ -77,8 +77,37 @@ const adminAuth = (req, res, next) => {
 router.get("/admin/products", adminAuth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("Lista produktów dla admina");
 }));
+//autoryzacja usera
+const userAuth = (req, res, next) => {
+    var _a;
+    try {
+        const token = (_a = req.header("Authorization")) === null || _a === void 0 ? void 0 : _a.replace("Bearer ", "");
+        if (!token) {
+            throw new Error("Token is missing");
+        }
+        const decoded = jwt.verify(token, "secretkey");
+        if (typeof decoded !== "object") {
+            throw new Error();
+        }
+        req.user = decoded;
+        next();
+    }
+    catch (error) {
+        res.status(401).send({ error: "Please authenticate" });
+    }
+};
 // User: Przeglądanie i kupowanie produktów
-router.get("/user/products", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get("/user/products", userAuth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("Lista produktów dla użytkownika");
+}));
+// Pobieranie wszystkich użytkowników z rolą "user"
+router.get("/users", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const users = yield User.find({ role: "user" }); // Filtrujemy użytkowników z rolą "user"
+        res.status(200).send(users);
+    }
+    catch (error) {
+        res.status(500).send({ error: "Błąd serwera" });
+    }
 }));
 export default router;

@@ -89,9 +89,41 @@ router.get("/admin/products", adminAuth, async (req, res) => {
   res.send("Lista produktów dla admina");
 });
 
+//autoryzacja usera
+
+const userAuth = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+    if (!token) {
+      throw new Error("Token is missing");
+    }
+
+    const decoded = jwt.verify(token, "secretkey");
+
+    if (typeof decoded !== "object") {
+      throw new Error();
+    }
+
+    req.user = decoded;
+    next();
+  } catch (error) {
+    res.status(401).send({ error: "Please authenticate" });
+  }
+};
+
 // User: Przeglądanie i kupowanie produktów
-router.get("/user/products", async (req, res) => {
+router.get("/user/products", userAuth, async (req, res) => {
   res.send("Lista produktów dla użytkownika");
+});
+
+// Pobieranie wszystkich użytkowników z rolą "user"
+router.get("/users", async (req, res) => {
+  try {
+    const users = await User.find({ role: "user" }); // Filtrujemy użytkowników z rolą "user"
+    res.status(200).send(users);
+  } catch (error) {
+    res.status(500).send({ error: "Błąd serwera" });
+  }
 });
 
 export default router;
