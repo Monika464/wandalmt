@@ -9,22 +9,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import express from "express";
 import User from "../models/user.js";
-import jwt from "jsonwebtoken";
+import { adminAuth, userAuth } from "../middleware/auth.js";
 import bcrypt from "bcryptjs";
 const router = express.Router();
 router.get("/", (req, res) => {
     res.send("Hello World!");
 });
-// router.post("/user/signup", async (req, res) => {
-//   const user = new User(req.body);
-//   try {
-//     await user.save();
-//     const token = await user.generateAuthToken();
-//     res.status(201).send({ user, token });
-//   } catch (e) {
-//     res.status(400).send({ error: (e as Error).message });
-//   }
-// });
 router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const user = yield User.findByCredentials(req.body.email, req.body.password);
@@ -54,48 +44,10 @@ router.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, functio
         res.status(400).send(error);
     }
 }));
-// Middleware sprawdzający, czy użytkownik jest adminem
-const adminAuth = (req, res, next) => {
-    var _a;
-    try {
-        const token = (_a = req.header("Authorization")) === null || _a === void 0 ? void 0 : _a.replace("Bearer ", "");
-        if (!token) {
-            throw new Error("Token is missing");
-        }
-        const decoded = jwt.verify(token, "secretkey");
-        if (typeof decoded !== "object" || decoded.role !== "admin") {
-            throw new Error();
-        }
-        req.user = decoded;
-        next();
-    }
-    catch (error) {
-        res.status(403).send({ error: "Access denied" });
-    }
-};
 // Admin: Zarządzanie produktami
 router.get("/admin/products", adminAuth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("Lista produktów dla admina");
 }));
-//autoryzacja usera
-const userAuth = (req, res, next) => {
-    var _a;
-    try {
-        const token = (_a = req.header("Authorization")) === null || _a === void 0 ? void 0 : _a.replace("Bearer ", "");
-        if (!token) {
-            throw new Error("Token is missing");
-        }
-        const decoded = jwt.verify(token, "secretkey");
-        if (typeof decoded !== "object") {
-            throw new Error();
-        }
-        req.user = decoded;
-        next();
-    }
-    catch (error) {
-        res.status(401).send({ error: "Please authenticate" });
-    }
-};
 // User: Przeglądanie i kupowanie produktów
 router.get("/user/products", userAuth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("Lista produktów dla użytkownika");

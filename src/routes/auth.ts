@@ -1,7 +1,7 @@
 import express from "express";
 import User from "../models/user.js";
 import { Request, Response, NextFunction } from "express";
-
+import { adminAuth, userAuth } from "../middleware/auth.js";
 // Extend the Request interface to include the user property
 declare global {
   namespace Express {
@@ -18,17 +18,6 @@ const router = express.Router();
 router.get("/", (req, res) => {
   res.send("Hello World!");
 });
-
-// router.post("/user/signup", async (req, res) => {
-//   const user = new User(req.body);
-//   try {
-//     await user.save();
-//     const token = await user.generateAuthToken();
-//     res.status(201).send({ user, token });
-//   } catch (e) {
-//     res.status(400).send({ error: (e as Error).message });
-//   }
-// });
 
 router.post("/login", async (req, res) => {
   try {
@@ -64,52 +53,10 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// Middleware sprawdzający, czy użytkownik jest adminem
-const adminAuth = (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const token = req.header("Authorization")?.replace("Bearer ", "");
-    if (!token) {
-      throw new Error("Token is missing");
-    }
-    const decoded = jwt.verify(token, "secretkey");
-
-    if (typeof decoded !== "object" || decoded.role !== "admin") {
-      throw new Error();
-    }
-
-    req.user = decoded;
-    next();
-  } catch (error) {
-    res.status(403).send({ error: "Access denied" });
-  }
-};
-
 // Admin: Zarządzanie produktami
 router.get("/admin/products", adminAuth, async (req, res) => {
   res.send("Lista produktów dla admina");
 });
-
-//autoryzacja usera
-
-const userAuth = (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const token = req.header("Authorization")?.replace("Bearer ", "");
-    if (!token) {
-      throw new Error("Token is missing");
-    }
-
-    const decoded = jwt.verify(token, "secretkey");
-
-    if (typeof decoded !== "object") {
-      throw new Error();
-    }
-
-    req.user = decoded;
-    next();
-  } catch (error) {
-    res.status(401).send({ error: "Please authenticate" });
-  }
-};
 
 // User: Przeglądanie i kupowanie produktów
 router.get("/user/products", userAuth, async (req, res) => {
