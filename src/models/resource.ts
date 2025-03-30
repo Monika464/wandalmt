@@ -1,10 +1,12 @@
-import mongoose from "mongoose";
-const { Document, Schema } = mongoose;
+import mongoose, { Types, Document, Schema, model } from "mongoose";
 
 interface IResource extends Document {
   title: string;
   imageUrl: string;
   content: string;
+  videoUrl?: string;
+  productId: Types.ObjectId;
+  userIds?: Types.ObjectId[];
 }
 
 const resourceSchema = new Schema<IResource>(
@@ -21,10 +23,24 @@ const resourceSchema = new Schema<IResource>(
       type: String,
       required: true,
     },
+    videoUrl: {
+      type: String,
+      required: false, // Opcjonalne, jeśli nie każdy zasób ma film
+    },
+    productId: {
+      type: Schema.Types.ObjectId,
+      ref: "Product",
+      required: true, // Każdy zasób musi być powiązany z produktem
+    },
+    userIds: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   { timestamps: true }
 );
-
-const Resource = mongoose.model("Resource", resourceSchema);
+const Resource = model<IResource>("Resource", resourceSchema);
 
 export default Resource;
