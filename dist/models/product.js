@@ -23,7 +23,7 @@ const productSchema = new Schema({
     resourceId: {
         type: Schema.Types.ObjectId,
         ref: "Product",
-        required: false, // Każdy zasób musi być powiązany z produktem
+        required: false, // Każdy product musi być powiązany z zasobem
     },
 }, { timestamps: true });
 const Product = model("Product", productSchema);

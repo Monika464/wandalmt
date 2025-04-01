@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import express from "express";
 import User from "../models/user.js";
-import { adminAuth, userAuth } from "../middleware/auth.js";
+import { adminAuth, userAuth } from "../controllers/auth.js";
 import bcrypt from "bcryptjs";
 const router = express.Router();
 router.get("/", (req, res) => {

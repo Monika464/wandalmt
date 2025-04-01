@@ -1,12 +1,13 @@
 import express from "express";
 import Product from "../models/product.js";
 import Resource from "../models/resource.js";
+import { userAuth } from "controllers/auth.js";
 
 const router = express.Router();
 
 // Tworzenie produktu + powiązanego zasobu
 router.post("/products", async (req, res, next) => {
-  console.log("reqbody", req.body);
+  //console.log("reqbody", req.body);
   // next();
   try {
     const {
@@ -51,5 +52,17 @@ router.post("/products", async (req, res, next) => {
     });
   }
 });
+
+// router.get("/resources", userAuth, async (req, res) => {
+//   try {
+//     const userId = req.user._id;
+//     const resources = await Resource.find({ userIds: userId }).populate(
+//       "productId"
+//     );
+//     res.json(resources);
+//   } catch (error) {
+//     res.status(500).json({ error: "Error fetching resources" });
+//   }
+// });
 
 export default router;

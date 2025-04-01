@@ -14,6 +14,7 @@ interface IUser extends Document {
     items: ICartItem[];
   };
   generateAuthToken(): Promise<string>;
+  addToCart(productId: mongoose.Types.ObjectId): Promise<IUser>;
 }
 
 interface ICartItem {
@@ -92,6 +93,44 @@ userSchema.methods.generateAuthToken = function (): string {
     expiresIn: "7d",
   });
   return token;
+};
+
+// 🔹 Metoda do dodawania produktu do koszyka
+userSchema.methods.addToCart = async function (
+  productId: mongoose.Types.ObjectId
+): Promise<IUser> {
+  const user = this as IUser;
+
+  const cartProductIndex = user.cart.items.findIndex(
+    (cp) => cp.productId.toString() === productId.toString()
+  );
+
+  let updatedCartItems = [...user.cart.items];
+
+  if (cartProductIndex >= 0) {
+    updatedCartItems[cartProductIndex].quantity += 1;
+  } else {
+    updatedCartItems.push({
+      productId: productId,
+      quantity: 1,
+    });
+  }
+
+  user.cart.items = updatedCartItems;
+  await user.save();
+  return user;
+};
+
+// 🔹 Metoda do usuwania produktu z koszyka
+userSchema.methods.removeFromCart = async function (
+  productId: mongoose.Types.ObjectId
+): Promise<IUser> {
+  const user = this as IUser;
+  user.cart.items = user.cart.items.filter(
+    (item) => item.productId.toString() !== productId.toString()
+  );
+  await user.save();
+  return user;
 };
 
 const User = mongoose.model<IUser, IUserModel>("User", userSchema);

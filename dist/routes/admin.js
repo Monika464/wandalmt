@@ -13,7 +13,7 @@ import Resource from "../models/resource.js";
 const router = express.Router();
 // Tworzenie produktu + powiązanego zasobu
 router.post("/products", (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("reqbody", req.body);
+    //console.log("reqbody", req.body);
     // next();
     try {
         const { title, description, price, resourceTitle, imageUrl, content, videoUrl, } = req.body;
@@ -47,4 +47,15 @@ router.post("/products", (req, res, next) => __awaiter(void 0, void 0, void 0, f
         });
     }
 }));
+// router.get("/resources", userAuth, async (req, res) => {
+//   try {
+//     const userId = req.user._id;
+//     const resources = await Resource.find({ userIds: userId }).populate(
+//       "productId"
+//     );
+//     res.json(resources);
+//   } catch (error) {
+//     res.status(500).json({ error: "Error fetching resources" });
+//   }
+// });
 export default router;

@@ -73,5 +73,34 @@ userSchema.methods.generateAuthToken = function () {
     });
     return token;
 };
+// 🔹 Metoda do dodawania produktu do koszyka
+userSchema.methods.addToCart = function (productId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const user = this;
+        const cartProductIndex = user.cart.items.findIndex((cp) => cp.productId.toString() === productId.toString());
+        let updatedCartItems = [...user.cart.items];
+        if (cartProductIndex >= 0) {
+            updatedCartItems[cartProductIndex].quantity += 1;
+        }
+        else {
+            updatedCartItems.push({
+                productId: productId,
+                quantity: 1,
+            });
+        }
+        user.cart.items = updatedCartItems;
+        yield user.save();
+        return user;
+    });
+};
+// 🔹 Metoda do usuwania produktu z koszyka
+userSchema.methods.removeFromCart = function (productId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const user = this;
+        user.cart.items = user.cart.items.filter((item) => item.productId.toString() !== productId.toString());
+        yield user.save();
+        return user;
+    });
+};
 const User = mongoose.model("User", userSchema);
 export default User;
