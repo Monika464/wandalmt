@@ -44,6 +44,17 @@ router.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, functio
         res.status(400).send(error);
     }
 }));
+router.post("/logout", userAuth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("req.user", req.user);
+    try {
+        req.user.tokens = req.user.tokens.filter((t) => t.token !== req.token);
+        yield req.user.save();
+        res.send({ message: "Wylogowano pomyślnie" });
+    }
+    catch (e) {
+        res.status(500).send({ error: "Nie udało się wylogować" });
+    }
+}));
 // Admin: Zarządzanie produktami
 router.get("/admin/products", adminAuth, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     res.send("Lista produktów dla admina");

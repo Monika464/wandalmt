@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 interface IUser extends Document {
+  tokens: any;
   _id: mongoose.Types.ObjectId;
   email: string;
   password: string;
@@ -63,6 +64,11 @@ const userSchema = new Schema<IUser>({
       },
     ],
   },
+  tokens: [
+    {
+      token: { type: String, required: true },
+    },
+  ],
 });
 
 // Statyczna metoda do wyszukiwania użytkownika po e-mailu i haśle
@@ -83,7 +89,7 @@ userSchema.statics.findByCredentials = async function (
   return user;
 };
 
-userSchema.methods.generateAuthToken = function (): string {
+userSchema.methods.generateAuthToken = async function (): Promise<string> {
   const user = this as IUser;
   const secret = process.env.JWT_SECRET;
   if (!secret) {
@@ -92,6 +98,8 @@ userSchema.methods.generateAuthToken = function (): string {
   const token = jwt.sign({ _id: user._id.toString() }, secret, {
     expiresIn: "7d",
   });
+  user.tokens.push({ token });
+  await user.save();
   return token;
 };
 

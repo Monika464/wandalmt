@@ -47,6 +47,11 @@ const userSchema = new Schema({
             },
         ],
     },
+    tokens: [
+        {
+            token: { type: String, required: true },
+        },
+    ],
 });
 // Statyczna metoda do wyszukiwania użytkownika po e-mailu i haśle
 userSchema.statics.findByCredentials = function (email, password) {
@@ -63,15 +68,19 @@ userSchema.statics.findByCredentials = function (email, password) {
     });
 };
 userSchema.methods.generateAuthToken = function () {
-    const user = this;
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-        throw new Error("JWT secret is not defined");
-    }
-    const token = jwt.sign({ _id: user._id.toString() }, secret, {
-        expiresIn: "7d",
+    return __awaiter(this, void 0, void 0, function* () {
+        const user = this;
+        const secret = process.env.JWT_SECRET;
+        if (!secret) {
+            throw new Error("JWT secret is not defined");
+        }
+        const token = jwt.sign({ _id: user._id.toString() }, secret, {
+            expiresIn: "7d",
+        });
+        user.tokens.push({ token });
+        yield user.save();
+        return token;
     });
-    return token;
 };
 // 🔹 Metoda do dodawania produktu do koszyka
 userSchema.methods.addToCart = function (productId) {

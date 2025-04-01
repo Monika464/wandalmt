@@ -7,6 +7,7 @@ declare global {
   namespace Express {
     interface Request {
       user?: any;
+      token?: string;
     }
   }
 }
@@ -50,6 +51,19 @@ router.post("/register", async (req, res) => {
     res.status(201).send({ message: "User created", user });
   } catch (error) {
     res.status(400).send(error);
+  }
+});
+
+router.post("/logout", userAuth, async (req, res) => {
+  console.log("req.user", req.user);
+  try {
+    req.user.tokens = req.user.tokens.filter(
+      (t: { token: string }) => t.token !== req.token
+    );
+    await req.user.save();
+    res.send({ message: "Wylogowano pomyślnie" });
+  } catch (e) {
+    res.status(500).send({ error: "Nie udało się wylogować" });
   }
 });
 
