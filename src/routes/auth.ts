@@ -11,14 +11,10 @@ declare global {
     }
   }
 }
-import jwt from "jsonwebtoken";
+
 import bcrypt from "bcryptjs";
 
 const router = express.Router();
-
-router.get("/", (req, res) => {
-  res.send("Hello World!");
-});
 
 router.post("/login", async (req, res) => {
   try {
@@ -55,7 +51,7 @@ router.post("/register", async (req, res) => {
 });
 
 router.post("/logout", userAuth, async (req, res) => {
-  console.log("req.user", req.user);
+  //console.log("req.user", req.user);
   try {
     req.user.tokens = req.user.tokens.filter(
       (t: { token: string }) => t.token !== req.token
@@ -64,26 +60,6 @@ router.post("/logout", userAuth, async (req, res) => {
     res.send({ message: "Wylogowano pomyślnie" });
   } catch (e) {
     res.status(500).send({ error: "Nie udało się wylogować" });
-  }
-});
-
-// Admin: Zarządzanie produktami
-router.get("/admin/products", adminAuth, async (req, res) => {
-  res.send("Lista produktów dla admina");
-});
-
-// User: Przeglądanie i kupowanie produktów
-router.get("/user/products", userAuth, async (req, res) => {
-  res.send("Lista produktów dla użytkownika");
-});
-
-// Pobieranie wszystkich użytkowników z rolą "user"
-router.get("/users", async (req, res) => {
-  try {
-    const users = await User.find({ role: "user" }); // Filtrujemy użytkowników z rolą "user"
-    res.status(200).send(users);
-  } catch (error) {
-    res.status(500).send({ error: "Błąd serwera" });
   }
 });
 

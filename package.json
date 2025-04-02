@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "TS_NODE_IMPORTS=1 node --loader ts-node/esm src/app.ts",
+    "dev": "NODE_OPTIONS=\"--loader ts-node/esm\" npx ts-node src/app.ts",
     "build": "tsc",
     "start": "node dist/app.js"
   },
@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "arg": "^5.0.2",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

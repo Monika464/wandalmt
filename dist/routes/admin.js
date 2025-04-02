@@ -1,18 +1,11 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import express from "express";
 import Product from "../models/product.js";
 import Resource from "../models/resource.js";
+import { adminAuth } from "../controllers/auth.js";
+import User from "../models/user.js";
 const router = express.Router();
 // Tworzenie produktu + powiązanego zasobu
-router.post("/products", (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/products", async (req, res, next) => {
     //console.log("reqbody", req.body);
     // next();
     try {
@@ -25,7 +18,7 @@ router.post("/products", (req, res, next) => __awaiter(void 0, void 0, void 0, f
             content,
             imageUrl,
         });
-        yield newProduct.save();
+        await newProduct.save();
         // 2️⃣ Tworzymy powiązany zasób i przypisujemy mu `productId`
         const newResource = new Resource({
             title: resourceTitle,
@@ -34,7 +27,7 @@ router.post("/products", (req, res, next) => __awaiter(void 0, void 0, void 0, f
             content,
             productId: newProduct._id,
         });
-        yield newResource.save();
+        await newResource.save();
         res.status(201).json({
             message: "Product and Resource created successfully",
             product: newProduct,
@@ -46,7 +39,30 @@ router.post("/products", (req, res, next) => __awaiter(void 0, void 0, void 0, f
             error: error instanceof Error ? error.message : "Unknown error occurred",
         });
     }
-}));
+});
+//console.log("admin auth", adminAuth);
+//console.log("user auth", userAuth);
+// Admin: Zarządzanie produktami
+// router.get("/admin/products", adminAuth, async (req, res) => {
+//   res.send("Lista produktów dla admina");
+// });
+// // User: Przeglądanie i kupowanie produktów
+// router.get("/user/products", userAuth, async (req, res) => {
+//   res.send("Lista produktów dla użytkownika");
+// });
+// Pobieranie wszystkich użytkowników z rolą "user"
+router.get("/users", adminAuth, async (req, res) => {
+    console.log("router.get('/users') - wywołano");
+    console.log("root dziala");
+    try {
+        const users = await User.find({ role: "user" }); // Filtrujemy użytkowników z rolą "user"
+        res.status(200).send(users);
+    }
+    catch (error) {
+        console.error("Error fetching users:", error);
+        res.status(500).send({ error: "Błąd serwera" });
+    }
+});
 // router.get("/resources", userAuth, async (req, res) => {
 //   try {
 //     const userId = req.user._id;
