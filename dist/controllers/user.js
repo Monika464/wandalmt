@@ -21,3 +21,18 @@ export const addToCartHandler = async (req, res) => {
         res.status(500).json({ error: "Wystąpił błąd" });
     }
 };
+export const deleteCartProductHandler = async (req, res, next) => {
+    console.log("hej from handler", req.body);
+    try {
+        //console.log("req-user", req.user);
+        const prodId = req.body.productId;
+        //console.log("product id do usuniecia", prodId);
+        req.user.removeFromCart(prodId);
+        res.status(200).json({ message: "Produkt usunięty z koszyka" });
+    }
+    catch (error) {
+        console.error("Błąd podczas usuwania produktu z koszyka:", error);
+        res.status(500).json({ error: "Wystąpił błąd" });
+        return;
+    }
+};
