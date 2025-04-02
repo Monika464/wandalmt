@@ -1,7 +1,7 @@
 import express from "express";
 import User from "../models/user.js";
 import { Request, Response, NextFunction } from "express";
-import { adminAuth, userAuth } from "../controllers/auth.js";
+import { adminAuth, userAuth } from "../middleware/auth.js";
 // Extend the Request interface to include the user property
 declare global {
   namespace Express {

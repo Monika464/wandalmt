@@ -22,10 +22,9 @@ const productSchema = new Schema({
     },
     resourceId: {
         type: Schema.Types.ObjectId,
-        ref: "Product",
-        required: false, // Każdy product musi być powiązany z zasobem
+        ref: "Resource",
+        required: false,
     },
 }, { timestamps: true });
 const Product = model("Product", productSchema);
-//const Product = mongoose.model("Product", productSchema);
 export default Product;

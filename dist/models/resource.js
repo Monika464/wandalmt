@@ -19,7 +19,7 @@ const resourceSchema = new Schema({
     productId: {
         type: Schema.Types.ObjectId,
         ref: "Product",
-        required: true, // Każdy zasób musi być powiązany z produktem
+        required: true,
     },
     userIds: [
         {

@@ -44,7 +44,7 @@ export const adminAuth = async (
       res.status(403).json({ error: "Access denied" });
       return;
     }
-    console.log("admin", user);
+    // console.log("admin", user);
 
     if (user) {
       req.user = { ...user.toObject(), _id: user._id.toString() };

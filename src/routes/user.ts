@@ -2,7 +2,7 @@ import express from "express";
 //import User from "../models/user.js";
 //import { Request, Response, NextFunction } from "express";
 import { addToCartHandler } from "../controllers/user.js";
-import { userAuth } from "../controllers/auth.js";
+import { userAuth } from "../middleware/auth.js";
 // interface AuthRequest extends Request {
 //   user?: any;
 // }

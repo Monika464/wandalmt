@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { adminAuth, AuthRequest, userAuth } from "./auth.js";
+import { adminAuth, AuthRequest, userAuth } from "../middleware/auth.js";
 import Product from "../models/product.js";
 
 export const addToCartHandler = async (

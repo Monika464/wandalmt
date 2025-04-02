@@ -1,6 +1,5 @@
 import Product from "../models/product.js";
 export const addToCartHandler = async (req, res) => {
-    console.log("hello from addToCartHandler");
     try {
         if (!req.user) {
             res.status(401).json({ error: "Musisz być zalogowany" });
