@@ -18,15 +18,6 @@ app.use("/auth", authRouter);
 app.use("/users", userRouter);
 app.use("/admin", adminRouter);
 
-// app.use(authRouter);
-// //app.use("/admin", productRouter);
-// app.use(userRouter);
-// app.use(adminRouter);
-
-// app.get("/", (req, res) => {
-//   res.send("Hello World!");
-// });
-
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
 });

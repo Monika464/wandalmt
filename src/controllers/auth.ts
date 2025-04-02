@@ -20,28 +20,21 @@ interface DecodedToken {
   role: string;
 }
 
-// Middleware sprawdzający, czy użytkownik jest adminem
+//autoryzacja admina
 export const adminAuth = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
 ) => {
-  console.log("hello from adminAuth");
   try {
     const token = req.header("Authorization")?.replace("Bearer ", "");
-    console.log("token", token);
+
     if (!token) {
       res.status(401).json({ error: "Token is missing" });
-      return; // Zatrzymujemy dalsze wykonanie
+      return;
     }
     const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
 
-    //console.log("decoded", decoded);
-
-    // if (decoded.role !== "admin") {
-    //   res.status(403).json({ error: "Access denied" });
-    //   return;
-    // }
     const user = await User.findById(decoded._id);
     if (!user) {
       res.status(404).json({ error: "Użytkownik nie znaleziony" });
@@ -57,7 +50,7 @@ export const adminAuth = async (
       req.user = { ...user.toObject(), _id: user._id.toString() };
     } else {
       res.status(404).json({ error: "Użytkownik nie znaleziony" });
-      return; // Zatrzymujemy dalsze wykonanie
+      return;
     }
     next();
   } catch (error) {
@@ -76,11 +69,8 @@ export const userAuth = async (
     const token = req.header("Authorization")?.replace("Bearer ", "");
     if (!token) {
       res.status(401).json({ error: "Token is missing" });
-      return; // Zatrzymujemy dalsze wykonanie
+      return;
     }
-    // if (!token) {
-    //   throw new Error("Token is missing");
-    // }
 
     const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
 

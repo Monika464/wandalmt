@@ -3,22 +3,15 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET || "defaultsecret";
-// Middleware sprawdzający, czy użytkownik jest adminem
+//autoryzacja admina
 export const adminAuth = async (req, res, next) => {
-    console.log("hello from adminAuth");
     try {
         const token = req.header("Authorization")?.replace("Bearer ", "");
-        console.log("token", token);
         if (!token) {
             res.status(401).json({ error: "Token is missing" });
-            return; // Zatrzymujemy dalsze wykonanie
+            return;
         }
         const decoded = jwt.verify(token, JWT_SECRET);
-        //console.log("decoded", decoded);
-        // if (decoded.role !== "admin") {
-        //   res.status(403).json({ error: "Access denied" });
-        //   return;
-        // }
         const user = await User.findById(decoded._id);
         if (!user) {
             res.status(404).json({ error: "Użytkownik nie znaleziony" });
@@ -34,7 +27,7 @@ export const adminAuth = async (req, res, next) => {
         }
         else {
             res.status(404).json({ error: "Użytkownik nie znaleziony" });
-            return; // Zatrzymujemy dalsze wykonanie
+            return;
         }
         next();
     }
@@ -45,6 +38,7 @@ export const adminAuth = async (req, res, next) => {
 //autoryzacja usera
 export const userAuth = async (req, res, next) => {
     try {
+        console.log("hello from userAuth");
         const token = req.header("Authorization")?.replace("Bearer ", "");
         if (!token) {
             res.status(401).json({ error: "Token is missing" });

@@ -2,10 +2,10 @@ import express from "express";
 //import User from "../models/user.js";
 //import { Request, Response, NextFunction } from "express";
 import { addToCartHandler } from "../controllers/user.js";
+import { userAuth } from "../controllers/auth.js";
 // interface AuthRequest extends Request {
 //   user?: any;
 // }
-import { userAuth } from "../controllers/auth.js";
 import Product from "../models/product.js";
 const router = express.Router();
 router.get("/products", async (req, res) => {

@@ -16,7 +16,9 @@ router.post("/login", async (req, res) => {
 // Rejestracja (z możliwością dodania admina)
 router.post("/register", async (req, res) => {
     try {
+        console.log("hello from register");
         const { email, password, name, surname, role } = req.body;
+        console.log("req.body", req.body);
         const hashedPassword = await bcrypt.hash(password, 8);
         const user = new User({
             email,
@@ -25,6 +27,7 @@ router.post("/register", async (req, res) => {
             surname,
             role,
         });
+        console.log("user", user);
         await user.save();
         res.status(201).send({ message: "User created", user });
     }
