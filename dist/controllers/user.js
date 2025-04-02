@@ -22,7 +22,6 @@ export const addToCartHandler = async (req, res) => {
     }
 };
 export const deleteCartProductHandler = async (req, res, next) => {
-    console.log("hej from handler", req.body);
     try {
         //console.log("req-user", req.user);
         const prodId = req.body.productId;

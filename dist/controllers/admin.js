@@ -41,25 +41,39 @@ export const getEditProduct = async (req, res, next) => {
     //   if (!editMode) {
     //     return res.redirect("/");
     //   }
-    const prodId = req.params.productId;
-    Product.findById(prodId)
-        .then((product) => {
+    try {
+        const prodId = req.params.productId;
+        console.log("prodId", prodId);
+        const product = await Product.findById(prodId);
         console.log("product", product);
-        //   if (!product) {
-        //     return res.redirect("/");
-        //   }
-        //   res.render("admin/edit-product", {
-        //     pageTitle: "Edit Product",
-        //     path: "/admin/edit-product",
-        //     editing: editMode,
-        //     product: product,
-        //     hasError: false,
-        //     errorMessage: null,
-        //     validationErrors: [],
-        //   });
-    })
-        .catch((err) => console.log(err));
+        res.status(201).json({
+            message: "Product fetched successfully",
+            product: product,
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            error: error instanceof Error ? error.message : "Unknown error occurred",
+        });
+    }
 };
+// Product.findById(prodId)
+//   .then((product) => {
+//     console.log("product", product);
+//     //   if (!product) {
+//     //     return res.redirect("/");
+//     //   }
+//     //   res.render("admin/edit-product", {
+//     //     pageTitle: "Edit Product",
+//     //     path: "/admin/edit-product",
+//     //     editing: editMode,
+//     //     product: product,
+//     //     hasError: false,
+//     //     errorMessage: null,
+//     //     validationErrors: [],
+//     //   });
+//   })
+//   .catch((err) => console.log(err));
 // export const postEditProduct = async (req, res, next) => {
 //   const prodId = req.body.productId;
 //   const updatedTitle = req.body.title;

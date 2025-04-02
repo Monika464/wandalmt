@@ -63,28 +63,21 @@ export const getEditProduct = async (
   res: Response,
   next: NextFunction
 ) => {
-  //   const editMode = req.query.edit;
-  //   if (!editMode) {
-  //     return res.redirect("/");
-  //   }
-  const prodId = req.params.productId;
-  Product.findById(prodId)
-    .then((product) => {
-      console.log("product", product);
-      //   if (!product) {
-      //     return res.redirect("/");
-      //   }
-      //   res.render("admin/edit-product", {
-      //     pageTitle: "Edit Product",
-      //     path: "/admin/edit-product",
-      //     editing: editMode,
-      //     product: product,
-      //     hasError: false,
-      //     errorMessage: null,
-      //     validationErrors: [],
-      //   });
-    })
-    .catch((err) => console.log(err));
+  try {
+    const prodId = req.params.productId;
+    // console.log("prodId", prodId);
+
+    const product = await Product.findById(prodId);
+    //console.log("product", product);
+    res.status(201).json({
+      message: "Product fetched successfully",
+      product: product,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    });
+  }
 };
 
 // export const postEditProduct = async (req, res, next) => {
