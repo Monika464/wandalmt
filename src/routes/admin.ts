@@ -6,6 +6,7 @@ import User from "../models/user.js";
 import {
   addChapterToResource,
   createProduct,
+  deleteChapterFromResource,
   deleteProduct,
   deleteUser,
   editResource,
@@ -37,6 +38,10 @@ router.patch(
 router.put("/edit-resource/:resourceId", adminAuth, editResource);
 router.post("/resources/:id/chapters", addChapterToResource);
 router.patch("/resources/:id/chapters/:chapterIndex", updateChapterInResource);
+router.delete(
+  "/resources/:id/chapters/:chapterIndex",
+  deleteChapterFromResource
+);
 
 router.delete("/delete-user/:userId", adminAuth, deleteUser);
 router.delete("/delete-product/:productId", deleteProduct);

@@ -2,7 +2,7 @@ import express from "express";
 import Resource from "../models/resource.js";
 import { userAuth, adminAuth } from "../middleware/auth.js";
 import User from "../models/user.js";
-import { addChapterToResource, createProduct, deleteProduct, deleteUser, editResource, getEditProduct, postEditProduct, updateChapterInResource, } from "../controllers/admin.js";
+import { addChapterToResource, createProduct, deleteChapterFromResource, deleteProduct, deleteUser, editResource, getEditProduct, postEditProduct, updateChapterInResource, } from "../controllers/admin.js";
 import { body } from "express-validator";
 const router = express.Router();
 // Tworzenie produktu + powiązanego zasobu
@@ -17,6 +17,7 @@ router.patch("/edit-product/:productId", [
 router.put("/edit-resource/:resourceId", adminAuth, editResource);
 router.post("/resources/:id/chapters", addChapterToResource);
 router.patch("/resources/:id/chapters/:chapterIndex", updateChapterInResource);
+router.delete("/resources/:id/chapters/:chapterIndex", deleteChapterFromResource);
 router.delete("/delete-user/:userId", adminAuth, deleteUser);
 router.delete("/delete-product/:productId", deleteProduct);
 // router.patch(

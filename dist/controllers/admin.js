@@ -245,6 +245,33 @@ export const updateChapterInResource = async (req, res) => {
             .json({ error: err instanceof Error ? err.message : "Server error" });
     }
 };
+export const deleteChapterFromResource = async (req, res) => {
+    const { id, chapterIndex } = req.params;
+    try {
+        const resource = await Resource.findById(id);
+        if (!resource) {
+            res.status(404).json({ error: "Resource not found" });
+            return;
+        }
+        const index = parseInt(chapterIndex);
+        if (isNaN(index) ||
+            index < 0 ||
+            index >= (resource.chapters?.length || 0)) {
+            res.status(400).json({ error: "Invalid chapter index" });
+            return;
+        }
+        resource.chapters?.splice(index, 1);
+        await resource.save();
+        res
+            .status(200)
+            .json({ message: "Chapter deleted", chapters: resource.chapters });
+    }
+    catch (err) {
+        res
+            .status(500)
+            .json({ error: err instanceof Error ? err.message : "Server error" });
+    }
+};
 ////////////////////////////////////////
 // export const postEditProduct = async (
 //   req: Request,
