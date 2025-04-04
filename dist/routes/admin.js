@@ -1,7 +1,7 @@
 import express from "express";
 import { adminAuth } from "../middleware/auth.js";
 import User from "../models/user.js";
-import { createProduct, deleteUser, getEditProduct, postEditProduct, } from "../controllers/admin.js";
+import { createProduct, deleteProduct, deleteUser, editResource, getEditProduct, postEditProduct, } from "../controllers/admin.js";
 import { body } from "express-validator";
 const router = express.Router();
 // Tworzenie produktu + powiązanego zasobu
@@ -13,7 +13,9 @@ router.patch("/edit-product/:productId", [
     body("price").isFloat({ gt: 0 }),
     body("description").isLength({ min: 4, max: 400 }).trim(),
 ], adminAuth, postEditProduct);
+router.patch("/edit-resource/:resourceId", adminAuth, editResource);
 router.delete("/delete-user/:userId", adminAuth, deleteUser);
+router.delete("/delete-product/:productId", deleteProduct);
 // router.patch(
 //   "/edit-product",
 //   [
