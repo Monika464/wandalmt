@@ -1,6 +1,7 @@
 import Product from "../models/product.js";
 import { validationResult } from "express-validator";
 import Resource from "../models/resource.js";
+import User from "../models/user.js";
 export const createProduct = async (req, res, next) => {
     try {
         const { title, description, price, resourceTitle, imageUrl, content, videoUrl, } = req.body;
@@ -86,6 +87,26 @@ export const postEditProduct = async (req, res, next) => {
             error: error instanceof Error ? error.message : "Unknown error occurred",
         });
         return;
+    }
+};
+export const deleteUser = async (req, res, next) => {
+    try {
+        const { userId } = req.params;
+        // Szukamy użytkownika w bazie danych
+        const user = await User.findById(userId);
+        if (!user) {
+            res.status(404).json({ message: "User not found" });
+            return;
+        }
+        // Usuwamy użytkownika
+        await User.deleteOne({ _id: userId });
+        res.status(200).json({ message: "User deleted successfully" });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({
+            error: error instanceof Error ? error.message : "Unknown error occurred",
+        });
     }
 };
 // export const postEditProduct = async (

@@ -3,6 +3,7 @@ import { validationResult } from "express-validator";
 import { Request, Response, NextFunction } from "express";
 
 import Resource from "../models/resource.js";
+import User from "../models/user.js";
 
 export const createProduct = async (
   req: Request,
@@ -122,6 +123,34 @@ export const postEditProduct = async (
     return;
   }
 };
+
+export const deleteUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { userId } = req.params;
+
+    // Szukamy użytkownika w bazie danych
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    // Usuwamy użytkownika
+    await User.deleteOne({ _id: userId });
+
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    });
+  }
+};
+
 // export const postEditProduct = async (
 //   req: Request,
 //   res: Response,

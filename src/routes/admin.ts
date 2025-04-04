@@ -5,6 +5,7 @@ import { userAuth, adminAuth } from "../middleware/auth.js";
 import User from "../models/user.js";
 import {
   createProduct,
+  deleteUser,
   getEditProduct,
   postEditProduct,
 } from "../controllers/admin.js";
@@ -28,6 +29,8 @@ router.patch(
   adminAuth,
   postEditProduct
 );
+
+router.delete("/delete-user/:userId", adminAuth, deleteUser);
 // router.patch(
 //   "/edit-product",
 //   [
