@@ -4,6 +4,7 @@ import Resource from "../models/resource.js";
 import { userAuth, adminAuth } from "../middleware/auth.js";
 import User from "../models/user.js";
 import {
+  addChapterToResource,
   createProduct,
   deleteProduct,
   deleteUser,
@@ -32,7 +33,8 @@ router.patch(
   postEditProduct
 );
 
-router.patch("/edit-resource/:resourceId", adminAuth, editResource);
+router.put("/edit-resource/:resourceId", adminAuth, editResource);
+router.post("/resources/:id/chapters", addChapterToResource);
 
 router.delete("/delete-user/:userId", adminAuth, deleteUser);
 router.delete("/delete-product/:productId", deleteProduct);

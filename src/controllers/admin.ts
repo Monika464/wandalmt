@@ -177,8 +177,6 @@ export const deleteProduct = async (
 };
 //EDITING RESOURCE
 
-// Zmiana zasobu - wgrywanie nowych rozdziałów
-
 export const editResource = async (
   req: Request,
   res: Response,
@@ -196,25 +194,26 @@ export const editResource = async (
       return;
     }
 
-    // Pobierz dane aktualizacji z ciała żądania
     const updateData = req.body;
 
-    // Zablokuj modyfikację pól, których nie wolno zmieniać
-    const protectedFields = [
-      "title",
-      "imageUrl",
-      "content",
-      "videoUrl",
-      "productId",
-      "userIds",
-    ];
-    for (const field of protectedFields) {
-      if (updateData.hasOwnProperty(field)) {
-        delete updateData[field];
-      }
+    // ✅ Tylko te pola można aktualizować
+    if (typeof updateData.title === "string") {
+      resource.title = updateData.title;
     }
 
-    // Obsługa aktualizacji rozdziałów
+    if (typeof updateData.imageUrl === "string") {
+      resource.imageUrl = updateData.imageUrl;
+    }
+
+    if (typeof updateData.content === "string") {
+      resource.content = updateData.content;
+    }
+
+    if (typeof updateData.videoUrl === "string") {
+      resource.videoUrl = updateData.videoUrl;
+    }
+
+    // ✅ Aktualizacja rozdziałów (jeśli są podane)
     if (updateData.chapters) {
       if (!Array.isArray(updateData.chapters)) {
         throw new Error("Chapters must be an array");
@@ -224,24 +223,58 @@ export const editResource = async (
         throw new Error("Maximum of 100 chapters allowed");
       }
 
-      resource.chapters = updateData.chapters; // zastępuje istniejące
+      resource.chapters = updateData.chapters;
     }
 
     await resource.save();
+
     res.status(200).json({
       message: "Resource updated successfully",
       resource,
     });
   } catch (err) {
     if (err instanceof Error) {
-      throw new Error("Error updating resource: " + err.message);
+      res
+        .status(500)
+        .json({ error: "Error updating resource: " + err.message });
     } else {
-      throw new Error("Error updating resource: Unknown error occurred");
+      res.status(500).json({ error: "Unknown server error" });
     }
   }
 };
 
-//
+export const addChapterToResource = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { videoUrl, description } = req.body;
+
+  try {
+    const resource = await Resource.findById(id);
+    if (!resource) {
+      res.status(404).json({ error: "Resource not found" });
+      return;
+    }
+
+    if (!resource.chapters) resource.chapters = [];
+
+    if (resource.chapters.length >= 100) {
+      res
+        .status(400)
+        .json({ error: "Maximum number of chapters reached (100)" });
+      return;
+    }
+    resource.chapters.push({ videoUrl, description });
+    await resource.save();
+
+    res
+      .status(200)
+      .json({ message: "Chapter added", chapters: resource.chapters });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: err instanceof Error ? err.message : "Server error" });
+    return;
+  }
+};
 
 ////////////////////////////////////////
 // export const postEditProduct = async (

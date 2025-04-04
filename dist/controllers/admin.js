@@ -128,7 +128,6 @@ export const deleteProduct = async (req, res, next) => {
     }
 };
 //EDITING RESOURCE
-// Zmiana zasobu - wgrywanie nowych rozdziałów
 export const editResource = async (req, res, next) => {
     try {
         const { resourceId } = req.params;
@@ -139,23 +138,21 @@ export const editResource = async (req, res, next) => {
             res.status(404).json({ message: "Resource not found" });
             return;
         }
-        // Pobierz dane aktualizacji z ciała żądania
         const updateData = req.body;
-        // Zablokuj modyfikację pól, których nie wolno zmieniać
-        const protectedFields = [
-            "title",
-            "imageUrl",
-            "content",
-            "videoUrl",
-            "productId",
-            "userIds",
-        ];
-        for (const field of protectedFields) {
-            if (updateData.hasOwnProperty(field)) {
-                delete updateData[field];
-            }
+        // ✅ Tylko te pola można aktualizować
+        if (typeof updateData.title === "string") {
+            resource.title = updateData.title;
         }
-        // Obsługa aktualizacji rozdziałów
+        if (typeof updateData.imageUrl === "string") {
+            resource.imageUrl = updateData.imageUrl;
+        }
+        if (typeof updateData.content === "string") {
+            resource.content = updateData.content;
+        }
+        if (typeof updateData.videoUrl === "string") {
+            resource.videoUrl = updateData.videoUrl;
+        }
+        // ✅ Aktualizacja rozdziałów (jeśli są podane)
         if (updateData.chapters) {
             if (!Array.isArray(updateData.chapters)) {
                 throw new Error("Chapters must be an array");
@@ -163,7 +160,7 @@ export const editResource = async (req, res, next) => {
             if (updateData.chapters.length > 100) {
                 throw new Error("Maximum of 100 chapters allowed");
             }
-            resource.chapters = updateData.chapters; // zastępuje istniejące
+            resource.chapters = updateData.chapters;
         }
         await resource.save();
         res.status(200).json({
@@ -173,13 +170,69 @@ export const editResource = async (req, res, next) => {
     }
     catch (err) {
         if (err instanceof Error) {
-            throw new Error("Error updating resource: " + err.message);
+            res
+                .status(500)
+                .json({ error: "Error updating resource: " + err.message });
         }
         else {
-            throw new Error("Error updating resource: Unknown error occurred");
+            res.status(500).json({ error: "Unknown server error" });
         }
     }
 };
+// Zmiana zasobu - wgrywanie nowych rozdziałów
+// export const editResource = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> => {
+//   try {
+//     const { resourceId } = req.params;
+//     console.log("resourceId", resourceId);
+//     console.log("reqbody", req.body);
+//     const resource = await Resource.findById(resourceId);
+//     if (!resource) {
+//       res.status(404).json({ message: "Resource not found" });
+//       return;
+//     }
+//     // Pobierz dane aktualizacji z ciała żądania
+//     const updateData = req.body;
+//     // Zablokuj modyfikację pól, których nie wolno zmieniać
+//     // const protectedFields = [
+//     //   "title",
+//     //   "imageUrl",
+//     //   "content",
+//     //   "videoUrl",
+//     //   "productId",
+//     //   "userIds",
+//     // ];
+//     // for (const field of protectedFields) {
+//     //   if (updateData.hasOwnProperty(field)) {
+//     //     delete updateData[field];
+//     //   }
+//     // }
+//     // Obsługa aktualizacji rozdziałów
+//     if (updateData.chapters) {
+//       if (!Array.isArray(updateData.chapters)) {
+//         throw new Error("Chapters must be an array");
+//       }
+//       if (updateData.chapters.length > 100) {
+//         throw new Error("Maximum of 100 chapters allowed");
+//       }
+//       resource.chapters = updateData.chapters; // zastępuje istniejące
+//     }
+//     await resource.save();
+//     res.status(200).json({
+//       message: "Resource updated successfully",
+//       resource,
+//     });
+//   } catch (err) {
+//     if (err instanceof Error) {
+//       throw new Error("Error updating resource: " + err.message);
+//     } else {
+//       throw new Error("Error updating resource: Unknown error occurred");
+//     }
+//   }
+// };
 //
 ////////////////////////////////////////
 // export const postEditProduct = async (

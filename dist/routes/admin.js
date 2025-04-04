@@ -13,7 +13,7 @@ router.patch("/edit-product/:productId", [
     body("price").isFloat({ gt: 0 }),
     body("description").isLength({ min: 4, max: 400 }).trim(),
 ], adminAuth, postEditProduct);
-router.patch("/edit-resource/:resourceId", adminAuth, editResource);
+router.put("/edit-resource/:resourceId", adminAuth, editResource);
 router.delete("/delete-user/:userId", adminAuth, deleteUser);
 router.delete("/delete-product/:productId", deleteProduct);
 // router.patch(
