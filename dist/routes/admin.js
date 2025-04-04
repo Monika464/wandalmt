@@ -1,18 +1,25 @@
 import express from "express";
 import { adminAuth } from "../middleware/auth.js";
 import User from "../models/user.js";
-import { createProduct, getEditProduct } from "../controllers/admin.js";
+import { createProduct, getEditProduct, postEditProduct, } from "../controllers/admin.js";
+import { body } from "express-validator";
 const router = express.Router();
 // Tworzenie produktu + powiązanego zasobu
 router.post("/products", createProduct);
 router.get("/edit-product/:productId", adminAuth, getEditProduct);
-// router.post(
+router.patch("/edit-product/:productId", [
+    body("productId").isMongoId(),
+    body("title").isString().isLength({ min: 2 }).trim(),
+    body("price").isFloat({ gt: 0 }),
+    body("description").isLength({ min: 4, max: 400 }).trim(),
+], adminAuth, postEditProduct);
+// router.patch(
 //   "/edit-product",
-//   // [
-//   //   body("title").isString().isLength({ min: 2 }).trim(),
-//   //   body("price").isFloat(),
-//   //   body("description").isLength({ min: 4, max: 400 }).trim(),
-//   // ],
+//   [
+//     body("title").isString().isLength({ min: 2 }).trim(),
+//     body("price").isFloat(),
+//     body("description").isLength({ min: 4, max: 400 }).trim(),
+//   ],
 //   adminAuth,
 //   postEditProduct
 // );
@@ -58,8 +65,6 @@ router.get("/edit-product/:productId", adminAuth, getEditProduct);
 //   });
 // }
 //});
-//console.log("admin auth", adminAuth);
-//console.log("user auth", userAuth);
 // Admin: Zarządzanie produktami
 // router.get("/admin/products", adminAuth, async (req, res) => {
 //   res.send("Lista produktów dla admina");
