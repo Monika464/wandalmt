@@ -35,6 +35,7 @@ router.patch(
 
 router.put("/edit-resource/:resourceId", adminAuth, editResource);
 router.post("/resources/:id/chapters", addChapterToResource);
+//router.patch("/resources/:id/chapters/:chapterIndex", updateChapterInResource);
 
 router.delete("/delete-user/:userId", adminAuth, deleteUser);
 router.delete("/delete-product/:productId", deleteProduct);
@@ -119,16 +120,17 @@ router.get("/users", adminAuth, async (req, res) => {
   }
 });
 
-// router.get("/resources", userAuth, async (req, res) => {
-//   try {
-//     const userId = req.user._id;
-//     const resources = await Resource.find({ userIds: userId }).populate(
-//       "productId"
-//     );
-//     res.json(resources);
-//   } catch (error) {
-//     res.status(500).json({ error: "Error fetching resources" });
-//   }
-// });
+router.get("/resources/:userId", userAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    //const userId = req.user._id;
+    const resources = await Resource.find({ userIds: id }).populate(
+      "productId"
+    );
+    res.json(resources);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching resources" });
+  }
+});
 
 export default router;

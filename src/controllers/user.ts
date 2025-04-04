@@ -47,3 +47,13 @@ export const deleteCartProductHandler = async (
     return;
   }
 };
+
+// export const updateUserResources = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> => {
+//   try {
+//     const userId = req.params.userId;
+
+//     // Sprawdzamy, czy użytkownik istnieje

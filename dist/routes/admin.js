@@ -1,7 +1,8 @@
 import express from "express";
-import { adminAuth } from "../middleware/auth.js";
+import Resource from "../models/resource.js";
+import { userAuth, adminAuth } from "../middleware/auth.js";
 import User from "../models/user.js";
-import { createProduct, deleteProduct, deleteUser, editResource, getEditProduct, postEditProduct, } from "../controllers/admin.js";
+import { addChapterToResource, createProduct, deleteProduct, deleteUser, editResource, getEditProduct, postEditProduct, } from "../controllers/admin.js";
 import { body } from "express-validator";
 const router = express.Router();
 // Tworzenie produktu + powiązanego zasobu
@@ -14,6 +15,7 @@ router.patch("/edit-product/:productId", [
     body("description").isLength({ min: 4, max: 400 }).trim(),
 ], adminAuth, postEditProduct);
 router.put("/edit-resource/:resourceId", adminAuth, editResource);
+router.post("/resources/:id/chapters", addChapterToResource);
 router.delete("/delete-user/:userId", adminAuth, deleteUser);
 router.delete("/delete-product/:productId", deleteProduct);
 // router.patch(
@@ -87,15 +89,15 @@ router.get("/users", adminAuth, async (req, res) => {
         res.status(500).send({ error: "Błąd serwera" });
     }
 });
-// router.get("/resources", userAuth, async (req, res) => {
-//   try {
-//     const userId = req.user._id;
-//     const resources = await Resource.find({ userIds: userId }).populate(
-//       "productId"
-//     );
-//     res.json(resources);
-//   } catch (error) {
-//     res.status(500).json({ error: "Error fetching resources" });
-//   }
-// });
+router.get("/resources/:userId", userAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        //const userId = req.user._id;
+        const resources = await Resource.find({ userIds: id }).populate("productId");
+        res.json(resources);
+    }
+    catch (error) {
+        res.status(500).json({ error: "Error fetching resources" });
+    }
+});
 export default router;
