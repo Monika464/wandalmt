@@ -283,7 +283,8 @@ export const updateChapterInResource = async (req: Request, res: Response) => {
   try {
     const resource = await Resource.findById(id);
     if (!resource) {
-      return res.status(404).json({ error: "Resource not found" });
+      res.status(404).json({ error: "Resource not found" });
+      return;
     }
 
     const index = parseInt(chapterIndex);
@@ -293,7 +294,8 @@ export const updateChapterInResource = async (req: Request, res: Response) => {
       !resource.chapters ||
       index >= resource.chapters.length
     ) {
-      return res.status(400).json({ error: "Invalid chapter index" });
+      res.status(400).json({ error: "Invalid chapter index" });
+      return;
     }
 
     // Zaktualizuj tylko podane pola

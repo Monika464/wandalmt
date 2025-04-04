@@ -11,6 +11,7 @@ import {
   editResource,
   getEditProduct,
   postEditProduct,
+  updateChapterInResource,
 } from "../controllers/admin.js";
 import { body } from "express-validator";
 
@@ -35,7 +36,7 @@ router.patch(
 
 router.put("/edit-resource/:resourceId", adminAuth, editResource);
 router.post("/resources/:id/chapters", addChapterToResource);
-//router.patch("/resources/:id/chapters/:chapterIndex", updateChapterInResource);
+router.patch("/resources/:id/chapters/:chapterIndex", updateChapterInResource);
 
 router.delete("/delete-user/:userId", adminAuth, deleteUser);
 router.delete("/delete-product/:productId", deleteProduct);

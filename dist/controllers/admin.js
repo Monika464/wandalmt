@@ -209,6 +209,42 @@ export const addChapterToResource = async (req, res) => {
         return;
     }
 };
+export const updateChapterInResource = async (req, res) => {
+    const { id, chapterIndex } = req.params;
+    const { videoUrl, description } = req.body;
+    try {
+        const resource = await Resource.findById(id);
+        if (!resource) {
+            res.status(404).json({ error: "Resource not found" });
+            return;
+        }
+        const index = parseInt(chapterIndex);
+        if (isNaN(index) ||
+            index < 0 ||
+            !resource.chapters ||
+            index >= resource.chapters.length) {
+            res.status(400).json({ error: "Invalid chapter index" });
+            return;
+        }
+        // Zaktualizuj tylko podane pola
+        if (videoUrl !== undefined) {
+            resource.chapters[index].videoUrl = videoUrl;
+        }
+        if (description !== undefined) {
+            resource.chapters[index].description = description;
+        }
+        await resource.save();
+        res.status(200).json({
+            message: "Chapter updated",
+            chapter: resource.chapters[index],
+        });
+    }
+    catch (err) {
+        res
+            .status(500)
+            .json({ error: err instanceof Error ? err.message : "Server error" });
+    }
+};
 ////////////////////////////////////////
 // export const postEditProduct = async (
 //   req: Request,
