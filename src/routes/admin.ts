@@ -36,15 +36,20 @@ router.patch(
 );
 
 router.put("/edit-resource/:resourceId", adminAuth, editResource);
-router.post("/resources/:id/chapters", addChapterToResource);
-router.patch("/resources/:id/chapters/:chapterIndex", updateChapterInResource);
+router.post("/resources/:id/chapters", adminAuth, addChapterToResource);
+router.patch(
+  "/resources/:id/chapters/:chapterIndex",
+  adminAuth,
+  updateChapterInResource
+);
 router.delete(
   "/resources/:id/chapters/:chapterIndex",
+  adminAuth,
   deleteChapterFromResource
 );
 
 router.delete("/delete-user/:userId", adminAuth, deleteUser);
-router.delete("/delete-product/:productId", deleteProduct);
+router.delete("/delete-product/:productId", adminAuth, deleteProduct);
 
 router.get("/users", adminAuth, async (req, res) => {
   try {
@@ -56,7 +61,7 @@ router.get("/users", adminAuth, async (req, res) => {
   }
 });
 
-router.get("/resources/:userId", userAuth, async (req, res) => {
+router.get("/resources/:userId", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     //const userId = req.user._id;

@@ -1,6 +1,6 @@
 import express from "express";
 import Resource from "../models/resource.js";
-import { userAuth, adminAuth } from "../middleware/auth.js";
+import { adminAuth } from "../middleware/auth.js";
 import User from "../models/user.js";
 import { addChapterToResource, createProduct, deleteChapterFromResource, deleteProduct, deleteUser, editResource, getEditProduct, postEditProduct, updateChapterInResource, } from "../controllers/admin.js";
 import { body } from "express-validator";
@@ -14,11 +14,11 @@ router.patch("/edit-product/:productId", [
     body("description").isLength({ min: 4, max: 400 }).trim(),
 ], adminAuth, postEditProduct);
 router.put("/edit-resource/:resourceId", adminAuth, editResource);
-router.post("/resources/:id/chapters", addChapterToResource);
-router.patch("/resources/:id/chapters/:chapterIndex", updateChapterInResource);
-router.delete("/resources/:id/chapters/:chapterIndex", deleteChapterFromResource);
+router.post("/resources/:id/chapters", adminAuth, addChapterToResource);
+router.patch("/resources/:id/chapters/:chapterIndex", adminAuth, updateChapterInResource);
+router.delete("/resources/:id/chapters/:chapterIndex", adminAuth, deleteChapterFromResource);
 router.delete("/delete-user/:userId", adminAuth, deleteUser);
-router.delete("/delete-product/:productId", deleteProduct);
+router.delete("/delete-product/:productId", adminAuth, deleteProduct);
 router.get("/users", adminAuth, async (req, res) => {
     try {
         const users = await User.find({ role: "user" });
@@ -29,7 +29,7 @@ router.get("/users", adminAuth, async (req, res) => {
         res.status(500).send({ error: "Błąd serwera" });
     }
 });
-router.get("/resources/:userId", userAuth, async (req, res) => {
+router.get("/resources/:userId", adminAuth, async (req, res) => {
     try {
         const { id } = req.params;
         //const userId = req.user._id;
