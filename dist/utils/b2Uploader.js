@@ -37,3 +37,15 @@ export const handleUploadErrors = (err, req, res, next) => {
     }
     next();
 };
+/// sprawdzanie plikow
+const params = {
+    Bucket: process.env.B2_BUCKET_NAME,
+};
+s3.listObjectsV2(params, (err, data) => {
+    if (err) {
+        console.log("Error listing objects:", err);
+    }
+    else {
+        console.log("Objects in bucket:", data);
+    }
+});
