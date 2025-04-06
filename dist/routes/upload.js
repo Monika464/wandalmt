@@ -2,6 +2,7 @@ import express from "express";
 import { upload, handleUploadErrors } from "../utils/b2Uploader.js";
 import { s3 } from "../utils/b2Uploader.js"; // assuming s3 is an instance of S3
 import dotenv from "dotenv";
+import { adminAuth } from "../middleware/auth.js";
 dotenv.config();
 const router = express.Router();
 // Upload for video files
@@ -9,7 +10,7 @@ router.post("/upload/video", upload.array("videos", 3), // Maksymalnie 3 pliki w
 async (req, res) => {
     const files = req.files;
     if (!files || files.length === 0) {
-        res.status(400).json({ error: "Brak przesłanych plików wideo" });
+        res.status(400).json({ error: "No videos uploaded" });
         return;
     }
     try {
@@ -19,7 +20,7 @@ async (req, res) => {
             const fileExtension = file.originalname.split(".").pop()?.toLowerCase();
             const allowedExtensions = ["mp4", "avi", "mov"]; // Dozwolone formaty wideo
             if (!allowedExtensions.includes(fileExtension || "")) {
-                res.status(400).json({ error: "Nieobsługiwany format wideo" });
+                res.status(400).json({ error: "Unsupported video format" });
                 return;
             }
             const key = `${Date.now()}-${file.originalname}`;
@@ -38,20 +39,19 @@ async (req, res) => {
             uploadedUrls.push(url);
         }
         res.status(200).json({
-            message: "Wszystkie pliki wideo przesłane",
+            message: "All videos uploaded",
             urls: uploadedUrls,
         });
     }
     catch (error) {
-        console.error("Błąd przy uploadzie plików wideo:", error);
-        res.status(500).json({ error: error.message || "Błąd serwera" });
+        console.error("Error uploading video files:", error);
+        res.status(500).json({ error: error.message || "Server error" });
     }
 }, handleUploadErrors);
-router.post("/upload", upload.array("files", 5), // input name="files"
-async (req, res) => {
+router.post("/upload", adminAuth, upload.array("files", 5), async (req, res) => {
     const files = req.files;
     if (!files || files.length === 0) {
-        res.status(400).json({ error: "Brak przesłanych plików" });
+        res.status(400).json({ error: "No files uploaded" });
         return;
     }
     try {
@@ -76,10 +76,10 @@ async (req, res) => {
         }
         res
             .status(200)
-            .json({ message: "Wszystkie pliki przesłane", urls: uploadedUrls });
+            .json({ message: "All files uploaded", urls: uploadedUrls });
     }
     catch (error) {
-        console.error("Błąd przy uploadzie:", error);
+        console.error("Upload error:", error);
         res.status(500).json({ error: error.message || "Błąd serwera" });
     }
 }, handleUploadErrors);

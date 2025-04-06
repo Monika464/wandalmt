@@ -71,7 +71,6 @@ const userSchema = new Schema<IUser>({
   ],
 });
 
-// Statyczna metoda do wyszukiwania użytkownika po e-mailu i haśle
 userSchema.statics.findByCredentials = async function (
   email: string,
   password: string
@@ -103,7 +102,16 @@ userSchema.methods.generateAuthToken = async function (): Promise<string> {
   return token;
 };
 
-// 🔹 Metoda do dodawania produktu do koszyka
+// userSchema.methods.removeAuthToken = async function (token: string) {
+//   this.tokens = this.tokens.filter((t: { token: string }) => t.token !== token);
+//   await this.save();
+// };
+
+userSchema.methods.logoutAll = async function () {
+  this.tokens = [];
+  await this.save();
+};
+
 userSchema.methods.addToCart = async function (
   productId: mongoose.Types.ObjectId
 ): Promise<IUser> {
@@ -129,7 +137,6 @@ userSchema.methods.addToCart = async function (
   return user;
 };
 
-// 🔹 Metoda do usuwania produktu z koszyka
 userSchema.methods.removeFromCart = async function (
   productId: mongoose.Types.ObjectId
 ): Promise<IUser> {

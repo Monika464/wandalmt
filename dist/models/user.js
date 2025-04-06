@@ -44,7 +44,6 @@ const userSchema = new Schema({
         },
     ],
 });
-// Statyczna metoda do wyszukiwania użytkownika po e-mailu i haśle
 userSchema.statics.findByCredentials = async function (email, password) {
     const user = await this.findOne({ email });
     if (!user) {
@@ -69,7 +68,14 @@ userSchema.methods.generateAuthToken = async function () {
     await user.save();
     return token;
 };
-// 🔹 Metoda do dodawania produktu do koszyka
+userSchema.methods.removeAuthToken = async function (token) {
+    this.tokens = this.tokens.filter((t) => t.token !== token);
+    await this.save();
+};
+userSchema.methods.logoutAll = async function () {
+    this.tokens = [];
+    await this.save();
+};
 userSchema.methods.addToCart = async function (productId) {
     const user = this;
     const cartProductIndex = user.cart.items.findIndex((cp) => cp.productId.toString() === productId.toString());
@@ -87,7 +93,6 @@ userSchema.methods.addToCart = async function (productId) {
     await user.save();
     return user;
 };
-// 🔹 Metoda do usuwania produktu z koszyka
 userSchema.methods.removeFromCart = async function (productId) {
     const user = this;
     user.cart.items = user.cart.items.filter((item) => item.productId.toString() !== productId.toString());

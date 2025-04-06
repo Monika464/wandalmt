@@ -3,6 +3,7 @@ import { upload, handleUploadErrors } from "../utils/b2Uploader.js";
 import { S3 } from "@aws-sdk/client-s3";
 import { s3 } from "../utils/b2Uploader.js"; // assuming s3 is an instance of S3
 import dotenv from "dotenv";
+import { adminAuth } from "../middleware/auth.js";
 dotenv.config();
 const router = express.Router();
 
@@ -14,7 +15,7 @@ router.post(
     const files = req.files as Express.Multer.File[];
 
     if (!files || files.length === 0) {
-      res.status(400).json({ error: "Brak przesłanych plików wideo" });
+      res.status(400).json({ error: "No videos uploaded" });
       return;
     }
 
@@ -27,7 +28,7 @@ router.post(
         const allowedExtensions = ["mp4", "avi", "mov"]; // Dozwolone formaty wideo
 
         if (!allowedExtensions.includes(fileExtension || "")) {
-          res.status(400).json({ error: "Nieobsługiwany format wideo" });
+          res.status(400).json({ error: "Unsupported video format" });
           return;
         }
 
@@ -50,12 +51,12 @@ router.post(
       }
 
       res.status(200).json({
-        message: "Wszystkie pliki wideo przesłane",
+        message: "All videos uploaded",
         urls: uploadedUrls,
       });
     } catch (error: any) {
-      console.error("Błąd przy uploadzie plików wideo:", error);
-      res.status(500).json({ error: error.message || "Błąd serwera" });
+      console.error("Error uploading video files:", error);
+      res.status(500).json({ error: error.message || "Server error" });
     }
   },
   handleUploadErrors
@@ -63,12 +64,13 @@ router.post(
 
 router.post(
   "/upload",
-  upload.array("files", 5), // input name="files"
+  adminAuth,
+  upload.array("files", 5),
   async (req: Request, res: Response) => {
     const files = req.files as Express.Multer.File[];
 
     if (!files || files.length === 0) {
-      res.status(400).json({ error: "Brak przesłanych plików" });
+      res.status(400).json({ error: "No files uploaded" });
       return;
     }
 
@@ -98,9 +100,9 @@ router.post(
 
       res
         .status(200)
-        .json({ message: "Wszystkie pliki przesłane", urls: uploadedUrls });
+        .json({ message: "All files uploaded", urls: uploadedUrls });
     } catch (error: any) {
-      console.error("Błąd przy uploadzie:", error);
+      console.error("Upload error:", error);
       res.status(500).json({ error: error.message || "Błąd serwera" });
     }
   },

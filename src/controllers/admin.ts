@@ -132,7 +132,6 @@ export const deleteUser = async (
   try {
     const { userId } = req.params;
 
-    // Szukamy użytkownika w bazie danych
     const user = await User.findById(userId);
     if (!user) {
       res.status(404).json({ message: "User not found" });

@@ -46,6 +46,6 @@ s3.listObjectsV2(params, (err, data) => {
         console.log("Error listing objects:", err);
     }
     else {
-        console.log("Objects in bucket:", data);
+        // console.log("Objects in bucket:", data);
     }
 });

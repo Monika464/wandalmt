@@ -32,26 +32,6 @@ const s3 = new S3Client({
   forcePathStyle: true, // Wymagane dla Backblaze
 });
 
-const test = async () => {
-  try {
-    const data = await s3.send(
-      new ListObjectsCommand({ Bucket: process.env.B2_BUCKET_NAME! })
-    );
-    console.log(
-      "✅ Połączenie działa! Obiekty w buckecie:",
-      data.Contents || "Brak plików"
-    );
-  } catch (err) {
-    if (err instanceof Error) {
-      console.error("❌ Błąd połączenia:", err.message);
-    } else {
-      console.error("❌ Błąd połączenia:", err);
-    }
-  }
-};
-
-test();
-
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
 });

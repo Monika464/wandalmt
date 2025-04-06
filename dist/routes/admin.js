@@ -20,67 +20,6 @@ router.patch("/resources/:id/chapters/:chapterIndex", updateChapterInResource);
 router.delete("/resources/:id/chapters/:chapterIndex", deleteChapterFromResource);
 router.delete("/delete-user/:userId", adminAuth, deleteUser);
 router.delete("/delete-product/:productId", deleteProduct);
-// router.patch(
-//   "/edit-product",
-//   [
-//     body("title").isString().isLength({ min: 2 }).trim(),
-//     body("price").isFloat(),
-//     body("description").isLength({ min: 4, max: 400 }).trim(),
-//   ],
-//   adminAuth,
-//   postEditProduct
-// );
-//router.delete("/product/:productId", isAuth, deleteProduct);
-//console.log("reqbody", req.body);
-// next();
-// try {
-//   const {
-//     title,
-//     description,
-//     price,
-//     resourceTitle,
-//     imageUrl,
-//     content,
-//     videoUrl,
-//   } = req.body;
-//   // 1️⃣ Tworzymy nowy produkt
-//   const newProduct = new Product({
-//     title,
-//     description,
-//     price,
-//     content,
-//     imageUrl,
-//   });
-//   await newProduct.save();
-//   // 2️⃣ Tworzymy powiązany zasób i przypisujemy mu `productId`
-//   const newResource = new Resource({
-//     title: resourceTitle,
-//     imageUrl,
-//     videoUrl,
-//     content,
-//     productId: newProduct._id,
-//   });
-//   await newResource.save();
-//   res.status(201).json({
-//     message: "Product and Resource created successfully",
-//     product: newProduct,
-//     resource: newResource,
-//   });
-// } catch (error) {
-//   res.status(500).json({
-//     error: error instanceof Error ? error.message : "Unknown error occurred",
-//   });
-// }
-//});
-// Admin: Zarządzanie produktami
-// router.get("/admin/products", adminAuth, async (req, res) => {
-//   res.send("Lista produktów dla admina");
-// });
-// // User: Przeglądanie i kupowanie produktów
-// router.get("/user/products", userAuth, async (req, res) => {
-//   res.send("Lista produktów dla użytkownika");
-// });
-// Pobieranie wszystkich użytkowników z rolą "user"
 router.get("/users", adminAuth, async (req, res) => {
     try {
         const users = await User.find({ role: "user" }); // Filtrujemy użytkowników z rolą "user"
