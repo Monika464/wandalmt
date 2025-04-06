@@ -6,7 +6,7 @@ import { adminAuth } from "../middleware/auth.js";
 dotenv.config();
 const router = express.Router();
 // Upload for video files
-router.post("/upload/video", upload.array("videos", 3), // Maksymalnie 3 pliki wideo
+router.post("/upload/video", adminAuth, upload.array("videos", 3), // Maksymalnie 3 pliki wideo
 async (req, res) => {
     const files = req.files;
     if (!files || files.length === 0) {

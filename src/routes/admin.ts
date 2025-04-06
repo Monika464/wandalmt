@@ -19,7 +19,6 @@ import { body } from "express-validator";
 
 const router = express.Router();
 
-// Tworzenie produktu + powiązanego zasobu
 router.post("/products", createProduct);
 
 router.get("/edit-product/:productId", adminAuth, getEditProduct);
@@ -49,7 +48,7 @@ router.delete("/delete-product/:productId", deleteProduct);
 
 router.get("/users", adminAuth, async (req, res) => {
   try {
-    const users = await User.find({ role: "user" }); // Filtrujemy użytkowników z rolą "user"
+    const users = await User.find({ role: "user" });
     res.status(200).send(users);
   } catch (error) {
     console.error("Error fetching users:", error);

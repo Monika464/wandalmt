@@ -68,10 +68,10 @@ userSchema.methods.generateAuthToken = async function () {
     await user.save();
     return token;
 };
-userSchema.methods.removeAuthToken = async function (token) {
-    this.tokens = this.tokens.filter((t) => t.token !== token);
-    await this.save();
-};
+// userSchema.methods.removeAuthToken = async function (token: string) {
+//   this.tokens = this.tokens.filter((t: { token: string }) => t.token !== token);
+//   await this.save();
+// };
 userSchema.methods.logoutAll = async function () {
     this.tokens = [];
     await this.save();

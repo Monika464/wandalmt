@@ -47,7 +47,7 @@ export const handleUploadErrors = (
   next();
 };
 
-/// sprawdzanie plikow
+/// check files in bucket
 const params = {
   Bucket: process.env.B2_BUCKET_NAME!,
 };

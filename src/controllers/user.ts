@@ -8,7 +8,7 @@ export const addToCartHandler = async (
 ): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(401).json({ error: "Musisz być zalogowany" });
+      res.status(401).json({ error: "You must be logged in" });
       return;
     }
 
@@ -16,17 +16,17 @@ export const addToCartHandler = async (
 
     //return res.status(404).json({ error: "Produkt nie znaleziony" });
     if (!product) {
-      res.status(404).json({ error: "Produkt nie znaleziony" });
+      res.status(404).json({ error: "Product not found" });
       return;
     }
 
     await req.user.addToCart(product._id);
     res
       .status(200)
-      .json({ message: "Produkt dodany do koszyka", cart: req.user.cart });
+      .json({ message: "Product added to cart", cart: req.user.cart });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Wystąpił błąd" });
+    res.status(500).json({ error: "An error has occurred" });
   }
 };
 
@@ -40,10 +40,10 @@ export const deleteCartProductHandler = async (
     const prodId = req.body.productId;
     //console.log("product id do usuniecia", prodId);
     req.user.removeFromCart(prodId);
-    res.status(200).json({ message: "Produkt usunięty z koszyka" });
+    res.status(200).json({ message: "Product removed from cart" });
   } catch (error) {
-    console.error("Błąd podczas usuwania produktu z koszyka:", error);
-    res.status(500).json({ error: "Wystąpił błąd" });
+    console.error("Product removed from cart:", error);
+    res.status(500).json({ error: "An error has occurred" });
     return;
   }
 };

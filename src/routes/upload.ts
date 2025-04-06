@@ -10,6 +10,7 @@ const router = express.Router();
 // Upload for video files
 router.post(
   "/upload/video",
+  adminAuth,
   upload.array("videos", 3), // Maksymalnie 3 pliki wideo
   async (req: Request, res: Response) => {
     const files = req.files as Express.Multer.File[];

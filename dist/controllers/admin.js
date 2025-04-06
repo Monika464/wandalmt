@@ -70,11 +70,6 @@ export const postEditProduct = async (req, res, next) => {
             res.status(404).json({ message: "Product not found" });
             return;
         }
-        // Additional logic here...
-        // Odkomentuj gdy zaimplementujesz autoryzację
-        // if (product.userId.toString() !== req.user.id) {
-        //   return res.status(403).json({ message: "Not authorized" });
-        // }
         product.title = title;
         product.price = price;
         product.description = description;
@@ -97,7 +92,6 @@ export const deleteUser = async (req, res, next) => {
             res.status(404).json({ message: "User not found" });
             return;
         }
-        // Usuwamy użytkownika
         await User.deleteOne({ _id: userId });
         res.status(200).json({ message: "User deleted successfully" });
     }
@@ -138,7 +132,7 @@ export const editResource = async (req, res, next) => {
             return;
         }
         const updateData = req.body;
-        // ✅ Tylko te pola można aktualizować
+        // ✅ Only these fields can be updated
         if (typeof updateData.title === "string") {
             resource.title = updateData.title;
         }
@@ -151,7 +145,7 @@ export const editResource = async (req, res, next) => {
         if (typeof updateData.videoUrl === "string") {
             resource.videoUrl = updateData.videoUrl;
         }
-        // ✅ Aktualizacja rozdziałów (jeśli są podane)
+        // ✅ Update chapters (if provided)
         if (updateData.chapters) {
             if (!Array.isArray(updateData.chapters)) {
                 throw new Error("Chapters must be an array");
@@ -271,47 +265,3 @@ export const deleteChapterFromResource = async (req, res) => {
             .json({ error: err instanceof Error ? err.message : "Server error" });
     }
 };
-////////////////////////////////////////
-// export const postEditProduct = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ) => {
-//   try {
-//     const errors = validationResult(req);
-//     if (!errors.isEmpty()) {
-//       return res
-//         .status(400)
-//         .json({ message: "Invalid input", errors: errors.array() });
-//     }
-//     const { productId, title, price, description } = req.body;
-//     //const image = req.file; // Jeśli plik został przesłany
-//     // Pobranie produktu z bazy
-//     const product = await Product.findById(productId);
-//     if (!product) {
-//       return res.status(404).json({ message: "Product not found" });
-//     }
-//     // Sprawdzenie, czy użytkownik jest właścicielem produktu
-//     // if (product.userId.toString() !== req.user.id) {
-//     //   return res.status(403).json({ message: "Not authorized" });
-//     // }
-//     // Aktualizacja pól
-//     product.title = title;
-//     product.price = price;
-//     product.description = description;
-//     // Jeśli przesłano nowy obraz, usuń stary
-//     // if (image) {
-//     //   deleteFile(product.imageUrl); // Usunięcie starego pliku
-//     //   product.imageUrl = image.path; // Zapis nowej ścieżki
-//     // }
-//     // Zapis do bazy danych
-//     await product.save();
-//     return res
-//       .status(200)
-//       .json({ message: "Product updated successfully", product });
-//   } catch (error) {
-//     //next(error);
-//     console.error(error);
-//     return res.status(500).json({ message: "Internal server error" });
-//   }
-// };
