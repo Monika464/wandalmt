@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "NODE_OPTIONS=\"--loader ts-node/esm\" npx ts-node src/app.ts",
+    "dev": "tsx src/app.ts",
     "build": "tsc",
     "start": "node dist/app.js"
   },
@@ -35,6 +35,7 @@
     "@types/node": "^22.13.14",
     "nodemon": "^3.1.9",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.5",
     "typescript": "^5.8.2"
   }
 }
