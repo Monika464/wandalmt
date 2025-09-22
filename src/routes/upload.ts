@@ -1,10 +1,12 @@
 import express, { Request, Response, NextFunction } from "express";
 import { upload, handleUploadErrors } from "../utils/b2Uploader.js";
-import { S3 } from "@aws-sdk/client-s3";
-import { s3 } from "../utils/b2Uploader.js"; // assuming s3 is an instance of S3
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { s3 } from "../utils/b2Uploader.js";
 import dotenv from "dotenv";
 import { adminAuth } from "../middleware/auth.js";
+
 dotenv.config();
+
 const router = express.Router();
 
 // Upload for video files
@@ -36,15 +38,24 @@ router.post(
         const key = `${Date.now()}-${file.originalname}`;
 
         // Upload video file to B2 (Backblaze or AWS S3)
-        await s3
-          .putObject({
-            Bucket: process.env.B2_BUCKET_NAME!,
-            Key: key,
-            Body: file.buffer,
-            ContentType: file.mimetype,
-            ACL: "private",
-          })
-          .promise();
+        const command = new PutObjectCommand({
+          Bucket: process.env.B2_BUCKET_NAME!,
+          Key: key,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+          ACL: "private" as const, // typ zgodny z v3
+        });
+
+        await s3.send(command);
+        // await s3
+        //   .putObject({
+        //     Bucket: process.env.B2_BUCKET_NAME!,
+        //     Key: key,
+        //     Body: file.buffer,
+        //     ContentType: file.mimetype,
+        //     ACL: "private",
+        //   })
+        //   .promise();
 
         // Generate the file URL
         const url = `https://s3.eu-central-003.backblazeb2.com/${process.env.B2_BUCKET_NAME}/${key}`;
@@ -82,15 +93,24 @@ router.post(
         const key = `${Date.now()}-${file.originalname}`;
 
         console.log("Uploading file: ", key);
-        await s3
-          .putObject({
-            Bucket: process.env.B2_BUCKET_NAME!,
-            Key: key,
-            Body: file.buffer,
-            ContentType: file.mimetype,
-            ACL: "private",
-          })
-          .promise();
+        const command = new PutObjectCommand({
+          Bucket: process.env.B2_BUCKET_NAME!,
+          Key: key,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+          ACL: "private" as const,
+        });
+
+        await s3.send(command);
+        // await s3
+        //   .putObject({
+        //     Bucket: process.env.B2_BUCKET_NAME!,
+        //     Key: key,
+        //     Body: file.buffer,
+        //     ContentType: file.mimetype,
+        //     ACL: "private",
+        //   })
+        //   .promise();
 
         // console.log("File uploaded: ", key);
         //console.log("Response: ", response);
