@@ -1,7 +1,8 @@
 import express from "express";
-import User from "../models/user.js";
+
 //import { Request, Response, NextFunction } from "express";
 import { adminAuth, userAuth } from "../middleware/auth.js";
+import User, { IUser } from "../models/user.js";
 // Extend the Request interface to include the user property
 declare global {
   namespace Express {
@@ -11,7 +12,14 @@ declare global {
     }
   }
 }
-
+// Typ dla ciała żądania login/register
+interface AuthRequestBody {
+  email: string;
+  password: string;
+  name?: string;
+  surname?: string;
+  role?: "user" | "admin";
+}
 import bcrypt from "bcryptjs";
 
 const router = express.Router();
@@ -19,13 +27,23 @@ const router = express.Router();
 //Login admin or user
 router.post("/login", async (req, res) => {
   try {
-    const user = await User.findByCredentials(
-      req.body.email,
-      req.body.password
-    );
-    const token = await user.generateAuthToken();
+    const { email, password, role } = req.body;
+    const user: IUser | null = await User.findByCredentials(email, password);
+    // const user = await User.findByCredentials(
+    //   req.body.email,
+    //   req.body.password
+    // );
+    if (!user) {
+      return res.status(400).send({ error: "Niepoprawny email lub hasło" });
+    }
+    // Sprawdzamy rolę, jeśli podano
+    if (role && user.role !== role) {
+      return res.status(403).send({ error: "Nie masz odpowiednich uprawnień" });
+    }
 
-    res.send({ user, token });
+    const token = await user.generateAuthToken();
+    res.status(200).send({ user, token });
+    //res.send({ user, token });
   } catch (e) {
     res.status(400).send({ error: (e as Error).message });
   }
