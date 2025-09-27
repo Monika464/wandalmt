@@ -58,6 +58,13 @@ router.post("/register", async (req, res) => {
   try {
     const { email, password, name, surname, role } = req.body;
 
+    // Sprawdzenie, czy email już istnieje
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res
+        .status(400)
+        .send({ error: "Użytkownik z tym emailem już istnieje" });
+    }
     const hashedPassword = await bcrypt.hash(password, 8);
     const user = new User({
       email,
@@ -82,6 +89,13 @@ router.post(
     try {
       const { email, password, name, surname } = req.body;
 
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res
+          .status(400)
+          .json({ error: "Użytkownik z tym emailem już istnieje" });
+      }
+
       const hashedPassword = await bcrypt.hash(password, 8);
       const user = new User({
         email,
@@ -90,6 +104,8 @@ router.post(
         surname,
         role: "admin", // wymuszona rola
       });
+
+      console.log("Creating admin:", user);
 
       await user.save();
       res.status(201).send({ message: "Admin created", user });
