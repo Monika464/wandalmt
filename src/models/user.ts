@@ -2,7 +2,7 @@ import mongoose, { Document, Schema, Model } from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-interface IUser extends Document {
+export interface IUser extends Document {
   tokens: any;
   _id: mongoose.Types.ObjectId;
   email: string;
@@ -23,7 +23,7 @@ interface ICartItem {
   quantity: number;
 }
 
-interface IUserModel extends Model<IUser> {
+export interface IUserModel extends Model<IUser> {
   findByCredentials(email: string, password: string): Promise<IUser>;
 }
 

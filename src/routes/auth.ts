@@ -1,8 +1,8 @@
-import express from "express";
-
+import express, { Request, Response } from "express";
 //import { Request, Response, NextFunction } from "express";
 import { adminAuth, userAuth } from "../middleware/auth.js";
 import User, { IUser } from "../models/user.js";
+import { IUserModel } from "../models/user.js";
 // Extend the Request interface to include the user property
 declare global {
   namespace Express {
@@ -20,12 +20,16 @@ interface AuthRequestBody {
   surname?: string;
   role?: "user" | "admin";
 }
+type AuthRequestTyped = Request<{}, {}, AuthRequestBody> & {
+  user?: any;
+  token?: string;
+};
 import bcrypt from "bcryptjs";
 
 const router = express.Router();
 
 //Login admin or user
-router.post("/login", async (req, res) => {
+router.post("/login", async (req: Request, res: Response) => {
   try {
     const { email, password, role } = req.body;
     const user: IUser | null = await User.findByCredentials(email, password);
@@ -71,6 +75,29 @@ router.post("/register", async (req, res) => {
 });
 
 //logout admin
+router.post(
+  "/register-admin",
+  adminAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const { email, password, name, surname } = req.body;
+
+      const hashedPassword = await bcrypt.hash(password, 8);
+      const user = new User({
+        email,
+        password: hashedPassword,
+        name,
+        surname,
+        role: "admin", // wymuszona rola
+      });
+
+      await user.save();
+      res.status(201).send({ message: "Admin created", user });
+    } catch (error) {
+      res.status(400).send({ error });
+    }
+  }
+);
 
 router.post("/logout-admin", adminAuth, async (req, res, next) => {
   //console.log("req.user", req.user);
@@ -84,8 +111,10 @@ router.post("/logout-admin", adminAuth, async (req, res, next) => {
     req.user.tokens = req.user.tokens.filter(
       (t: { token: string }) => t.token !== req.token
     );
+    await req.user.save();
 
-    res.send({ message: "Logout successful" });
+    res.status(200).send({ message: "Admin logged out successfully" });
+    //res.send({ message: "Logout successful" });
   } catch (error) {
     res.status(500).send({ error: "Failed to log out" });
   }
