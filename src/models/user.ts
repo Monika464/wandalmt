@@ -16,6 +16,7 @@ export interface IUser extends Document {
   };
   generateAuthToken(): Promise<string>;
   addToCart(productId: mongoose.Types.ObjectId): Promise<IUser>;
+  removeFromCart(productId: string): Promise<void>;
 }
 
 interface ICartItem {

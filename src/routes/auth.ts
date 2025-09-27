@@ -20,7 +20,7 @@ import bcrypt from "bcryptjs";
 const router = Router();
 
 //Login admin or user
-router.post("/login", async (req, res) => {
+router.post("/login", async (req, res): Promise<void> => {
   try {
     const { email, password, role } = req.body;
     const user: IUser | null = await User.findByCredentials(email, password);
@@ -29,7 +29,7 @@ router.post("/login", async (req, res) => {
     //   req.body.password
     // );
     if (!user) {
-      return res.status(400).send({ error: "Niepoprawny email lub hasło" });
+      res.status(400).send({ error: "Niepoprawny email lub hasło" });
     }
     // Sprawdzamy rolę, jeśli podano
     if (role && user.role !== role) {
@@ -45,16 +45,14 @@ router.post("/login", async (req, res) => {
 });
 
 // Register admin or user
-router.post("/register", async (req, res) => {
+router.post("/register", async (req, res): Promise<void> => {
   try {
     const { email, password, name, surname, role } = req.body;
 
     // Sprawdzenie, czy email już istnieje
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res
-        .status(400)
-        .send({ error: "Użytkownik z tym emailem już istnieje" });
+      res.status(400).send({ error: "Użytkownik z tym emailem już istnieje" });
     }
     const hashedPassword = await bcrypt.hash(password, 8);
     const user = new User({
@@ -73,42 +71,46 @@ router.post("/register", async (req, res) => {
 });
 
 //logout admin
-router.post("/register-admin", adminAuth, async (req, res, next) => {
-  try {
-    const { email, password, name, surname } = req.body;
+router.post(
+  "/register-admin",
+  adminAuth,
+  async (req, res, next): Promise<void> => {
+    try {
+      const { email, password, name, surname } = req.body;
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res
-        .status(400)
-        .json({ error: "Użytkownik z tym emailem już istnieje" });
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        res
+          .status(400)
+          .json({ error: "Użytkownik z tym emailem już istnieje" });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 8);
+      const user = new User({
+        email,
+        password: hashedPassword,
+        name,
+        surname,
+        role: "admin", // wymuszona rola
+      });
+
+      console.log("Creating admin:", user);
+
+      await user.save();
+      res.status(201).send({ message: "Admin created", user });
+    } catch (error) {
+      res.status(400).send({ error });
     }
-
-    const hashedPassword = await bcrypt.hash(password, 8);
-    const user = new User({
-      email,
-      password: hashedPassword,
-      name,
-      surname,
-      role: "admin", // wymuszona rola
-    });
-
-    console.log("Creating admin:", user);
-
-    await user.save();
-    res.status(201).send({ message: "Admin created", user });
-  } catch (error) {
-    res.status(400).send({ error });
   }
-});
+);
 
 router.post(
   "/logout-admin",
   adminAuth,
-  async (req: IAuthRequest, res: Response) => {
+  async (req: IAuthRequest, res: Response): Promise<void> => {
     try {
       if (!req.user || !req.token) {
-        return res.status(400).send({ error: "Invalid request" });
+        return;
       }
       if (req.user.role !== "admin") {
         res.status(403).send({ error: "Access denied" });
@@ -133,20 +135,24 @@ router.post(
   }
 );
 
-router.post("/logout", userAuth, async (req: IAuthRequest, res: Response) => {
-  try {
-    if (!req.user || !req.token) {
-      return res.status(400).send({ error: "Invalid request" });
+router.post(
+  "/logout",
+  userAuth,
+  async (req: IAuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user || !req.token) {
+        return;
+      }
+      req.user.tokens = req.user.tokens.filter(
+        (t: { token: string }) => t.token !== req.token
+      );
+      await req.user.save();
+      //console.log("req.user", req.user);
+      res.status(200).send({ message: "Logged out successfully" });
+    } catch (e) {
+      res.status(500).send({ error: "Failed to log out" });
     }
-    req.user.tokens = req.user.tokens.filter(
-      (t: { token: string }) => t.token !== req.token
-    );
-    await req.user.save();
-    //console.log("req.user", req.user);
-    res.status(200).send({ message: "Logged out successfully" });
-  } catch (e) {
-    res.status(500).send({ error: "Failed to log out" });
   }
-});
+);
 
 export default router;

@@ -1,6 +1,27 @@
 import { Request, Response, NextFunction } from "express";
 import { adminAuth, AuthRequest, userAuth } from "../middleware/auth.js";
 import Product from "../models/product.js";
+import { IUser } from "models/user.js";
+
+// interface IAuthRequest extends Request {
+//   body: IAuthRequestBody;
+//   user?: IUser | null;
+//   token?: string;
+// }
+
+// interface IAuthRequestBody {
+//   email: string;
+//   password: string;
+//   name?: string;
+//   surname?: string;
+//   role?: "user" | "admin";
+// }
+
+interface IDeleteCartProductRequest extends AuthRequest {
+  body: {
+    productId: string;
+  };
+}
 
 export const addToCartHandler = async (
   req: AuthRequest,
@@ -20,7 +41,7 @@ export const addToCartHandler = async (
       return;
     }
 
-    await req.user.addToCart(product._id);
+    await req.user.addToCart(product._id as import("mongoose").Types.ObjectId);
     res
       .status(200)
       .json({ message: "Product added to cart", cart: req.user.cart });
@@ -31,7 +52,7 @@ export const addToCartHandler = async (
 };
 
 export const deleteCartProductHandler = async (
-  req: Request,
+  req: IDeleteCartProductRequest,
   res: Response,
   next: NextFunction
 ) => {
@@ -39,6 +60,10 @@ export const deleteCartProductHandler = async (
     //console.log("req-user", req.user);
     const prodId = req.body.productId;
     //console.log("product id do usuniecia", prodId);
+    if (!req.user) {
+      res.status(401).json({ error: "You must be logged in" });
+      return;
+    }
     req.user.removeFromCart(prodId);
     res.status(200).json({ message: "Product removed from cart" });
   } catch (error) {

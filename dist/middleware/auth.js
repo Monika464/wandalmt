@@ -26,7 +26,8 @@ export const adminAuth = async (req, res, next) => {
         // console.log("admin", user);
         if (user) {
             req.token = token;
-            req.user = { ...user.toObject(), _id: user._id.toString() };
+            // req.user = { ...user.toObject(), _id: user._id.toString() };
+            req.user = user;
         }
         else {
             res.status(404).json({ error: "User not found" });

@@ -26,6 +26,10 @@ export const deleteCartProductHandler = async (req, res, next) => {
         //console.log("req-user", req.user);
         const prodId = req.body.productId;
         //console.log("product id do usuniecia", prodId);
+        if (!req.user) {
+            res.status(401).json({ error: "You must be logged in" });
+            return;
+        }
         req.user.removeFromCart(prodId);
         res.status(200).json({ message: "Product removed from cart" });
     }
