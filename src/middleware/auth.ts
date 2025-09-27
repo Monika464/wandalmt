@@ -1,19 +1,26 @@
-import User from "../models/user.js";
+import User, { IUser } from "../models/user.js";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import mongoose, { Types } from "mongoose";
 
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET || "defaultsecret";
 
 export interface AuthRequest extends Request {
-  user?: {
-    _id: string;
-    role: string;
-    [key: string]: any;
-  };
+  user?: IUser | null;
+  token?: string;
 }
+
+// export interface AuthRequest extends Request {
+//   user?: {
+//     _id: mongoose.Types.ObjectId;
+//     role: string;
+//     [key: string]: any;
+//   };
+//   token?: string;
+// }
 
 interface DecodedToken {
   _id: string;
@@ -50,7 +57,8 @@ export const adminAuth = async (
 
     if (user) {
       req.token = token;
-      req.user = { ...user.toObject(), _id: user._id.toString() };
+      // req.user = { ...user.toObject(), _id: user._id.toString() };
+      req.user = user;
     } else {
       res.status(404).json({ error: "User not found" });
       return;
@@ -64,7 +72,7 @@ export const adminAuth = async (
 //userAuth
 
 export const userAuth = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ) => {
