@@ -1,7 +1,6 @@
 import express from "express";
-import Product from "../models/product.js";
 import Resource from "../models/resource.js";
-import { userAuth, adminAuth } from "../middleware/auth.js";
+import { adminAuth } from "../middleware/auth.js";
 import User from "../models/user.js";
 
 import {
@@ -75,32 +74,43 @@ router.get("/resources/:userId", adminAuth, async (req, res) => {
 });
 
 // PATCH /admin/users/:userId/status
-router.patch("/users/:userId/status", adminAuth, async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { active } = req.body;
+router.patch(
+  "/users/:userId/status",
+  adminAuth,
+  async (req, res): Promise<void> => {
+    try {
+      const { userId } = req.params;
+      let { active } = req.body;
 
-    if (typeof active !== "boolean") {
-      return res
-        .status(400)
-        .json({ message: "Pole 'active' musi być typu boolean" });
+      if (typeof active === "string") {
+        active = active === "true";
+      }
+
+      if (typeof active !== "boolean") {
+        // return res
+        //   .status(400)
+        //   .json({ message: "Pole 'active' musi być typu boolean" });
+        return;
+      }
+
+      // findByIdAndUpdate zapisuje zmiany automatycznie
+      const user = await User.findByIdAndUpdate(
+        userId,
+        { active },
+        { new: true } // zwróci zaktualizowany dokument
+      );
+
+      if (!user) {
+        //return res.status(404).json({ message: "Użytkownik nie znaleziony" });
+        return;
+      }
+
+      res.status(200).json({ message: "Status użytkownika zmieniony", user });
+    } catch (error) {
+      console.error("Błąd przy zmianie statusu użytkownika:", error);
+      res.status(500).json({ message: "Błąd serwera" });
     }
-
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { active },
-      { new: true }
-    );
-
-    if (!user) {
-      return res.status(404).json({ message: "Użytkownik nie znaleziony" });
-    }
-
-    res.status(200).json({ message: "Status użytkownika zmieniony", user });
-  } catch (error) {
-    console.error("Błąd przy zmianie statusu użytkownika:", error);
-    res.status(500).json({ message: "Błąd serwera" });
   }
-});
+);
 
 export default router;

@@ -40,4 +40,26 @@ router.get("/resources/:userId", adminAuth, async (req, res) => {
         res.status(500).json({ error: "Error fetching resources" });
     }
 });
+// PATCH /admin/users/:userId/status
+router.patch("/users/:userId/status", adminAuth, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { active } = req.body;
+        if (typeof active !== "boolean") {
+            res
+                .status(400)
+                .json({ message: "Pole 'active' musi być typu boolean" });
+        }
+        const user = await User.findByIdAndUpdate(userId, { active }, { new: true });
+        if (!user) {
+            //return res.status(404).json({ message: "Użytkownik nie znaleziony" });
+            return;
+        }
+        res.status(200).json({ message: "Status użytkownika zmieniony", user });
+    }
+    catch (error) {
+        console.error("Błąd przy zmianie statusu użytkownika:", error);
+        res.status(500).json({ message: "Błąd serwera" });
+    }
+});
 export default router;

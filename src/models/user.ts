@@ -14,6 +14,7 @@ export interface IUser extends Document {
   cart: {
     items: ICartItem[];
   };
+  active: boolean;
   generateAuthToken(): Promise<string>;
   addToCart(productId: mongoose.Types.ObjectId): Promise<IUser>;
   removeFromCart(productId: string): Promise<void>;
@@ -47,6 +48,7 @@ const userSchema = new Schema<IUser>({
     required: true,
   },
   role: { type: String, enum: ["user", "admin"], default: "user" },
+  active: { type: Boolean, default: true },
   resources: [
     {
       type: Schema.Types.ObjectId,

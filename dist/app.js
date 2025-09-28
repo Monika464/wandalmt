@@ -12,8 +12,9 @@ const app = express();
 app.use(express.json());
 app.use(cors({
     origin: "http://localhost:5173",
+    methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE"],
 }));
 //app.use(cors());
 app.use("/auth", authRouter);

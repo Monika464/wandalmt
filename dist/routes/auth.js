@@ -52,7 +52,6 @@ router.post("/register", async (req, res) => {
         res.status(400).send(error);
     }
 });
-//logout admin
 router.post("/register-admin", adminAuth, async (req, res, next) => {
     try {
         const { email, password, name, surname } = req.body;
