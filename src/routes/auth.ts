@@ -70,7 +70,6 @@ router.post("/register", async (req, res): Promise<void> => {
   }
 });
 
-//logout admin
 router.post(
   "/register-admin",
   adminAuth,
