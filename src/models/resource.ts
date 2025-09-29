@@ -1,6 +1,7 @@
 import mongoose, { Types, Document, Schema, model } from "mongoose";
 
 interface IChapter {
+  title?: string;
   videoUrl?: string;
   description?: string;
 }
@@ -17,6 +18,7 @@ interface IResource extends Document {
 
 const chapterSchema = new Schema<IChapter>(
   {
+    title: { type: String, required: true },
     videoUrl: { type: String },
     description: { type: String },
   },

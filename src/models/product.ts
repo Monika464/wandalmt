@@ -5,7 +5,8 @@ interface IProduct extends Document {
   price: number;
   description: string;
   imageUrl: string;
-  content: string;
+  content: Object;
+  status: Object;
   userId: mongoose.Types.ObjectId;
   resourceId: mongoose.Types.ObjectId;
 }
@@ -28,15 +29,21 @@ const productSchema = new Schema<IProduct>(
       type: String,
       required: true,
     },
+    content: { type: String, required: true },
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
     },
-    resourceId: {
-      type: Schema.Types.ObjectId,
-      ref: "Resource",
-      required: false,
+    status: {
+      type: String,
+      enum: ["draft", "published", "archived"],
+      default: "draft",
     },
+    // resourceId: {
+    //   type: Schema.Types.ObjectId,
+    //   ref: "Resource",
+    //   required: false,
+    // },
   },
   { timestamps: true }
 );
