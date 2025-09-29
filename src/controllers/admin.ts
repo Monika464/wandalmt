@@ -1,346 +1,355 @@
-import Product from "../models/product.js";
-import { validationResult } from "express-validator";
-import { Request, Response, NextFunction } from "express";
+// import Product from "../models/product.js";
+// import { validationResult } from "express-validator";
+// import { Request, Response, NextFunction } from "express";
 
-import Resource from "../models/resource.js";
-import User from "../models/user.js";
+// import Resource from "../models/resource.js";
+// import User from "../models/user.js";
 
-export const createProduct = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const {
-      title,
-      description,
-      price,
-      resourceTitle,
-      imageUrl,
-      content,
-      videoUrl,
-    } = req.body;
+// //CREATE PRODUCT AND RESOURCE
+// export const createProduct = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) => {
+//   try {
+//     const {
+//       title,
+//       description,
+//       price,
+//       resourceTitle,
+//       imageUrl,
+//       content,
+//       videoUrl,
+//       chapters,
+//     } = req.body;
 
-    // 1️⃣ Tworzymy nowy produkt
-    const newProduct = new Product({
-      title,
-      description,
-      price,
-      content,
-      imageUrl,
-    });
-    await newProduct.save();
+//     // 1️⃣ Tworzymy nowy produkt
+//     const newProduct = new Product({
+//       title,
+//       description,
+//       price,
+//       content,
+//       imageUrl,
+//       status: "draft", // Domyślny status
+//     });
+//     await newProduct.save();
 
-    // 2️⃣ Tworzymy powiązany zasób i przypisujemy mu `productId`
-    const newResource = new Resource({
-      title: resourceTitle,
-      imageUrl,
-      videoUrl,
-      content,
-      productId: newProduct._id,
-    });
+//     // 2️⃣ Tworzymy powiązany zasób i przypisujemy mu `productId`
+//     const newResource = new Resource({
+//       title: resourceTitle,
+//       imageUrl,
+//       videoUrl,
+//       content,
+//       productId: newProduct._id,
+//       chapters,
+//     });
 
-    await newResource.save();
+//     await newResource.save();
 
-    // 3️⃣ Aktualizujemy produkt o resourceId
-    newProduct.resourceId = newResource._id as typeof newProduct.resourceId;
-    await newProduct.save();
+//     // 3️⃣ Aktualizujemy produkt o resourceId
+//     newProduct.resourceId = newResource._id as typeof newProduct.resourceId;
+//     await newProduct.save();
 
-    res.status(201).json({
-      message: "Product and Resource created successfully",
-      product: newProduct,
-      resource: newResource,
-    });
-  } catch (error) {
-    res.status(500).json({
-      error: error instanceof Error ? error.message : "Unknown error occurred",
-    });
-  }
-};
+//     res.status(201).json({
+//       message: "Product and Resource created successfully",
+//       product: newProduct,
+//       resource: newResource,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       error: error instanceof Error ? error.message : "Unknown error occurred",
+//     });
+//   }
+// };
 
-export const getEditProduct = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const prodId = req.params.productId;
-    // console.log("prodId", prodId);
+// //GET PRODUCT FOR EDITING
+// export const getEditProduct = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ) => {
+//   try {
+//     const prodId = req.params.productId;
+//     // console.log("prodId", prodId);
 
-    const product = await Product.findById(prodId);
-    //console.log("product", product);
-    res.status(201).json({
-      message: "Product fetched successfully",
-      product: product,
-    });
-  } catch (error) {
-    res.status(500).json({
-      error: error instanceof Error ? error.message : "Unknown error occurred",
-    });
-  }
-};
-export const postEditProduct = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res
-        .status(400)
-        .json({ message: "Invalid input", errors: errors.array() });
-      return;
-    }
+//     const product = await Product.findById(prodId);
+//     //console.log("product", product);
+//     res.status(201).json({
+//       message: "Product fetched successfully",
+//       product: product,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       error: error instanceof Error ? error.message : "Unknown error occurred",
+//     });
+//   }
+// };
 
-    const { productId, title, price, description } = req.body;
+// //EDIT PRODUCT
+// export const postEditProduct = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> => {
+//   try {
+//     const errors = validationResult(req);
+//     if (!errors.isEmpty()) {
+//       res
+//         .status(400)
+//         .json({ message: "Invalid input", errors: errors.array() });
+//       return;
+//     }
 
-    const product = await Product.findById(productId);
-    if (!product) {
-      res.status(404).json({ message: "Product not found" });
-      return;
-    }
+//     const { productId, title, price, description } = req.body;
 
-    product.title = title;
-    product.price = price;
-    product.description = description;
+//     const product = await Product.findById(productId);
+//     if (!product) {
+//       res.status(404).json({ message: "Product not found" });
+//       return;
+//     }
 
-    await product.save();
+//     product.title = title;
+//     product.price = price;
+//     product.description = description;
 
-    res.status(200).json({ message: "Product updated successfully", product });
-    return;
-  } catch (error) {
-    res.status(500).json({
-      error: error instanceof Error ? error.message : "Unknown error occurred",
-    });
-    return;
-  }
-};
+//     await product.save();
 
-export const deleteUser = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const { userId } = req.params;
+//     res.status(200).json({ message: "Product updated successfully", product });
+//     return;
+//   } catch (error) {
+//     res.status(500).json({
+//       error: error instanceof Error ? error.message : "Unknown error occurred",
+//     });
+//     return;
+//   }
+// };
 
-    const user = await User.findById(userId);
-    if (!user) {
-      res.status(404).json({ message: "User not found" });
-      return;
-    }
+// //DELETE USER
+// export const deleteUser = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> => {
+//   try {
+//     const { userId } = req.params;
 
-    await User.deleteOne({ _id: userId });
+//     const user = await User.findById(userId);
+//     if (!user) {
+//       res.status(404).json({ message: "User not found" });
+//       return;
+//     }
 
-    res.status(200).json({ message: "User deleted successfully" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      error: error instanceof Error ? error.message : "Unknown error occurred",
-    });
-  }
-};
+//     await User.deleteOne({ _id: userId });
 
-export const deleteProduct = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const { productId } = req.params;
+//     res.status(200).json({ message: "User deleted successfully" });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({
+//       error: error instanceof Error ? error.message : "Unknown error occurred",
+//     });
+//   }
+// };
 
-    const product = await Product.findById(productId);
-    if (!product) {
-      res.status(404).json({ message: "Product not found" });
-      return;
-    }
+// export const deleteProduct = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> => {
+//   try {
+//     const { productId } = req.params;
 
-    await Product.deleteOne({ _id: productId });
+//     const product = await Product.findById(productId);
+//     if (!product) {
+//       res.status(404).json({ message: "Product not found" });
+//       return;
+//     }
 
-    res.status(200).json({ message: "Product deleted successfully" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      error: error instanceof Error ? error.message : "Unknown error occurred",
-    });
-  }
-};
-//EDITING RESOURCE
+//     await Product.deleteOne({ _id: productId });
 
-export const editResource = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const { resourceId } = req.params;
-    console.log("resourceId", resourceId);
-    console.log("reqbody", req.body);
+//     res.status(200).json({ message: "Product deleted successfully" });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({
+//       error: error instanceof Error ? error.message : "Unknown error occurred",
+//     });
+//   }
+// };
+// //EDITING RESOURCE
 
-    const resource = await Resource.findById(resourceId);
+// export const editResource = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> => {
+//   try {
+//     const { resourceId } = req.params;
+//     console.log("resourceId", resourceId);
+//     console.log("reqbody", req.body);
 
-    if (!resource) {
-      res.status(404).json({ message: "Resource not found" });
-      return;
-    }
+//     const resource = await Resource.findById(resourceId);
 
-    const updateData = req.body;
+//     if (!resource) {
+//       res.status(404).json({ message: "Resource not found" });
+//       return;
+//     }
 
-    // ✅ Only these fields can be updated
-    if (typeof updateData.title === "string") {
-      resource.title = updateData.title;
-    }
+//     const updateData = req.body;
 
-    if (typeof updateData.imageUrl === "string") {
-      resource.imageUrl = updateData.imageUrl;
-    }
+//     // ✅ Only these fields can be updated
+//     if (typeof updateData.title === "string") {
+//       resource.title = updateData.title;
+//     }
 
-    if (typeof updateData.content === "string") {
-      resource.content = updateData.content;
-    }
+//     if (typeof updateData.imageUrl === "string") {
+//       resource.imageUrl = updateData.imageUrl;
+//     }
 
-    if (typeof updateData.videoUrl === "string") {
-      resource.videoUrl = updateData.videoUrl;
-    }
+//     if (typeof updateData.content === "string") {
+//       resource.content = updateData.content;
+//     }
 
-    // ✅ Update chapters (if provided)
-    if (updateData.chapters) {
-      if (!Array.isArray(updateData.chapters)) {
-        throw new Error("Chapters must be an array");
-      }
+//     if (typeof updateData.videoUrl === "string") {
+//       resource.videoUrl = updateData.videoUrl;
+//     }
 
-      if (updateData.chapters.length > 100) {
-        throw new Error("Maximum of 100 chapters allowed");
-      }
+//     // ✅ Update chapters (if provided)
+//     if (updateData.chapters) {
+//       if (!Array.isArray(updateData.chapters)) {
+//         throw new Error("Chapters must be an array");
+//       }
 
-      resource.chapters = updateData.chapters;
-    }
+//       if (updateData.chapters.length > 100) {
+//         throw new Error("Maximum of 100 chapters allowed");
+//       }
 
-    await resource.save();
+//       resource.chapters = updateData.chapters;
+//     }
 
-    res.status(200).json({
-      message: "Resource updated successfully",
-      resource,
-    });
-  } catch (err) {
-    if (err instanceof Error) {
-      res
-        .status(500)
-        .json({ error: "Error updating resource: " + err.message });
-    } else {
-      res.status(500).json({ error: "Unknown server error" });
-    }
-  }
-};
+//     await resource.save();
 
-export const addChapterToResource = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { videoUrl, description } = req.body;
+//     res.status(200).json({
+//       message: "Resource updated successfully",
+//       resource,
+//     });
+//   } catch (err) {
+//     if (err instanceof Error) {
+//       res
+//         .status(500)
+//         .json({ error: "Error updating resource: " + err.message });
+//     } else {
+//       res.status(500).json({ error: "Unknown server error" });
+//     }
+//   }
+// };
 
-  try {
-    const resource = await Resource.findById(id);
-    if (!resource) {
-      res.status(404).json({ error: "Resource not found" });
-      return;
-    }
+// export const addChapterToResource = async (req: Request, res: Response) => {
+//   const { id } = req.params;
+//   const { videoUrl, description } = req.body;
 
-    if (!resource.chapters) resource.chapters = [];
+//   try {
+//     const resource = await Resource.findById(id);
+//     if (!resource) {
+//       res.status(404).json({ error: "Resource not found" });
+//       return;
+//     }
 
-    if (resource.chapters.length >= 100) {
-      res
-        .status(400)
-        .json({ error: "Maximum number of chapters reached (100)" });
-      return;
-    }
-    resource.chapters.push({ videoUrl, description });
-    await resource.save();
+//     if (!resource.chapters) resource.chapters = [];
 
-    res
-      .status(200)
-      .json({ message: "Chapter added", chapters: resource.chapters });
-  } catch (err) {
-    res
-      .status(500)
-      .json({ error: err instanceof Error ? err.message : "Server error" });
-    return;
-  }
-};
+//     if (resource.chapters.length >= 100) {
+//       res
+//         .status(400)
+//         .json({ error: "Maximum number of chapters reached (100)" });
+//       return;
+//     }
+//     resource.chapters.push({ videoUrl, description });
+//     await resource.save();
 
-export const updateChapterInResource = async (req: Request, res: Response) => {
-  const { id, chapterIndex } = req.params;
-  const { videoUrl, description } = req.body;
+//     res
+//       .status(200)
+//       .json({ message: "Chapter added", chapters: resource.chapters });
+//   } catch (err) {
+//     res
+//       .status(500)
+//       .json({ error: err instanceof Error ? err.message : "Server error" });
+//     return;
+//   }
+// };
 
-  try {
-    const resource = await Resource.findById(id);
-    if (!resource) {
-      res.status(404).json({ error: "Resource not found" });
-      return;
-    }
+// export const updateChapterInResource = async (req: Request, res: Response) => {
+//   const { id, chapterIndex } = req.params;
+//   const { videoUrl, description } = req.body;
 
-    const index = parseInt(chapterIndex);
-    if (
-      isNaN(index) ||
-      index < 0 ||
-      !resource.chapters ||
-      index >= resource.chapters.length
-    ) {
-      res.status(400).json({ error: "Invalid chapter index" });
-      return;
-    }
+//   try {
+//     const resource = await Resource.findById(id);
+//     if (!resource) {
+//       res.status(404).json({ error: "Resource not found" });
+//       return;
+//     }
 
-    // Zaktualizuj tylko podane pola
-    if (videoUrl !== undefined) {
-      resource.chapters[index].videoUrl = videoUrl;
-    }
-    if (description !== undefined) {
-      resource.chapters[index].description = description;
-    }
+//     const index = parseInt(chapterIndex);
+//     if (
+//       isNaN(index) ||
+//       index < 0 ||
+//       !resource.chapters ||
+//       index >= resource.chapters.length
+//     ) {
+//       res.status(400).json({ error: "Invalid chapter index" });
+//       return;
+//     }
 
-    await resource.save();
-    res.status(200).json({
-      message: "Chapter updated",
-      chapter: resource.chapters[index],
-    });
-  } catch (err) {
-    res
-      .status(500)
-      .json({ error: err instanceof Error ? err.message : "Server error" });
-  }
-};
+//     // Zaktualizuj tylko podane pola
+//     if (videoUrl !== undefined) {
+//       resource.chapters[index].videoUrl = videoUrl;
+//     }
+//     if (description !== undefined) {
+//       resource.chapters[index].description = description;
+//     }
 
-export const deleteChapterFromResource = async (
-  req: Request,
-  res: Response
-) => {
-  const { id, chapterIndex } = req.params;
+//     await resource.save();
+//     res.status(200).json({
+//       message: "Chapter updated",
+//       chapter: resource.chapters[index],
+//     });
+//   } catch (err) {
+//     res
+//       .status(500)
+//       .json({ error: err instanceof Error ? err.message : "Server error" });
+//   }
+// };
 
-  try {
-    const resource = await Resource.findById(id);
-    if (!resource) {
-      res.status(404).json({ error: "Resource not found" });
-      return;
-    }
+// //DELETE CHAPTER FROM RESOURCE
+// export const deleteChapterFromResource = async (
+//   req: Request,
+//   res: Response
+// ) => {
+//   const { id, chapterIndex } = req.params;
 
-    const index = parseInt(chapterIndex);
-    if (
-      isNaN(index) ||
-      index < 0 ||
-      index >= (resource.chapters?.length || 0)
-    ) {
-      res.status(400).json({ error: "Invalid chapter index" });
-      return;
-    }
+//   try {
+//     const resource = await Resource.findById(id);
+//     if (!resource) {
+//       res.status(404).json({ error: "Resource not found" });
+//       return;
+//     }
 
-    resource.chapters?.splice(index, 1);
-    await resource.save();
+//     const index = parseInt(chapterIndex);
+//     if (
+//       isNaN(index) ||
+//       index < 0 ||
+//       index >= (resource.chapters?.length || 0)
+//     ) {
+//       res.status(400).json({ error: "Invalid chapter index" });
+//       return;
+//     }
 
-    res
-      .status(200)
-      .json({ message: "Chapter deleted", chapters: resource.chapters });
-  } catch (err) {
-    res
-      .status(500)
-      .json({ error: err instanceof Error ? err.message : "Server error" });
-  }
-};
+//     resource.chapters?.splice(index, 1);
+//     await resource.save();
+
+//     res
+//       .status(200)
+//       .json({ message: "Chapter deleted", chapters: resource.chapters });
+//   } catch (err) {
+//     res
+//       .status(500)
+//       .json({ error: err instanceof Error ? err.message : "Server error" });
+//   }
+// };
