@@ -18,7 +18,12 @@ import { body } from "express-validator";
 
 const router = express.Router();
 
+//create product
 router.post("/products", adminAuth, createProduct);
+
+//edit product
+router.put("/products/:productId", adminAuth, postEditProduct);
+router.get("/products/:productId", adminAuth, getEditProduct);
 
 router.get("/products", fetchProducts);
 

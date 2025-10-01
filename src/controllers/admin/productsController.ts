@@ -54,11 +54,7 @@ export const fetchUserResources = async (
 };
 
 //CREATE PRODUCT AND RESOURCE
-export const createProduct = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const createProduct = async (req: Request, res: Response) => {
   try {
     const {
       title,
@@ -67,8 +63,7 @@ export const createProduct = async (
       resourceTitle,
       imageUrl,
       content,
-      videoUrl,
-      chapters,
+      videoUrl = "",
     } = req.body;
 
     // 1️⃣ Tworzymy nowy produkt
@@ -84,15 +79,14 @@ export const createProduct = async (
 
     // 2️⃣ Tworzymy powiązany zasób i przypisujemy mu `productId`
     const newResource = new Resource({
-      title: resourceTitle,
+      title: resourceTitle || title,
       imageUrl,
       videoUrl,
       content,
       productId: newProduct._id,
-      chapters,
     });
 
-    await newResource.save();
+    await newProduct.save();
 
     // 3️⃣ Aktualizujemy produkt o resourceId
     newProduct.resourceId = newResource._id as typeof newProduct.resourceId;
@@ -111,20 +105,21 @@ export const createProduct = async (
 };
 
 //GET PRODUCT FOR EDITING
-export const getEditProduct = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const getEditProduct = async (req: Request, res: Response) => {
   try {
     const prodId = req.params.productId;
     // console.log("prodId", prodId);
 
     const product = await Product.findById(prodId);
+    if (!product) {
+      res.status(404).json({ message: "Product not found" });
+      return;
+    }
+
     //console.log("product", product);
     res.status(201).json({
       message: "Product fetched successfully",
-      product: product,
+      product,
     });
   } catch (error) {
     res.status(500).json({
@@ -136,8 +131,7 @@ export const getEditProduct = async (
 //EDIT PRODUCT
 export const postEditProduct = async (
   req: Request,
-  res: Response,
-  next: NextFunction
+  res: Response
 ): Promise<void> => {
   try {
     const errors = validationResult(req);
@@ -148,9 +142,10 @@ export const postEditProduct = async (
       return;
     }
 
-    const { productId, title, price, description } = req.body;
+    const prodId = req.params.productId;
+    const { title, price, description, imageUrl, content } = req.body;
 
-    const product = await Product.findById(productId);
+    const product = await Product.findById(prodId);
     if (!product) {
       res.status(404).json({ message: "Product not found" });
       return;
@@ -159,16 +154,16 @@ export const postEditProduct = async (
     product.title = title;
     product.price = price;
     product.description = description;
+    product.imageUrl = imageUrl;
+    product.content = content;
 
     await product.save();
 
     res.status(200).json({ message: "Product updated successfully", product });
-    return;
   } catch (error) {
     res.status(500).json({
       error: error instanceof Error ? error.message : "Unknown error occurred",
     });
-    return;
   }
 };
 
