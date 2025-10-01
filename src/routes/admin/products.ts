@@ -7,16 +7,20 @@ import {
   deleteChapterFromResource,
   deleteProduct,
   editResource,
+  fetchProducts,
   fetchUserResources,
   getEditProduct,
   postEditProduct,
   updateChapterInResource,
 } from "../../controllers/admin/productsController.js";
+
 import { body } from "express-validator";
 
 const router = express.Router();
 
-router.post("/products", createProduct);
+router.post("/products", adminAuth, createProduct);
+
+router.get("/products", fetchProducts);
 
 router.get("/edit-product/:productId", adminAuth, getEditProduct);
 
@@ -45,8 +49,7 @@ router.delete(
   deleteChapterFromResource
 );
 
-// router.delete("/delete-user/:userId", adminAuth, deleteUser);
-router.delete("/delete-product/:productId", adminAuth, deleteProduct);
+router.delete("/products/:productId", adminAuth, deleteProduct);
 
 router.get("/resources/:userId", adminAuth, fetchUserResources);
 

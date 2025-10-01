@@ -12,6 +12,7 @@ export const fetchProducts = async (
   try {
     const products = await Product.find();
     res.status(200).send(products);
+    console.log("products", products);
   } catch (error) {
     console.error("Error fetching products:", error);
     res.status(500).send({ error: "Błąd serwera" });
