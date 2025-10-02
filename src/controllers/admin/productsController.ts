@@ -53,56 +53,87 @@ export const fetchUserResources = async (
   }
 };
 
-//CREATE PRODUCT AND RESOURCE
+//CREATE PRODUCT
 export const createProduct = async (req: Request, res: Response) => {
   try {
-    const {
-      title,
-      description,
-      price,
-      resourceTitle,
-      imageUrl,
-      content,
-      videoUrl = "",
-    } = req.body;
+    const { title, description, price, imageUrl } = req.body;
+
+    if (!title || !description || !price || !imageUrl) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
 
     // 1️⃣ Tworzymy nowy produkt
     const newProduct = new Product({
       title,
       description,
       price,
-      content,
       imageUrl,
-      status: "draft", // Domyślny status
-    });
-    await newProduct.save();
-
-    // 2️⃣ Tworzymy powiązany zasób i przypisujemy mu `productId`
-    const newResource = new Resource({
-      title: resourceTitle || title,
-      imageUrl,
-      videoUrl,
-      content,
-      productId: newProduct._id,
+      status: "draft",
     });
 
-    await newProduct.save();
-
-    // 3️⃣ Aktualizujemy produkt o resourceId
-    newProduct.resourceId = newResource._id as typeof newProduct.resourceId;
     await newProduct.save();
 
     res.status(201).json({
-      message: "Product and Resource created successfully",
+      message: "Product created successfully",
       product: newProduct,
-      resource: newResource,
     });
   } catch (error) {
+    console.error("❌ Error creating product:", error);
     res.status(500).json({
       error: error instanceof Error ? error.message : "Unknown error occurred",
     });
   }
 };
+// //CREATE PRODUCT AND RESOURCE
+// export const createProduct = async (req: Request, res: Response) => {
+//   try {
+//     const {
+//       title,
+//       description,
+//       price,
+//       resourceTitle,
+//       imageUrl,
+//       content,
+//       videoUrl = "",
+//     } = req.body;
+
+//     // 1️⃣ Tworzymy nowy produkt
+//     const newProduct = new Product({
+//       title,
+//       description,
+//       price,
+//       content,
+//       imageUrl,
+//       status: "draft", // Domyślny status
+//     });
+//     await newProduct.save();
+
+//     // 2️⃣ Tworzymy powiązany zasób i przypisujemy mu `productId`
+//     const newResource = new Resource({
+//       title: resourceTitle || title,
+//       imageUrl,
+//       videoUrl,
+//       content,
+//       productId: newProduct._id,
+//     });
+
+//     await newProduct.save();
+
+//     // 3️⃣ Aktualizujemy produkt o resourceId
+//     newProduct.resourceId = newResource._id as typeof newProduct.resourceId;
+//     await newProduct.save();
+
+//     res.status(201).json({
+//       message: "Product and Resource created successfully",
+//       product: newProduct,
+//       resource: newResource,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       error: error instanceof Error ? error.message : "Unknown error occurred",
+//     });
+//   }
+// };
 
 //GET PRODUCT FOR EDITING
 export const getEditProduct = async (req: Request, res: Response) => {
@@ -143,7 +174,7 @@ export const postEditProduct = async (
     }
 
     const prodId = req.params.productId;
-    const { title, price, description, imageUrl, content } = req.body;
+    const { title, price, description, imageUrl } = req.body;
 
     const product = await Product.findById(prodId);
     if (!product) {
@@ -155,7 +186,6 @@ export const postEditProduct = async (
     product.price = price;
     product.description = description;
     product.imageUrl = imageUrl;
-    product.content = content;
 
     await product.save();
 
