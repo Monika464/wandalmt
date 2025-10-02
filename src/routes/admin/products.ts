@@ -2,16 +2,11 @@ import express from "express";
 import { adminAuth } from "../../middleware/auth.js";
 
 import {
-  addChapterToResource,
   createProduct,
-  deleteChapterFromResource,
   deleteProduct,
-  editResource,
   fetchProducts,
-  fetchUserResources,
   getEditProduct,
   postEditProduct,
-  updateChapterInResource,
 } from "../../controllers/admin/productsController.js";
 
 import { body } from "express-validator";
@@ -41,21 +36,6 @@ router.patch(
   postEditProduct
 );
 
-router.put("/edit-resource/:resourceId", adminAuth, editResource);
-router.post("/resources/:id/chapters", adminAuth, addChapterToResource);
-router.patch(
-  "/resources/:id/chapters/:chapterIndex",
-  adminAuth,
-  updateChapterInResource
-);
-router.delete(
-  "/resources/:id/chapters/:chapterIndex",
-  adminAuth,
-  deleteChapterFromResource
-);
-
 router.delete("/products/:productId", adminAuth, deleteProduct);
-
-router.get("/resources/:userId", adminAuth, fetchUserResources);
 
 export default router;

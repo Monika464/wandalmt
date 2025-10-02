@@ -121,7 +121,6 @@ router.post(
         (t: { token: string }) => t.token !== req.token
       );
 
-      console.log("Updated tokens:", req.user.tokens);
       await req.user.save();
 
       res.status(200).send({ message: "Admin logged out successfully" });

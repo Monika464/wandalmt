@@ -1,70 +1,38 @@
-import mongoose, { Types, Document, Schema, model } from "mongoose";
+// models/Resource.ts
+import mongoose, { Schema, Document, Types } from "mongoose";
 
-interface IChapter {
-  title?: string;
-  videoUrl?: string;
-  description?: string;
-}
-
-interface IResource extends Document {
+interface Chapter {
+  _id?: Types.ObjectId;
   title: string;
-  imageUrl: string;
-  content: string;
+  description?: string;
   videoUrl?: string;
-  productId: Types.ObjectId;
-  userIds?: Types.ObjectId[];
-  chapters?: IChapter[];
 }
 
-const chapterSchema = new Schema<IChapter>(
+export interface IResource extends Document {
+  title: string;
+  content?: string;
+  imageUrl?: string;
+  videoUrl?: string;
+  productId: mongoose.Types.ObjectId;
+  chapters: Chapter[];
+}
+
+const ChapterSchema = new Schema<Chapter>({
+  title: { type: String, required: true },
+  description: { type: String },
+  videoUrl: { type: String },
+});
+
+const ResourceSchema = new Schema<IResource>(
   {
     title: { type: String, required: true },
+    content: { type: String },
+    imageUrl: { type: String },
     videoUrl: { type: String },
-    description: { type: String },
-  },
-  { _id: false } // Nie potrzebujemy oddzielnego _id dla każdego rozdziału
-);
-
-const resourceSchema = new Schema<IResource>(
-  {
-    title: {
-      type: String,
-      required: true,
-    },
-    imageUrl: {
-      type: String,
-      required: true,
-    },
-    content: {
-      type: String,
-      required: true,
-    },
-    videoUrl: {
-      type: String,
-      required: false,
-    },
-    productId: {
-      type: Schema.Types.ObjectId,
-      ref: "Product",
-      required: true,
-    },
-    userIds: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
-    chapters: {
-      type: [chapterSchema],
-      validate: [
-        (val: IChapter[]) => val.length <= 100,
-        "Maksymalnie 100 rozdziałów dozwolonych",
-      ],
-    },
+    productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
+    chapters: [ChapterSchema],
   },
   { timestamps: true }
 );
 
-const Resource = model<IResource>("Resource", resourceSchema);
-
-export default Resource;
+export default mongoose.model<IResource>("Resource", ResourceSchema);
