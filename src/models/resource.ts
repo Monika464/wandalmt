@@ -11,7 +11,6 @@ interface Chapter {
 export interface IResource extends Document {
   title: string;
   content?: string;
-  imageUrl?: string;
   videoUrl?: string;
   productId: mongoose.Types.ObjectId;
   chapters: Chapter[];
@@ -27,7 +26,6 @@ const ResourceSchema = new Schema<IResource>(
   {
     title: { type: String, required: true },
     content: { type: String },
-    imageUrl: { type: String },
     videoUrl: { type: String },
     productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
     chapters: [ChapterSchema],

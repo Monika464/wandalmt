@@ -9,12 +9,11 @@ export const createResource = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { productId, title, content, imageUrl, videoUrl } = req.body;
+    const { productId, title, content, videoUrl } = req.body;
     const resource = new Resource({
       productId,
       title,
       content,
-      imageUrl,
       videoUrl,
       chapters: [],
     });
