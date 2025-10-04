@@ -65,7 +65,9 @@ export const adminAuth = async (
     }
     next();
   } catch (error) {
-    res.status(403).send({ error: "Access denied" });
+    console.error("Auth error:", error);
+    return res.status(401).json({ error: "Unauthorized" });
+    //res.status(403).send({ error: "Access denied" });
   }
 };
 
@@ -97,3 +99,21 @@ export const userAuth = async (
     res.status(401).send({ error: "Please authenticate" });
   }
 };
+
+// export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+//   const authHeader = req.headers.authorization;
+
+//   if (!authHeader || !authHeader.startsWith("Bearer ")) {
+//     return res.status(401).json({ error: "Brak tokena, nieautoryzowany" });
+//   }
+
+//   const token = authHeader.split(" ")[1];
+
+//   try {
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+//     (req as any).user = decoded; // przypisujesz użytkownika do req
+//     next();
+//   } catch (err) {
+//     return res.status(401).json({ error: "Nieprawidłowy token" });
+//   }
+// };

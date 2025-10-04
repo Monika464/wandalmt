@@ -33,6 +33,7 @@ export const fetchProduct = async (
       return;
     }
     res.status(200).send(product);
+    //res.status(200).send(product);
     //console.log("product", product);
   } catch (error) {
     console.error("Error fetching product:", error);
