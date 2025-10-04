@@ -5,6 +5,8 @@ import {
   updateResource,
   deleteResource,
   getResourceByProduct,
+  getResourceByProductId,
+  getResourceById,
 } from "../../controllers/admin/resourceControllers.js";
 import {
   addChapter,
@@ -18,6 +20,8 @@ router.post("/resources", createResource);
 router.put("/resources/:id", updateResource);
 router.delete("/resources/:id", deleteResource);
 router.get("/resources/:productId", getResourceByProduct);
+router.get("/resources/id/:id", getResourceById);
+router.get("/resources/:productId", getResourceByProductId);
 
 // Chapters
 router.post("/resources/:id/chapters", addChapter);

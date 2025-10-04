@@ -4,6 +4,7 @@ import { adminAuth } from "../../middleware/auth.js";
 import {
   createProduct,
   deleteProduct,
+  fetchProduct,
   fetchProducts,
   getEditProduct,
   postEditProduct,
@@ -15,6 +16,9 @@ const router = express.Router();
 
 //create product
 router.post("/products", adminAuth, createProduct);
+
+//fetch product
+router.get("/products/:id", adminAuth, fetchProduct);
 
 //edit product
 router.put("/products/:productId", adminAuth, postEditProduct);

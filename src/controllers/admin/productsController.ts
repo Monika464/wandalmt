@@ -19,6 +19,27 @@ export const fetchProducts = async (
   }
 };
 
+//FETCH SINGLE PRODUCT
+export const fetchProduct = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findById(id);
+    if (!product) {
+      res.status(404).json({ message: "Product not found" });
+      return;
+    }
+    res.status(200).send(product);
+    //console.log("product", product);
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    res.status(500).send({ error: "Błąd serwera" });
+  }
+};
+
 //FETCH PRODUCTS OF SINGLE USER
 export const fetchUserProducts = async (
   req: Request,

@@ -3,22 +3,36 @@ import { Request, Response } from "express";
 import Resource from "../../models/resource.js";
 
 // ADD Chapter
-export const addChapter = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const resource = await Resource.findById(req.params.id);
-    //if (!resource) return res.status(404).json({ error: "Resource not found" });
-    if (!resource) return;
+export const addChapter = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { videoUrl, description } = req.body;
 
-    resource.chapters.push(req.body);
+  try {
+    const resource = await Resource.findById(id);
+    if (!resource) {
+      res.status(404).json({ error: "Resource not found" });
+      return;
+    }
+
+    if (!resource.chapters) resource.chapters = [];
+
+    if (resource.chapters.length >= 100) {
+      res
+        .status(400)
+        .json({ error: "Maximum number of chapters reached (100)" });
+      return;
+    }
+    resource.chapters.push({ videoUrl, description });
     await resource.save();
-    res.status(201).json(resource);
-  } catch (error) {
-    res.status(500).json({
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
+
+    res
+      .status(200)
+      .json({ message: "Chapter added", chapters: resource.chapters });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: err instanceof Error ? err.message : "Server error" });
+    return;
   }
 };
 

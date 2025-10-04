@@ -82,7 +82,77 @@ export const getResourceByProduct = async (
   }
 };
 
+export const getResourceByProductId = async (req: Request, res: Response) => {
+  const { productId } = req.params;
+
+  try {
+    const resource = await Resource.findOne({ productId });
+    if (!resource) {
+      res.status(404).json({ error: "Resource not found for this product" });
+      return;
+    }
+    res.status(200).json(resource);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: err instanceof Error ? err.message : "Server error" });
+  }
+};
+
+// GET /admin/resources/id/:id
+export const getResourceById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const resource = await Resource.findById(id);
+    if (!resource) {
+      res.status(404).json({ error: "Resource not found" });
+      return;
+    }
+    res.status(200).json(resource);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: err instanceof Error ? err.message : "Server error" });
+  }
+};
+
 //CHAPTER CONTROLLERS
+
+//ADD CHAPTER
+
+// export const addChapter = async (req: Request, res: Response) => {
+//   const { id } = req.params;
+//   const { videoUrl, description } = req.body;
+
+//   try {
+//     const resource = await Resource.findById(id);
+//     if (!resource) {
+//       res.status(404).json({ error: "Resource not found" });
+//       return;
+//     }
+
+//     if (!resource.chapters) resource.chapters = [];
+
+//     if (resource.chapters.length >= 100) {
+//       res
+//         .status(400)
+//         .json({ error: "Maximum number of chapters reached (100)" });
+//       return;
+//     }
+//     resource.chapters.push({ videoUrl, description });
+//     await resource.save();
+
+//     res
+//       .status(200)
+//       .json({ message: "Chapter added", chapters: resource.chapters });
+//   } catch (err) {
+//     res
+//       .status(500)
+//       .json({ error: err instanceof Error ? err.message : "Server error" });
+//     return;
+//   }
+// };
 
 // //FETCH RESOURCES OF SINGLE USER
 // export const fetchUserResources = async (
@@ -165,39 +235,6 @@ export const getResourceByProduct = async (
 //     } else {
 //       res.status(500).json({ error: "Unknown server error" });
 //     }
-//   }
-// };
-
-// export const addChapterToResource = async (req: Request, res: Response) => {
-//   const { id } = req.params;
-//   const { videoUrl, description } = req.body;
-
-//   try {
-//     const resource = await Resource.findById(id);
-//     if (!resource) {
-//       res.status(404).json({ error: "Resource not found" });
-//       return;
-//     }
-
-//     if (!resource.chapters) resource.chapters = [];
-
-//     if (resource.chapters.length >= 100) {
-//       res
-//         .status(400)
-//         .json({ error: "Maximum number of chapters reached (100)" });
-//       return;
-//     }
-//     resource.chapters.push({ videoUrl, description });
-//     await resource.save();
-
-//     res
-//       .status(200)
-//       .json({ message: "Chapter added", chapters: resource.chapters });
-//   } catch (err) {
-//     res
-//       .status(500)
-//       .json({ error: err instanceof Error ? err.message : "Server error" });
-//     return;
 //   }
 // };
 
