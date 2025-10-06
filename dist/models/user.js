@@ -20,6 +20,7 @@ const userSchema = new Schema({
         required: true,
     },
     role: { type: String, enum: ["user", "admin"], default: "user" },
+    active: { type: Boolean, default: true },
     resources: [
         {
             type: Schema.Types.ObjectId,

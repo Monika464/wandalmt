@@ -32,7 +32,7 @@ export const adminAuth = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-) => {
+): Promise<void> => {
   try {
     const token = req.header("Authorization")?.replace("Bearer ", "");
     //console.log("Token received:", token);
@@ -57,7 +57,6 @@ export const adminAuth = async (
 
     if (user) {
       req.token = token;
-      // req.user = { ...user.toObject(), _id: user._id.toString() };
       req.user = user;
     } else {
       res.status(404).json({ error: "User not found" });
@@ -66,7 +65,8 @@ export const adminAuth = async (
     next();
   } catch (error) {
     console.error("Auth error:", error);
-    return res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "Unauthorized" });
+    return;
     //res.status(403).send({ error: "Access denied" });
   }
 };

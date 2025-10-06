@@ -26,7 +26,6 @@ export const adminAuth = async (req, res, next) => {
         // console.log("admin", user);
         if (user) {
             req.token = token;
-            // req.user = { ...user.toObject(), _id: user._id.toString() };
             req.user = user;
         }
         else {
@@ -36,7 +35,10 @@ export const adminAuth = async (req, res, next) => {
         next();
     }
     catch (error) {
-        res.status(403).send({ error: "Access denied" });
+        console.error("Auth error:", error);
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+        //res.status(403).send({ error: "Access denied" });
     }
 };
 //userAuth
@@ -60,3 +62,17 @@ export const userAuth = async (req, res, next) => {
         res.status(401).send({ error: "Please authenticate" });
     }
 };
+// export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+//   const authHeader = req.headers.authorization;
+//   if (!authHeader || !authHeader.startsWith("Bearer ")) {
+//     return res.status(401).json({ error: "Brak tokena, nieautoryzowany" });
+//   }
+//   const token = authHeader.split(" ")[1];
+//   try {
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
+//     (req as any).user = decoded; // przypisujesz użytkownika do req
+//     next();
+//   } catch (err) {
+//     return res.status(401).json({ error: "Nieprawidłowy token" });
+//   }
+// };

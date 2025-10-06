@@ -1,22 +1,22 @@
-import express from "express";
-import Resource from "../models/resource.js";
-import { adminAuth } from "../middleware/auth.js";
-import User from "../models/user.js";
+// import express from "express";
+// import Resource from "../models/resource.js";
+// import { adminAuth } from "../middleware/auth.js";
+// import User from "../models/user.js";
 
-import {
-  addChapterToResource,
-  createProduct,
-  deleteChapterFromResource,
-  deleteProduct,
-  deleteUser,
-  editResource,
-  getEditProduct,
-  postEditProduct,
-  updateChapterInResource,
-} from "../controllers/admin.js";
-import { body } from "express-validator";
+// import {
+//   addChapterToResource,
+//   createProduct,
+//   deleteChapterFromResource,
+//   deleteProduct,
+//   deleteUser,
+//   editResource,
+//   getEditProduct,
+//   postEditProduct,
+//   updateChapterInResource,
+// } from "../controllers/admin.js";
+// import { body } from "express-validator";
 
-const router = express.Router();
+// const router = express.Router();
 
 // router.post("/products", createProduct);
 

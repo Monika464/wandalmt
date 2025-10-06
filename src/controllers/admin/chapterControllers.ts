@@ -63,6 +63,7 @@ export const editChapter = async (
 };
 
 // DELETE Chapter
+
 export const deleteChapter = async (
   req: Request,
   res: Response

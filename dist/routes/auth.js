@@ -88,7 +88,6 @@ router.post("/logout-admin", adminAuth, async (req, res) => {
         }
         // await req.user.removeAuthToken(req.token);
         req.user.tokens = req.user.tokens.filter((t) => t.token !== req.token);
-        console.log("Updated tokens:", req.user.tokens);
         await req.user.save();
         res.status(200).send({ message: "Admin logged out successfully" });
         console.log("Logout-admin success");
