@@ -35,7 +35,7 @@ export const adminAuth = async (
 ): Promise<void> => {
   try {
     const token = req.header("Authorization")?.replace("Bearer ", "");
-    //console.log("Token received:", token);
+    //console.log("Token received by backend:", token);
 
     if (!token) {
       res.status(401).json({ error: "Token is missing" });
