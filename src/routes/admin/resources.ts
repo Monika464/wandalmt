@@ -19,7 +19,7 @@ const router = express.Router();
 router.post("/resources", createResource);
 router.put("/resources/:id", updateResource);
 router.delete("/resources/:id", deleteResource);
-router.get("/resources/:productId", getResourceByProduct);
+//outer.get("/resources/:productId", getResourceByProduct);
 router.get("/resources/id/:id", getResourceById);
 router.get("/resources/:productId", getResourceByProductId);
 

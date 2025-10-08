@@ -27,6 +27,7 @@ export const fetchProduct = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
+    //console.log("id product", id);
     const product = await Product.findById(id);
     if (!product) {
       res.status(404).json({ message: "Product not found" });

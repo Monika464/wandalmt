@@ -84,7 +84,7 @@ export const getResourceByProduct = async (
 
 export const getResourceByProductId = async (req: Request, res: Response) => {
   const { productId } = req.params;
-
+  //console.log("resource", productId);
   try {
     const resource = await Resource.findOne({ productId });
     if (!resource) {
@@ -102,7 +102,7 @@ export const getResourceByProductId = async (req: Request, res: Response) => {
 // GET /admin/resources/id/:id
 export const getResourceById = async (req: Request, res: Response) => {
   const { id } = req.params;
-
+  console.log("id resource", id);
   try {
     const resource = await Resource.findById(id);
     if (!resource) {
