@@ -17,7 +17,7 @@ export const createResource = async (
       videoUrl,
       chapters: [],
     });
-    console.log("resource", resource);
+    //console.log("resource", resource);
     await resource.save();
     res.status(201).json(resource);
   } catch (error) {
@@ -64,27 +64,29 @@ export const deleteResource = async (
 };
 
 // GET Resource by productId
-export const getResourceByProduct = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const resource = await Resource.findOne({
-      productId: req.params.productId,
-    });
-    // if (!resource) return res.status(404).json({ error: "Resource not found" });
-    if (!resource) return;
-    res.json(resource);
-  } catch (error) {
-    res.status(500).json({
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
-  }
-};
-
+// export const getResourceByProduct = async (
+//   req: Request,
+//   res: Response
+// ): Promise<void> => {
+//   try {
+//     const resource = await Resource.findOne({
+//       productId: req.params.productId,
+//     });
+//     console.log("getResourceByProduct", resource);
+//     // if (!resource) return res.status(404).json({ error: "Resource not found" });
+//     if (!resource) return;
+//     res.json(resource);
+//   } catch (error) {
+//     res.status(500).json({
+//       error: error instanceof Error ? error.message : "Unknown error",
+//     });
+//   }
+// };
+//kiedy wczytuje wszystkkie
+///resources/:productId
 export const getResourceByProductId = async (req: Request, res: Response) => {
   const { productId } = req.params;
-  //console.log("resource", productId);
+  // console.log("getResourceByProductId", productId);
   try {
     const resource = await Resource.findOne({ productId });
     if (!resource) {
@@ -99,10 +101,11 @@ export const getResourceByProductId = async (req: Request, res: Response) => {
   }
 };
 
-// GET /admin/resources/id/:id
+//kiedy wczytuje pojedyncza strone
+///resources/id/:id
 export const getResourceById = async (req: Request, res: Response) => {
   const { id } = req.params;
-  console.log("id resource", id);
+  // console.log("getResourceById", id);
   try {
     const resource = await Resource.findById(id);
     if (!resource) {
