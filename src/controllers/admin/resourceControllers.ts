@@ -18,8 +18,8 @@ export const fetchResources = async (req: Request, res: Response) => {
     const filter: any = {};
     if (q) {
       filter.$or = [
-        { name: new RegExp(q, "i") }, // wyszukiwanie po nazwie (case-insensitive)
-        { description: new RegExp(q, "i") },
+        { title: new RegExp(q, "i") }, // wyszukiwanie po nazwie (case-insensitive)
+        { content: new RegExp(q, "i") },
       ];
     }
 
