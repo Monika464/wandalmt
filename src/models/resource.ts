@@ -1,5 +1,6 @@
 // models/Resource.ts
 import mongoose, { Schema, Document, Types } from "mongoose";
+import type { IUser } from "../models/user.js";
 
 interface Chapter {
   _id?: Types.ObjectId;
@@ -13,7 +14,8 @@ export interface IResource extends Document {
   content?: string;
   videoUrl?: string;
   productId: mongoose.Types.ObjectId;
-  chapters: Chapter[];
+  chapters?: Chapter[];
+  users?: IUser[];
 }
 
 const ChapterSchema = new Schema<Chapter>({
@@ -29,6 +31,7 @@ const ResourceSchema = new Schema<IResource>(
     videoUrl: { type: String },
     productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
     chapters: [ChapterSchema],
+    users: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   },
   { timestamps: true }
 );

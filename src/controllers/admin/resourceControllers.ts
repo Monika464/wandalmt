@@ -3,6 +3,60 @@
 import { Request, Response } from "express";
 import Resource from "../../models/resource.js";
 
+//FETCH ALL RESOURCES
+
+export const fetchResources = async (req: Request, res: Response) => {
+  try {
+    // --- 1️⃣ Pobierz parametry zapytania ---
+    const page = parseInt(req.query.page as string) || 1;
+    const pageSize = parseInt(req.query.pageSize as string) || 20;
+    const q = (req.query.q as string) || "";
+    const sortField = (req.query.sortField as string) || "createdAt";
+    const sortOrder = (req.query.sortOrder as string) === "asc" ? 1 : -1;
+
+    // --- 2️⃣ Zbuduj filtr wyszukiwania ---
+    const filter: any = {};
+    if (q) {
+      filter.$or = [
+        { name: new RegExp(q, "i") }, // wyszukiwanie po nazwie (case-insensitive)
+        { description: new RegExp(q, "i") },
+      ];
+    }
+
+    // --- 3️⃣ Policz całkowitą liczbę zasobów ---
+    const total = await Resource.countDocuments(filter);
+
+    // --- 4️⃣ Pobierz zasoby z paginacją ---
+    const items = await Resource.find(filter)
+      .sort({ [sortField]: sortOrder })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .lean(); // .lean() = szybsze, zwraca zwykłe obiekty JS
+
+    // --- 5️⃣ Zwróć dane ---
+    res.status(200).json({
+      items, // lista zasobów
+      total, // łączna liczba zasobów (dla paginacji)
+      page, // aktualna strona
+      pageSize, // ilość elementów na stronie
+    });
+  } catch (error) {
+    console.error("❌ Error fetching resources:", error);
+    res.status(500).json({ error: "Błąd serwera" });
+  }
+};
+
+// export const fetchResources = async (res: Response) => {
+//   try {
+//     const resources = await Resource.find();
+//     res.status(200).json(resources);
+//     //console.log("resources", resources);
+//   } catch (error) {
+//     console.error("Error fetching  resorces:", error);
+//     res.status(500).json({ error: "Błąd serwera" });
+//   }
+// };
+
 // CREATE Resource
 export const createResource = async (
   req: Request,
@@ -47,6 +101,8 @@ export const updateResource = async (
 };
 
 // DELETE Resource
+// DELETE /api/resources/:id
+
 export const deleteResource = async (
   req: Request,
   res: Response
@@ -82,11 +138,11 @@ export const deleteResource = async (
 //     });
 //   }
 // };
-//kiedy wczytuje wszystkkie
+
 ///resources/:productId
 export const getResourceByProductId = async (req: Request, res: Response) => {
   const { productId } = req.params;
-  // console.log("getResourceByProductId", productId);
+  //console.log("getResourceByProductId", productId);
   try {
     const resource = await Resource.findOne({ productId });
     if (!resource) {
@@ -101,7 +157,6 @@ export const getResourceByProductId = async (req: Request, res: Response) => {
   }
 };
 
-//kiedy wczytuje pojedyncza strone
 ///resources/id/:id
 export const getResourceById = async (req: Request, res: Response) => {
   const { id } = req.params;

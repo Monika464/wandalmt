@@ -7,6 +7,7 @@ import {
   getResourceByProduct,
   getResourceByProductId,
   getResourceById,
+  fetchResources,
 } from "../../controllers/admin/resourceControllers.js";
 import {
   addChapter,
@@ -14,14 +15,17 @@ import {
   deleteChapter,
 } from "../../controllers/admin/chapterControllers.js";
 const router = express.Router();
+import Resource from "../../models/resource.js";
 
-// Resource
+// Fetch all resources
+router.get("/resources", fetchResources);
+
 router.post("/resources", createResource);
 router.put("/resources/:id", updateResource);
 router.delete("/resources/:id", deleteResource);
-//outer.get("/resources/:productId", getResourceByProduct);
+//router.get("/resources/:productId", getResourceByProduct);
 router.get("/resources/id/:id", getResourceById);
-router.get("/resources/:productId", getResourceByProductId);
+router.get("/resources/product/:productId", getResourceByProductId);
 
 // Chapters
 router.post("/resources/:id/chapters", addChapter);
