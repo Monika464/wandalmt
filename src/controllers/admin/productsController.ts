@@ -4,15 +4,77 @@ import { Request, Response, NextFunction } from "express";
 import Resource from "../../models/resource.js";
 
 //FETCH PRODUCTS
+// export const fetchProducts = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> => {
+//   try {
+//     const page = parseInt(req.query.page as string) || 1;
+//     const pageSize = parseInt(req.query.pageSize as string) || 20;
+//     const q = (req.query.q as string) || "";
+//     const sortField = (req.query.sortField as string) || "createdAt";
+//     const sortOrder = (req.query.sortOrder as string) === "asc" ? 1 : -1;
+
+//     const filter: any = {};
+//     if (q) {
+//       filter.$or = [
+//         { name: new RegExp(q, "i") }, // wyszukiwanie po nazwie
+//         { description: new RegExp(q, "i") },
+//       ];
+//     }
+
+//     const total = await Product.countDocuments(filter);
+
+//     const items = await Product.find(filter)
+//       .sort({ [sortField]: sortOrder })
+//       .skip((page - 1) * pageSize)
+//       .limit(pageSize)
+//       .lean();
+
+//     res.status(200).json({
+//       items,
+//       total,
+//       page,
+//       pageSize,
+//     });
+//   } catch (error) {
+//     console.error("❌ Error fetching products:", error);
+//     res.status(500).json({ error: "Błąd serwera" });
+//   }
+// };
+
+// export const fetchProducts = async (
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> => {
+//   try {
+//     const products = await Product.find();
+//     res.status(200).send(products);
+//     //console.log("products", products);
+//   } catch (error) {
+//     console.error("Error fetching products:", error);
+//     res.status(500).send({ error: "Błąd serwera" });
+//   }
+// };
 export const fetchProducts = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const products = await Product.find();
+    const { q } = req.query; // np. ?q=sword
+
+    let filter = {};
+    if (q && typeof q === "string") {
+      // dopasowanie po nazwie (np. "sword") – case-insensitive
+      filter = { title: { $regex: q, $options: "i" } };
+    }
+
+    const products = await Product.find(filter);
+
     res.status(200).send(products);
-    //console.log("products", products);
   } catch (error) {
     console.error("Error fetching products:", error);
     res.status(500).send({ error: "Błąd serwera" });
