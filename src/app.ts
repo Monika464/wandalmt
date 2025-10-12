@@ -4,6 +4,7 @@ import { connectDB } from "./db.js";
 import authRouter from "./routes/auth.js";
 import adminRouter from "./routes/admin/index.js";
 import userRouter from "./routes/user.js";
+import productsRouter from "./routes/products/products.js";
 import uploadRouter from "./routes/upload.js";
 
 import dotenv from "dotenv";
@@ -25,6 +26,7 @@ app.use(
 app.use("/auth", authRouter);
 app.use("/users", userRouter);
 app.use("/admin", adminRouter);
+app.use("/", productsRouter);
 app.use("/api", uploadRouter);
 
 app.listen(3000, () => {
