@@ -18,7 +18,7 @@ export const fetchProducts = async (
     }
 
     const products = await Product.find(filter);
-    console.log("prod", products);
+    // console.log("prod", products);
 
     res.status(200).send(products);
   } catch (error) {
