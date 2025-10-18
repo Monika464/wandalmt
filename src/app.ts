@@ -7,6 +7,7 @@ import userRouter from "./routes/user.js";
 import productRouter from "./routes/public/products.js";
 import resourceRouter from "./routes/public/resources.js";
 import uploadRouter from "./routes/upload.js";
+import checkoutRouter from "./routes/public/checkout.js";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -30,6 +31,7 @@ app.use("/admin", adminRouter);
 app.use("/", productRouter);
 app.use("/", resourceRouter);
 app.use("/api", uploadRouter);
+app.use("/", checkoutRouter);
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
