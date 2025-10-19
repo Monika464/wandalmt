@@ -8,12 +8,17 @@ import productRouter from "./routes/public/products.js";
 import resourceRouter from "./routes/public/resources.js";
 import uploadRouter from "./routes/upload.js";
 import checkoutRouter from "./routes/public/checkout.js";
+import purchaseRoutes from "./routes/public/purchase.js";
+import webhookRoutes from "./routes/webhook.js";
 
 import dotenv from "dotenv";
 dotenv.config();
 
 connectDB();
 const app = express();
+
+app.use("/api", webhookRoutes);
+
 app.use(express.json());
 app.use(
   cors({
@@ -32,6 +37,8 @@ app.use("/", productRouter);
 app.use("/", resourceRouter);
 app.use("/api", uploadRouter);
 app.use("/", checkoutRouter);
+
+app.use("/", purchaseRoutes);
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
