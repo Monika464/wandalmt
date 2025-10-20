@@ -17,7 +17,7 @@ dotenv.config();
 connectDB();
 const app = express();
 
-app.use("/api", webhookRoutes);
+app.use("/", webhookRoutes);
 
 app.use(express.json());
 app.use(

@@ -19,7 +19,7 @@ router.get("/purchase", async (req: Request, res: Response) => {
     const purchase = await Purchase.findOne({ sessionId: session_id }).populate<
       IPurchase & { productId: IProduct }
     >("productId");
-
+    //console.log("🔍 Found purchase:", purchase);
     if (!purchase) {
       return res.status(404).json({ status: "not found", items: [] });
     }

@@ -1,14 +1,16 @@
 import express from "express";
+import { userAuth } from "middleware/auth.js";
 import Product from "models/product.js";
 import Stripe from "stripe";
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-router.post("/create-checkout-session", async (req, res) => {
+router.post("/create-checkout-session", userAuth, async (req, res) => {
   try {
     const { productId } = req.body;
-
+    const user = req.user;
+    console.log("Creating checkout session for user:", user);
     // Pobierz produkt po ID
     const product = await Product.findById(productId);
     if (!product) {
@@ -29,9 +31,11 @@ router.post("/create-checkout-session", async (req, res) => {
           quantity: 1,
         },
       ],
+      // metadata: { userId: user._id.toString() },
       //success_url: "http://localhost:5173/success",
       //cancel_url: "http://localhost:5173/cancel",
-
+      customer_email: user!.email,
+      metadata: { userId: user!._id.toString() },
       return_url:
         "http://localhost:5173/return?session_id={CHECKOUT_SESSION_ID}",
     });
@@ -46,6 +50,7 @@ router.post("/create-checkout-session", async (req, res) => {
 
 router.get("/session-status", async (req, res) => {
   const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+  // console.log("Retrieveduu session:", session);
   res.send({
     message:
       session.status === "complete"

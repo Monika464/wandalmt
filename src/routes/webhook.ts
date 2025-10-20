@@ -25,7 +25,7 @@ router.post(
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    console.log("Webhook received:", event.type);
+    //console.log("Webhook received:", event.type);
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
@@ -33,13 +33,13 @@ router.post(
       const lineItems = await stripe.checkout.sessions.listLineItems(
         session.id
       );
-      console.log("Line items:", lineItems.data);
+      //console.log("Line items:", lineItems.data);
 
       const firstItem = lineItems.data[0];
       const product = firstItem?.description
         ? await Product.findOne({ title: firstItem.description })
         : null;
-
+      console.log("📦 Saving purchase for session:", session.id);
       if (product) {
         await Purchase.create({
           productId: product._id,
