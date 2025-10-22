@@ -27,6 +27,7 @@ router.post(
         return res.status(401).json({ error: "Użytkownik nieautoryzowany" });
       }
 
+      const productIds = items.map((item) => item._id.toString());
       // Stripe line_items
       const lineItems = items.map((item) => ({
         price_data: {
@@ -47,33 +48,9 @@ router.post(
         metadata: {
           userId: req.user._id.toString(),
           email: req.user.email,
+          productIds: productIds.join(","),
         },
       });
-
-      // Stripe line_items
-      // const lineItems = items.map((item) => ({
-      //   price_data: {
-      //     currency: "pln",
-      //     product_data: {
-      //       name: item.title,
-      //     },
-      //     unit_amount: Math.round(item.price * 100),
-      //   },
-      //   quantity: item.quantity,
-      // }));
-
-      // const session = await stripe.checkout.sessions.create({
-      //   payment_method_types: ["card"],
-      //   mode: "payment",
-      //   line_items: lineItems,
-      //   success_url: `http://localhost:5173/cart-return?session_id={CHECKOUT_SESSION_ID}`,
-      //   cancel_url: `http://localhost:5173/cart-cancel`,
-      //   customer_email: req.user.email,
-      //   metadata: {
-      //     userId: req.user._id.toString(),
-      //     email: req.user.email,
-      //   },
-      // });
 
       res.json({ url: session.url });
     } catch (err) {
@@ -88,7 +65,6 @@ router.get(
   "/cart-session-status",
   userAuth,
   async (req: AuthenticatedRequest, res: Response) => {
-    console.log("Checking payment status...");
     try {
       const { session_id } = req.query;
       if (!session_id) {
@@ -101,14 +77,23 @@ router.get(
         { expand: ["line_items.data.price.product"] }
       );
 
-      console.log("Stripe session object:", JSON.stringify(session, null, 2));
+      //console.log("Stripe session object:", JSON.stringify(session, null, 2));
 
-      console.log("Payment status:", session.payment_status);
+      //console.log("Payment status:", session.payment_status);
+      if (session.payment_status !== "paid") {
+        return res.json({
+          status: "pending",
+          message: "⏳ Płatność w trakcie przetwarzania",
+        });
+      }
 
       if (session.payment_status === "paid") {
         const userEmail = session.customer_email || req.user?.email;
-        console.log("User email:", userEmail);
-        console.log("User ID from metadata:", session.metadata?.userId);
+        const productIds = session.metadata?.productIds
+          ? session.metadata.productIds.split(",")
+          : [];
+        // console.log("User email:", userEmail);
+        //console.log("User ID from metadata:", session.metadata?.userId);
 
         const existing = await Order.findOne({
           stripeSessionId: session.id,
@@ -116,31 +101,34 @@ router.get(
           // "user.userId": session.metadata?.userId,
         });
 
-        console.log("Existing order found?", existing);
+        //console.log("Existing order found?", existing);
 
         if (!existing) {
-          console.log("Creating new order...");
+          //console.log("Creating new order...");
 
           const order = new Order({
             stripeSessionId: session.id,
-            products: session.line_items?.data.map((item: any) => ({
-              product: {
-                title: item.description || "Brak tytułu",
-                price: (item.amount_total || 0) / 100,
-                description: item.description || "",
-                imageUrl: "",
-                content: "",
-                userId: new mongoose.Types.ObjectId(session.metadata?.userId),
-              },
-              quantity: item.quantity || 1,
-            })),
+            products: session.line_items?.data.map(
+              (item: any, index: number) => ({
+                product: {
+                  _id: productIds[index]
+                    ? new mongoose.Types.ObjectId(productIds[index])
+                    : undefined,
+                  title: item.description || "Brak tytułu",
+                  price: (item.amount_total || 0) / 100,
+                  description: item.description || "",
+                  imageUrl: "",
+                  content: "",
+                  userId: new mongoose.Types.ObjectId(session.metadata?.userId),
+                },
+                quantity: item.quantity || 1,
+              })
+            ),
             user: {
               email: userEmail,
               userId: new mongoose.Types.ObjectId(session.metadata?.userId),
             },
           });
-
-          console.log("Order to save:", JSON.stringify(order, null, 2));
 
           await order.save();
           console.log("Order saved!");

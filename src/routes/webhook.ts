@@ -79,112 +79,80 @@ router.post(
       }
     }
 
-    // if (event.type === "checkout.session.completed") {
-    //   const session = event.data.object as Stripe.Checkout.Session;
-
-    //   const lineItems = await stripe.checkout.sessions.listLineItems(
-    //     session.id
-    //   );
-    //   //console.log("Line items:", lineItems.data);
-
-    //   const firstItem = lineItems.data[0];
-    //   const product = firstItem?.description
-    //     ? await Product.findOne({ title: firstItem.description })
-    //     : null;
-    //   console.log("📦 Saving purchase for session:", session.id);
-    //   if (product) {
-    //     await Purchase.create({
-    //       productId: product._id,
-    //       sessionId: session.id,
-    //       customerEmail: session.customer_email,
-    //       amount: session.amount_total,
-    //       status: "complete",
-    //     });
-    //     console.log("Purchase saved:", session.id);
-    //   } else {
-    //     console.warn(
-    //       "Product not found for description:",
-    //       firstItem?.description
-    //     );
-    //   }
-    // }
-
     res.json({ received: true });
   }
 );
 
-export default router;
-
-// import express, { Request, Response } from "express";
-// import Stripe from "stripe";
-// import Purchase from "../models/purchase.js";
-// import Product from "../models/product.js";
-
-// const router = express.Router();
-
-// // Ustawienie Stripe z wersją API 2025-09-30.clover
-// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-//   apiVersion: "2025-09-30.clover",
-// });
-
-// // Typ dla obiektu webhook session
-// interface StripeSession {
-//   id: string;
-//   customer_email?: string;
-//   amount_total?: number;
-//   line_items?: Array<{
-//     description?: string;
-//   }>;
-// }
-
+// // 🧩 webhook wymaga surowego body
 // router.post(
-//   "/webhook",
+//   "/api/stripe-webhook",
 //   express.raw({ type: "application/json" }),
 //   async (req: Request, res: Response) => {
-//     const sig = req.headers["stripe-signature"] as string;
-//     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
+//     const sig = req.headers["stripe-signature"];
+
+//     if (!sig) {
+//       return res.status(400).send("Missing Stripe signature");
+//     }
 
 //     let event: Stripe.Event;
 
 //     try {
-//       event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+//       event = stripe.webhooks.constructEvent(
+//         req.body,
+//         sig,
+//         process.env.STRIPE_WEBHOOK_SECRET as string
+//       );
 //     } catch (err: any) {
-//       console.error("Webhook signature failed:", err);
+//       console.error("⚠️ Webhook signature verification failed:", err.message);
 //       return res.status(400).send(`Webhook Error: ${err.message}`);
 //     }
 
-//     console.log("Webhook event received heej");
-//     console.log("Webhook received:", event.type);
+//     // ✅ Obsługa zdarzenia 'checkout.session.completed'
 //     if (event.type === "checkout.session.completed") {
-//       const session = event.data.object as StripeSession;
+//       const session = event.data.object as Stripe.Checkout.Session;
+//       console.log("✅ Webhook session completed:", session.id);
 
-//       const lineItems = await stripe.checkout.sessions.listLineItems(
-//         session.id
-//       );
-//       console.log(lineItems.data);
+//       if (session.payment_status === "paid") {
+//         try {
+//           const existing = await Order.findOne({ stripeSessionId: session.id });
+//           if (!existing) {
+//             const order = new Order({
+//               stripeSessionId: session.id,
+//               user: {
+//                 email: session.customer_email,
+//                 userId: new mongoose.Types.ObjectId(session.metadata?.userId),
+//               },
+//               products: [
+//                 {
+//                   product: {
+//                     title: session.metadata?.productTitle || "Produkt",
+//                     price: Number(session.amount_total || 0) / 100,
+//                     description: session.metadata?.description || "",
+//                     userId: new mongoose.Types.ObjectId(
+//                       session.metadata?.userId
+//                     ),
+//                     imageUrl: "",
+//                     content: "",
+//                   },
+//                   quantity: 1,
+//                 },
+//               ],
+//             });
 
-//       const lineItem = session.line_items?.[0];
-//       const product = await Product.findOne({ title: lineItem?.description });
-
-//       if (product) {
-//         await Purchase.create({
-//           productId: product._id,
-//           sessionId: session.id,
-//           customerEmail: session.customer_email,
-//           amount: session.amount_total,
-//           status: "complete",
-//         });
-//         console.log("Purchase saved:", session.id);
-//       } else {
-//         console.warn(
-//           "Product not found for description:",
-//           lineItem?.description
-//         );
+//             await order.save();
+//             console.log("💾 Order zapisany przez webhook:", order._id);
+//           }
+//         } catch (error) {
+//           console.error(
+//             "❌ Błąd podczas zapisu zamówienia przez webhook:",
+//             error
+//           );
+//         }
 //       }
 //     }
 
-//     res.json({ received: true });
+//     res.status(200).send("Received");
 //   }
 // );
 
-// export default router;
+export default router;
