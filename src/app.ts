@@ -10,6 +10,7 @@ import uploadRouter from "./routes/upload.js";
 import checkoutRouter from "./routes/public/checkout.js";
 import purchaseRoutes from "./routes/public/purchase.js";
 import webhookRoutes from "./routes/webhook.js";
+import cartCheckoutRouter from "./routes/public/cart-checkout.js";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -37,7 +38,7 @@ app.use("/", productRouter);
 app.use("/", resourceRouter);
 app.use("/api", uploadRouter);
 app.use("/", checkoutRouter);
-
+app.use("/", cartCheckoutRouter);
 app.use("/", purchaseRoutes);
 
 app.listen(3000, () => {

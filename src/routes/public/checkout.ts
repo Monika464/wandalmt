@@ -47,6 +47,39 @@ router.post("/create-checkout-session", userAuth, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// router.post("/create-cart-checkout-session", async (req, res) => {
+//   try {
+//     const { cart, userId } = req.body;
+
+//     if (!cart || cart.length === 0) {
+//       return res.status(400).json({ error: "Koszyk jest pusty" });
+//     }
+
+//     const lineItems = cart.map((item) => ({
+//       price_data: {
+//         currency: "pln",
+//         product_data: { name: item.title },
+//         unit_amount: item.price * 100,
+//       },
+//       quantity: item.quantity,
+//     }));
+
+//     const session = await stripe.checkout.sessions.create({
+//       ui_mode: "embedded",
+//       payment_method_types: ["card"],
+//       mode: "payment",
+//       line_items: lineItems,
+//       metadata: { userId: String(userId) },
+//       return_url:
+//         "http://localhost:5173/cart-return?session_id={CHECKOUT_SESSION_ID}",
+//     });
+
+//     res.json({ client_secret: session.client_secret });
+//   } catch (err) {
+//     console.error("Stripe cart error:", err);
+//     res.status(500).json({ error: err.message });
+//   }
+// });
 
 router.get("/session-status", async (req, res) => {
   const session = await stripe.checkout.sessions.retrieve(req.query.session_id);

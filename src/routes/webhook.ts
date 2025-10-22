@@ -26,36 +26,88 @@ router.post(
     }
 
     //console.log("Webhook received:", event.type);
-
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
 
       const lineItems = await stripe.checkout.sessions.listLineItems(
         session.id
       );
-      //console.log("Line items:", lineItems.data);
+      // console.log("Line items:", lineItems.data);
 
-      const firstItem = lineItems.data[0];
-      const product = firstItem?.description
-        ? await Product.findOne({ title: firstItem.description })
-        : null;
-      console.log("📦 Saving purchase for session:", session.id);
-      if (product) {
-        await Purchase.create({
-          productId: product._id,
-          sessionId: session.id,
-          customerEmail: session.customer_email,
-          amount: session.amount_total,
-          status: "complete",
-        });
-        console.log("Purchase saved:", session.id);
+      // Odczytaj userId z metadanych
+      const userId = session.metadata?.userId || null;
+      console.log("🔑 Webhook userId:", userId);
+
+      // Jeśli to sesja z koszyka (więcej niż 1 produkt)
+      if (lineItems.data.length > 1) {
+        console.log(`🛒 Saving multiple purchases for session ${session.id}`);
+
+        for (const item of lineItems.data) {
+          const product = await Product.findOne({ title: item.description });
+          if (product) {
+            await Purchase.create({
+              userId,
+              productId: product._id,
+              sessionId: session.id,
+              customerEmail: session.customer_email,
+              amount: (item.amount_total || 0) / 100,
+              quantity: item.quantity,
+              status: "complete",
+            });
+          } else {
+            console.warn("Product not found:", item.description);
+          }
+        }
       } else {
-        console.warn(
-          "Product not found for description:",
-          firstItem?.description
-        );
+        // Pojedynczy produkt (jak dotychczas)
+        const firstItem = lineItems.data[0];
+        const product = await Product.findOne({ title: firstItem.description });
+        if (product) {
+          await Purchase.create({
+            userId,
+            productId: product._id,
+            sessionId: session.id,
+            customerEmail: session.customer_email,
+            amount: (session.amount_total || 0) / 100,
+            quantity: firstItem.quantity,
+            status: "complete",
+          });
+          console.log("Purchase saved:", session.id);
+        } else {
+          console.warn("Product not found:", firstItem.description);
+        }
       }
     }
+
+    // if (event.type === "checkout.session.completed") {
+    //   const session = event.data.object as Stripe.Checkout.Session;
+
+    //   const lineItems = await stripe.checkout.sessions.listLineItems(
+    //     session.id
+    //   );
+    //   //console.log("Line items:", lineItems.data);
+
+    //   const firstItem = lineItems.data[0];
+    //   const product = firstItem?.description
+    //     ? await Product.findOne({ title: firstItem.description })
+    //     : null;
+    //   console.log("📦 Saving purchase for session:", session.id);
+    //   if (product) {
+    //     await Purchase.create({
+    //       productId: product._id,
+    //       sessionId: session.id,
+    //       customerEmail: session.customer_email,
+    //       amount: session.amount_total,
+    //       status: "complete",
+    //     });
+    //     console.log("Purchase saved:", session.id);
+    //   } else {
+    //     console.warn(
+    //       "Product not found for description:",
+    //       firstItem?.description
+    //     );
+    //   }
+    // }
 
     res.json({ received: true });
   }

@@ -17,9 +17,11 @@ interface IOrder extends Document {
     email: string;
     userId: mongoose.Types.ObjectId;
   };
+  stripeSessionId: string;
 }
 
 const orderSchema = new Schema<IOrder>({
+  stripeSessionId: { type: String, required: true, unique: true },
   products: [
     {
       product: { type: Object, required: true },
