@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 import Order from "../../models/order.js";
 import User from "../../models/user.js";
 import { userAuth } from "../../middleware/auth.js"; // poprawnie
-import type { AuthenticatedRequest } from "../../types/express"; // jeśli masz typ rozszerzający Request
+//import type { AuthenticatedRequest } from ""; // jeśli masz typ rozszerzający Request
 
 const router = express.Router();
 
@@ -12,53 +12,50 @@ const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 // ✅ 1️⃣ Tworzenie sesji płatności Stripe Checkout
-router.post(
-  "/cart-checkout-session",
-  userAuth,
-  async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const { items } = req.body;
+router.post("/cart-checkout-session", userAuth, async (req, res) => {
+  try {
+    const { items } = req.body;
+    //console.log("req body:", req.body, "req user", req.user);
 
-      if (!items || !Array.isArray(items) || items.length === 0) {
-        return res.status(400).json({ error: "Brak produktów w koszyku" });
-      }
-
-      if (!req.user) {
-        return res.status(401).json({ error: "Użytkownik nieautoryzowany" });
-      }
-
-      const productIds = items.map((item) => item._id.toString());
-      // Stripe line_items
-      const lineItems = items.map((item) => ({
-        price_data: {
-          currency: "pln",
-          product_data: { name: item.title },
-          unit_amount: Math.round(item.price * 100),
-        },
-        quantity: item.quantity,
-      }));
-
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        mode: "payment",
-        line_items: lineItems,
-        success_url: `http://localhost:5173/cart-return?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `http://localhost:5173/cart-cancel`,
-        customer_email: req.user.email,
-        metadata: {
-          userId: req.user._id.toString(),
-          email: req.user.email,
-          productIds: productIds.join(","),
-        },
-      });
-
-      res.json({ url: session.url });
-    } catch (err) {
-      console.error("Stripe error:", err);
-      res.status(500).json({ error: "Błąd tworzenia sesji płatności" });
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: "Brak produktów w koszyku" });
     }
+
+    if (!req.user) {
+      return res.status(401).json({ error: "Użytkownik nieautoryzowany" });
+    }
+
+    const productIds = items.map((item) => item._id.toString());
+    // Stripe line_items
+    const lineItems = items.map((item) => ({
+      price_data: {
+        currency: "pln",
+        product_data: { name: item.title },
+        unit_amount: Math.round(item.price * 100),
+      },
+      quantity: item.quantity,
+    }));
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items: lineItems,
+      success_url: `http://localhost:5173/cart-return?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `http://localhost:5173/cart-cancel`,
+      customer_email: req.user.email,
+      metadata: {
+        userId: req.user._id.toString(),
+        email: req.user.email,
+        productIds: productIds.join(","),
+      },
+    });
+
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error("Stripe error:", err);
+    res.status(500).json({ error: "Błąd tworzenia sesji płatności" });
   }
-);
+});
 
 // ✅ 2️⃣ Sprawdzanie statusu i zapisywanie zamówienia
 router.get(
