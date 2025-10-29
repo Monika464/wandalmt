@@ -18,6 +18,7 @@ interface IOrder extends Document {
     userId: mongoose.Types.ObjectId;
   };
   stripeSessionId: string;
+  createdAt: Date;
 }
 
 const orderSchema = new Schema<IOrder>({
@@ -37,6 +38,10 @@ const orderSchema = new Schema<IOrder>({
       type: Schema.Types.ObjectId,
       required: true,
       ref: "User",
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
     },
   },
 });

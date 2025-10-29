@@ -2,23 +2,20 @@ import express from "express";
 import { userAuth } from "middleware/auth.js";
 import Product from "models/product.js";
 import Stripe from "stripe";
+import Order from "../../models/order.js";
+import mongoose from "mongoose";
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-router.post("/create-checkout-session", userAuth, async (req, res) => {
+router.post("/checkout-session", userAuth, async (req, res) => {
   try {
     const { productId } = req.body;
     const user = req.user;
-    console.log("Creating checkout session for user:", user);
-    // Pobierz produkt po ID
+
     const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({ error: "Product not found" });
-    }
+    if (!product) return res.status(404).json({ error: "Product not found" });
 
     const session = await stripe.checkout.sessions.create({
-      ui_mode: "embedded",
       payment_method_types: ["card"],
       mode: "payment",
       line_items: [
@@ -31,65 +28,107 @@ router.post("/create-checkout-session", userAuth, async (req, res) => {
           quantity: 1,
         },
       ],
-      // metadata: { userId: user._id.toString() },
-      //success_url: "http://localhost:5173/success",
-      //cancel_url: "http://localhost:5173/cancel",
-      customer_email: user!.email,
-      metadata: { userId: user!._id.toString() },
-      return_url:
+      customer_email: user.email,
+      metadata: {
+        userId: user._id.toString(),
+        productId: product._id.toString(),
+      },
+      success_url:
         "http://localhost:5173/return?session_id={CHECKOUT_SESSION_ID}",
+      cancel_url: "http://localhost:5173/cancel",
     });
-    //res.json({ id: session.id }); // zwracasz session.id
-    //console.log("Stripe session created:", session);
-    res.json({ client_secret: session.client_secret });
+
+    res.json({ url: session.url });
   } catch (error) {
     console.error("Stripe error:", error);
     res.status(500).json({ error: error.message });
   }
 });
-// router.post("/create-cart-checkout-session", async (req, res) => {
-//   try {
-//     const { cart, userId } = req.body;
+router.get("/session-status", userAuth, async (req, res) => {
+  try {
+    console.log("Checking single product session status backend");
 
-//     if (!cart || cart.length === 0) {
-//       return res.status(400).json({ error: "Koszyk jest pusty" });
-//     }
+    const { session_id } = req.query;
+    if (!session_id) {
+      return res.status(400).json({ error: "Brak session_id w zapytaniu" });
+    }
 
-//     const lineItems = cart.map((item) => ({
-//       price_data: {
-//         currency: "pln",
-//         product_data: { name: item.title },
-//         unit_amount: item.price * 100,
-//       },
-//       quantity: item.quantity,
-//     }));
+    const session = await stripe.checkout.sessions.retrieve(session_id, {
+      expand: ["line_items.data.price.product"],
+    });
 
-//     const session = await stripe.checkout.sessions.create({
-//       ui_mode: "embedded",
-//       payment_method_types: ["card"],
-//       mode: "payment",
-//       line_items: lineItems,
-//       metadata: { userId: String(userId) },
-//       return_url:
-//         "http://localhost:5173/cart-return?session_id={CHECKOUT_SESSION_ID}",
-//     });
+    if (session.payment_status !== "paid") {
+      return res.json({
+        status: "pending",
+        message: "⏳ Płatność w trakcie przetwarzania",
+      });
+    }
 
-//     res.json({ client_secret: session.client_secret });
-//   } catch (err) {
-//     console.error("Stripe cart error:", err);
-//     res.status(500).json({ error: err.message });
-//   }
-// });
+    // Płatność zakończona sukcesem
+    const userEmail = session.customer_email || req.user?.email;
+    const userId = session.metadata?.userId;
 
-router.get("/session-status", async (req, res) => {
-  const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
-  // console.log("Retrieveduu session:", session);
-  res.send({
-    message:
-      session.status === "complete"
-        ? "Płatność zakończona sukcesem 🎉"
-        : "Płatność nie została ukończona ❌",
-  });
+    // Sprawdź, czy zamówienie już istnieje
+    const existing = await Order.findOne({ stripeSessionId: session.id });
+
+    if (!existing) {
+      console.log("Creating new order...");
+
+      const lineItem = session.line_items?.data[0];
+      const productId = session.metadata?.productId;
+
+      const order = new Order({
+        stripeSessionId: session.id,
+        products: [
+          {
+            product: {
+              _id: productId
+                ? new mongoose.Types.ObjectId(productId)
+                : undefined,
+              title: lineItem?.description || "Brak tytułu",
+              price: (lineItem?.amount_total || 0) / 100,
+              description: lineItem?.description || "",
+              imageUrl: "",
+              content: "",
+              userId: new mongoose.Types.ObjectId(userId),
+            },
+            quantity: lineItem?.quantity || 1,
+          },
+        ],
+        user: {
+          email: userEmail,
+          userId: new mongoose.Types.ObjectId(userId),
+        },
+      });
+
+      await order.save();
+      console.log("✅ Order saved for single product!");
+    } else {
+      console.log("Order already exists, skipping save");
+    }
+
+    return res.json({
+      status: "complete",
+      message: "✅ Płatność zakończona sukcesem",
+    });
+  } catch (err) {
+    console.error("Payment status error:", err.message || err);
+    res
+      .status(500)
+      .json({ error: err.message || "Błąd podczas sprawdzania płatności" });
+  }
 });
+
+// router.get("/session-status", async (req, res) => {
+//   const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+//   // console.log("Retrieveduu session:", session);
+//   res.json({
+//     status: session.status,
+//     message:
+//       session.status === "complete"
+//         ? "Płatność zakończona sukcesem 🎉"
+//         : "Płatność nie została ukończona ❌",
+//   });
+// });
 
 export default router;

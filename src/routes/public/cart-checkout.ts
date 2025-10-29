@@ -14,6 +14,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 // ✅ 1️⃣ Tworzenie sesji płatności Stripe Checkout
 router.post("/cart-checkout-session", userAuth, async (req, res) => {
   try {
+    console.log("Creating cart checkout session backend");
     const { items } = req.body;
     //console.log("req body:", req.body, "req user", req.user);
 
@@ -63,6 +64,7 @@ router.get(
   userAuth,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
+      console.log("Checking cart session status backend");
       const { session_id } = req.query;
       if (!session_id) {
         console.log("No session_id in query");
