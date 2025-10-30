@@ -8,8 +8,8 @@ import productRouter from "./routes/public/products.js";
 import resourceRouter from "./routes/public/resources.js";
 import uploadRouter from "./routes/upload.js";
 import checkoutRouter from "./routes/public/checkout.js";
-import purchaseRoutes from "./routes/public/purchase.js";
-import webhookRoutes from "./routes/webhook.js";
+//import purchaseRoutes from "./routes/public/purchase.js";
+import stripeWebhookRouter from "./routes/stripeWebhook.js";
 import cartCheckoutRouter from "./routes/public/cart-checkout.js";
 //import myOrdersRouter from "./routes/public/orders.js";
 //import stripeWebhookRouter from "./routes/public/cart/stripeWebhook.js";
@@ -20,7 +20,7 @@ dotenv.config();
 connectDB();
 const app = express();
 
-app.use("/webhook", webhookRoutes);
+app.use("/api", stripeWebhookRouter);
 app.use(express.json());
 //app.use("/api", myOrdersRouter);
 
@@ -42,7 +42,7 @@ app.use("/", resourceRouter);
 app.use("/api", uploadRouter);
 app.use("/", checkoutRouter);
 app.use("/", cartCheckoutRouter);
-app.use("/", purchaseRoutes);
+//app.use("/", purchaseRoutes);
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");

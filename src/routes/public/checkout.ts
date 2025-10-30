@@ -46,7 +46,7 @@ router.post("/checkout-session", userAuth, async (req, res) => {
 });
 router.get("/session-status", userAuth, async (req, res) => {
   try {
-    console.log("Checking single product session status backend");
+    // console.log("Checking single product session status backend");
 
     const { session_id } = req.query;
     if (!session_id) {
