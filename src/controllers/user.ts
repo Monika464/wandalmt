@@ -1,30 +1,14 @@
 import { Request, Response, NextFunction } from "express";
-import { adminAuth, AuthRequest, userAuth } from "../middleware/auth.js";
 import Product from "../models/product.js";
-import { IUser } from "models/user.js";
 
-// interface IAuthRequest extends Request {
-//   body: IAuthRequestBody;
-//   user?: IUser | null;
-//   token?: string;
-// }
-
-// interface IAuthRequestBody {
-//   email: string;
-//   password: string;
-//   name?: string;
-//   surname?: string;
-//   role?: "user" | "admin";
-// }
-
-interface IDeleteCartProductRequest extends AuthRequest {
+interface IDeleteCartProductRequest extends Request {
   body: {
     productId: string;
   };
 }
 
 export const addToCartHandler = async (
-  req: AuthRequest,
+  req: Request,
   res: Response
 ): Promise<void> => {
   try {
@@ -53,8 +37,7 @@ export const addToCartHandler = async (
 
 export const deleteCartProductHandler = async (
   req: IDeleteCartProductRequest,
-  res: Response,
-  next: NextFunction
+  res: Response
 ) => {
   try {
     //console.log("req-user", req.user);

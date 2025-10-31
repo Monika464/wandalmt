@@ -11,5 +11,6 @@ const ResourceSchema = new Schema({
     videoUrl: { type: String },
     productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
     chapters: [ChapterSchema],
+    users: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 }, { timestamps: true });
 export default mongoose.model("Resource", ResourceSchema);

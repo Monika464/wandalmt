@@ -1,19 +1,21 @@
 // routes/resourceRoutes.ts
 import express from "express";
-import { createResource, updateResource, deleteResource, getResourceByProduct, getResourceByProductId, getResourceById, } from "../../controllers/admin/resourceControllers.js";
+import { createResource, updateResource, deleteResource, getResourceByProductId, getResourceById, fetchResources, } from "../../controllers/admin/resourceControllers.js";
 import { addChapter, editChapter, deleteChapter, } from "../../controllers/admin/chapterControllers.js";
 const router = express.Router();
-// Resource
-router.post("/resources", createResource);
-router.put("/resources/:id", updateResource);
-router.delete("/resources/:id", deleteResource);
-router.get("/resources/:productId", getResourceByProduct);
-router.get("/resources/id/:id", getResourceById);
-router.get("/resources/:productId", getResourceByProductId);
+import { adminAuth } from "middleware/auth.js";
+// Fetch all resources
+router.get("/resources", adminAuth, fetchResources);
+router.post("/resources", adminAuth, createResource);
+router.put("/resources/:id", adminAuth, updateResource);
+router.delete("/resources/:id", adminAuth, deleteResource);
+//router.get("/resources/:productId", getResourceByProduct);
+router.get("/resources/id/:id", adminAuth, getResourceById);
+router.get("/resources/product/:productId", adminAuth, getResourceByProductId);
 // Chapters
-router.post("/resources/:id/chapters", addChapter);
-router.put("/resources/:id/chapters/:chapterId", editChapter);
-router.delete("/resources/:id/chapters/:chapterId", deleteChapter);
+router.post("/resources/:id/chapters", adminAuth, addChapter);
+router.put("/resources/:id/chapters/:chapterId", adminAuth, editChapter);
+router.delete("/resources/:id/chapters/:chapterId", adminAuth, deleteChapter);
 export default router;
 // import express from "express";
 // import { adminAuth } from "../../middleware/auth.js";

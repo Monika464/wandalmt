@@ -4,7 +4,6 @@ import {
   createResource,
   updateResource,
   deleteResource,
-  getResourceByProduct,
   getResourceByProductId,
   getResourceById,
   fetchResources,

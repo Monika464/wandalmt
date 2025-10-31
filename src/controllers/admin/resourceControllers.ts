@@ -46,17 +46,6 @@ export const fetchResources = async (req: Request, res: Response) => {
   }
 };
 
-// export const fetchResources = async (res: Response) => {
-//   try {
-//     const resources = await Resource.find();
-//     res.status(200).json(resources);
-//     //console.log("resources", resources);
-//   } catch (error) {
-//     console.error("Error fetching  resorces:", error);
-//     res.status(500).json({ error: "Błąd serwera" });
-//   }
-// };
-
 // CREATE Resource
 export const createResource = async (
   req: Request,
@@ -118,26 +107,6 @@ export const deleteResource = async (
     });
   }
 };
-
-// GET Resource by productId
-// export const getResourceByProduct = async (
-//   req: Request,
-//   res: Response
-// ): Promise<void> => {
-//   try {
-//     const resource = await Resource.findOne({
-//       productId: req.params.productId,
-//     });
-//     console.log("getResourceByProduct", resource);
-//     // if (!resource) return res.status(404).json({ error: "Resource not found" });
-//     if (!resource) return;
-//     res.json(resource);
-//   } catch (error) {
-//     res.status(500).json({
-//       error: error instanceof Error ? error.message : "Unknown error",
-//     });
-//   }
-// };
 
 ///resources/:productId
 export const getResourceByProductId = async (req: Request, res: Response) => {

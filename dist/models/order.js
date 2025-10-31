@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 const orderSchema = new Schema({
+    stripeSessionId: { type: String, required: true, unique: true },
     products: [
         {
             product: { type: Object, required: true },
@@ -16,6 +17,10 @@ const orderSchema = new Schema({
             type: Schema.Types.ObjectId,
             required: true,
             ref: "User",
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now,
         },
     },
 });

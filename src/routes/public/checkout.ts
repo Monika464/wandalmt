@@ -6,14 +6,18 @@ import Order from "../../models/order.js";
 import mongoose from "mongoose";
 
 const router = express.Router();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-router.post("/checkout-session", userAuth, async (req, res) => {
+//const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+router.post("/checkout-session", userAuth, async (req, res): Promise<void> => {
   try {
-    const { productId } = req.body;
-    const user = req.user;
+    const { productId } = req.body as { productId: string };
+    const user = req.user!;
 
     const product = await Product.findById(productId);
-    if (!product) return res.status(404).json({ error: "Product not found" });
+    if (!product) {
+      res.status(404).json({ error: "Product not found" });
+      return;
+    }
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -31,7 +35,7 @@ router.post("/checkout-session", userAuth, async (req, res) => {
       customer_email: user.email,
       metadata: {
         userId: user._id.toString(),
-        productId: product._id.toString(),
+        productId: (product._id as string).toString(),
       },
       success_url:
         "http://localhost:5173/return?session_id={CHECKOUT_SESSION_ID}",
@@ -41,27 +45,34 @@ router.post("/checkout-session", userAuth, async (req, res) => {
     res.json({ url: session.url });
   } catch (error) {
     console.error("Stripe error:", error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      error: (error as Error).message,
+    });
   }
 });
-router.get("/session-status", userAuth, async (req, res) => {
+router.get("/session-status", userAuth, async (req, res): Promise<void> => {
   try {
     // console.log("Checking single product session status backend");
 
     const { session_id } = req.query;
     if (!session_id) {
-      return res.status(400).json({ error: "Brak session_id w zapytaniu" });
+      res.status(400).json({ error: "Brak session_id w zapytaniu" });
+      return;
     }
 
-    const session = await stripe.checkout.sessions.retrieve(session_id, {
-      expand: ["line_items.data.price.product"],
-    });
+    const session = await stripe.checkout.sessions.retrieve(
+      session_id as string,
+      {
+        expand: ["line_items.data.price.product"],
+      }
+    );
 
     if (session.payment_status !== "paid") {
-      return res.json({
+      res.json({
         status: "pending",
         message: "⏳ Płatność w trakcie przetwarzania",
       });
+      return;
     }
 
     // Płatność zakończona sukcesem
@@ -107,28 +118,17 @@ router.get("/session-status", userAuth, async (req, res) => {
       console.log("Order already exists, skipping save");
     }
 
-    return res.json({
+    res.json({
       status: "complete",
       message: "✅ Płatność zakończona sukcesem",
     });
+    return;
   } catch (err) {
-    console.error("Payment status error:", err.message || err);
-    res
-      .status(500)
-      .json({ error: err.message || "Błąd podczas sprawdzania płatności" });
+    console.error("Payment status error:", (err as Error).message || err);
+    res.status(500).json({
+      error: (err as Error).message || "Błąd podczas sprawdzania płatności",
+    });
   }
 });
-
-// router.get("/session-status", async (req, res) => {
-//   const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
-//   // console.log("Retrieveduu session:", session);
-//   res.json({
-//     status: session.status,
-//     message:
-//       session.status === "complete"
-//         ? "Płatność zakończona sukcesem 🎉"
-//         : "Płatność nie została ukończona ❌",
-//   });
-// });
 
 export default router;

@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "defaultsecret";
 export const adminAuth = async (req, res, next) => {
     try {
         const token = req.header("Authorization")?.replace("Bearer ", "");
-        //console.log("Token received:", token);
+        //console.log("Token received by backend:", token);
         if (!token) {
             res.status(401).json({ error: "Token is missing" });
             return;
@@ -54,6 +54,7 @@ export const userAuth = async (req, res, next) => {
         const user = await User.findById(decoded._id);
         if (!user) {
             res.status(404).json({ error: "User not found" });
+            return;
         }
         req.user = user;
         next();
@@ -62,17 +63,3 @@ export const userAuth = async (req, res, next) => {
         res.status(401).send({ error: "Please authenticate" });
     }
 };
-// export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
-//   const authHeader = req.headers.authorization;
-//   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-//     return res.status(401).json({ error: "Brak tokena, nieautoryzowany" });
-//   }
-//   const token = authHeader.split(" ")[1];
-//   try {
-//     const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
-//     (req as any).user = decoded; // przypisujesz użytkownika do req
-//     next();
-//   } catch (err) {
-//     return res.status(401).json({ error: "Nieprawidłowy token" });
-//   }
-// };

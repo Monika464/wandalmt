@@ -2,23 +2,15 @@ import User, { IUser } from "../models/user.js";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import mongoose, { Types } from "mongoose";
+import mongoose from "mongoose";
 
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET || "defaultsecret";
 
-export interface AuthRequest extends Request {
-  user?: IUser | null;
-  token?: string;
-}
-
 // export interface AuthRequest extends Request {
-//   user?: {
-//     _id: mongoose.Types.ObjectId;
-//     role: string;
-//     [key: string]: any;
-//   };
+//   user?: mongoose.Document<unknown, any, IUser> & IUser;
+//   //user?: IUser | null;
 //   token?: string;
 // }
 
@@ -29,7 +21,7 @@ interface DecodedToken {
 
 //admin auth
 export const adminAuth = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -74,10 +66,10 @@ export const adminAuth = async (
 //userAuth
 
 export const userAuth = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
-) => {
+): Promise<void> => {
   try {
     const token = req.header("Authorization")?.replace("Bearer ", "");
     if (!token) {
@@ -90,7 +82,8 @@ export const userAuth = async (
     // Pobieramy pełnego użytkownika z bazy
     const user = await User.findById(decoded._id);
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      res.status(404).json({ error: "User not found" });
+      return;
     }
 
     req.user = user;
@@ -99,21 +92,3 @@ export const userAuth = async (
     res.status(401).send({ error: "Please authenticate" });
   }
 };
-
-// export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
-//   const authHeader = req.headers.authorization;
-
-//   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-//     return res.status(401).json({ error: "Brak tokena, nieautoryzowany" });
-//   }
-
-//   const token = authHeader.split(" ")[1];
-
-//   try {
-//     const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
-//     (req as any).user = decoded; // przypisujesz użytkownika do req
-//     next();
-//   } catch (err) {
-//     return res.status(401).json({ error: "Nieprawidłowy token" });
-//   }
-// };

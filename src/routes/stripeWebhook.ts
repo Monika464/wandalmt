@@ -4,28 +4,34 @@ import Order from "../models/order.js"; // lub purchase.js – zależnie co zapi
 import mongoose from "mongoose";
 
 const router = express.Router();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2025-09-30.clover",
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 router.get("/test", (req, res) => {
   res.send("Webhook router działa!");
 });
-// ⚠️ WAŻNE: ten endpoint musi używać express.raw(), nie express.json()
+
 router.post(
   "/webhook",
   express.raw({ type: "application/json" }),
-  async (req, res) => {
+  async (req, res): Promise<void> => {
     console.log("🔔 Stripe webhook received");
     const sig = req.headers["stripe-signature"];
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    // 🔹 Zabezpieczenie — brak sygnatury = odrzuć
+    if (!sig || !webhookSecret) {
+      console.error("❌ Missing Stripe signature or secret");
+      res.status(400).send("Missing Stripe signature or secret");
+      return;
+    }
 
     let event;
     try {
       event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
     } catch (err) {
-      console.error("❌ Invalid Stripe signature:", err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
+      console.error("❌ Invalid Stripe signature:", (err as Error).message);
+      res.status(400).send(`Webhook Error: ${(err as Error).message}`);
+      return;
     }
 
     // 🔹 Obsługa zdarzenia zakończonej płatności
@@ -38,7 +44,8 @@ router.post(
         const existing = await Order.findOne({ stripeSessionId: session.id });
         if (existing) {
           console.log("ℹ️ Order already exists, skipping.");
-          return res.status(200).send("Already processed");
+          res.status(200).send("Already processed");
+          return;
         }
 
         // Pobierz szczegóły zakupionych produktów

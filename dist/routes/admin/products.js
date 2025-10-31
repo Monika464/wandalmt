@@ -5,12 +5,13 @@ import { body } from "express-validator";
 const router = express.Router();
 //create product
 router.post("/products", adminAuth, createProduct);
+//fetch products
+router.get("/products", adminAuth, fetchProducts);
 //fetch product
 router.get("/products/:id", adminAuth, fetchProduct);
 //edit product
 router.put("/products/:productId", adminAuth, postEditProduct);
 router.get("/products/:productId", adminAuth, getEditProduct);
-router.get("/products", fetchProducts);
 router.get("/edit-product/:productId", adminAuth, getEditProduct);
 router.patch("/edit-product/:productId", [
     body("productId").isMongoId(),

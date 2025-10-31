@@ -1,5 +1,43 @@
 //RESOURCE CONTROLLERS
 import Resource from "../../models/resource.js";
+//FETCH ALL RESOURCES
+export const fetchResources = async (req, res) => {
+    try {
+        // --- 1️⃣ Pobierz parametry zapytania ---
+        const page = parseInt(req.query.page) || 1;
+        const pageSize = parseInt(req.query.pageSize) || 20;
+        const q = req.query.q || "";
+        const sortField = req.query.sortField || "createdAt";
+        const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
+        // --- 2️⃣ Zbuduj filtr wyszukiwania ---
+        const filter = {};
+        if (q) {
+            filter.$or = [
+                { title: new RegExp(q, "i") }, // wyszukiwanie po nazwie (case-insensitive)
+                { content: new RegExp(q, "i") },
+            ];
+        }
+        // --- 3️⃣ Policz całkowitą liczbę zasobów ---
+        const total = await Resource.countDocuments(filter);
+        // --- 4️⃣ Pobierz zasoby z paginacją ---
+        const items = await Resource.find(filter)
+            .sort({ [sortField]: sortOrder })
+            .skip((page - 1) * pageSize)
+            .limit(pageSize)
+            .lean(); // .lean() = szybsze, zwraca zwykłe obiekty JS
+        // --- 5️⃣ Zwróć dane ---
+        res.status(200).json({
+            items, // lista zasobów
+            total, // łączna liczba zasobów (dla paginacji)
+            page, // aktualna strona
+            pageSize, // ilość elementów na stronie
+        });
+    }
+    catch (error) {
+        console.error("❌ Error fetching resources:", error);
+        res.status(500).json({ error: "Błąd serwera" });
+    }
+};
 // CREATE Resource
 export const createResource = async (req, res) => {
     try {
@@ -11,7 +49,7 @@ export const createResource = async (req, res) => {
             videoUrl,
             chapters: [],
         });
-        console.log("resource", resource);
+        //console.log("resource", resource);
         await resource.save();
         res.status(201).json(resource);
     }
@@ -39,6 +77,7 @@ export const updateResource = async (req, res) => {
     }
 };
 // DELETE Resource
+// DELETE /api/resources/:id
 export const deleteResource = async (req, res) => {
     try {
         const deleted = await Resource.findByIdAndDelete(req.params.id);
@@ -53,25 +92,10 @@ export const deleteResource = async (req, res) => {
         });
     }
 };
-// GET Resource by productId
-export const getResourceByProduct = async (req, res) => {
-    try {
-        const resource = await Resource.findOne({
-            productId: req.params.productId,
-        });
-        // if (!resource) return res.status(404).json({ error: "Resource not found" });
-        if (!resource)
-            return;
-        res.json(resource);
-    }
-    catch (error) {
-        res.status(500).json({
-            error: error instanceof Error ? error.message : "Unknown error",
-        });
-    }
-};
+///resources/:productId
 export const getResourceByProductId = async (req, res) => {
     const { productId } = req.params;
+    //console.log("getResourceByProductId", productId);
     try {
         const resource = await Resource.findOne({ productId });
         if (!resource) {
@@ -86,9 +110,10 @@ export const getResourceByProductId = async (req, res) => {
             .json({ error: err instanceof Error ? err.message : "Server error" });
     }
 };
-// GET /admin/resources/id/:id
+///resources/id/:id
 export const getResourceById = async (req, res) => {
     const { id } = req.params;
+    // console.log("getResourceById", id);
     try {
         const resource = await Resource.findById(id);
         if (!resource) {

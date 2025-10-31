@@ -21,7 +21,7 @@ export const addToCartHandler = async (req, res) => {
         res.status(500).json({ error: "An error has occurred" });
     }
 };
-export const deleteCartProductHandler = async (req, res, next) => {
+export const deleteCartProductHandler = async (req, res) => {
     try {
         //console.log("req-user", req.user);
         const prodId = req.body.productId;
