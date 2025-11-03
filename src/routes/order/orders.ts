@@ -32,6 +32,7 @@ router.get("/user", userAuth, async (req: Request, res: Response) => {
     const orders = await Order.find({ "user.userId": req.user._id }).sort({
       createdAt: -1,
     });
+
     res.status(200).json(orders);
   } catch (error) {
     console.error("Błąd przy pobieraniu zamówień użytkownika:", error);
