@@ -11,8 +11,7 @@ import checkoutRouter from "./routes/public/checkout.js";
 //import purchaseRoutes from "./routes/public/purchase.js";
 import stripeWebhookRouter from "./routes/stripeWebhook.js";
 import cartCheckoutRouter from "./routes/public/cart-checkout.js";
-//import myOrdersRouter from "./routes/public/orders.js";
-//import stripeWebhookRouter from "./routes/public/cart/stripeWebhook.js";
+import orderRoutes from "./routes/order/orders.js";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -42,7 +41,7 @@ app.use("/", resourceRouter);
 app.use("/api", uploadRouter);
 app.use("/", checkoutRouter);
 app.use("/", cartCheckoutRouter);
-//app.use("/", purchaseRoutes);
+app.use("/api/orders", orderRoutes);
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");

@@ -38,6 +38,7 @@ router.post("/login", async (req, res): Promise<void> => {
 
     const token = await user.generateAuthToken();
     res.status(200).send({ user, token });
+
     //res.send({ user, token });
   } catch (e) {
     res.status(400).send({ error: (e as Error).message });
@@ -139,12 +140,16 @@ router.post(
   async (req: IAuthRequest, res: Response): Promise<void> => {
     try {
       if (!req.user || !req.token) {
+        res.status(401).json({
+          message: "Brak autoryzacji (user lub token nie znaleziony)",
+        });
         return;
       }
       req.user.tokens = req.user.tokens.filter(
         (t: { token: string }) => t.token !== req.token
       );
       await req.user.save();
+
       //console.log("req.user", req.user);
       res.status(200).send({ message: "Logged out successfully" });
     } catch (e) {

@@ -8,12 +8,6 @@ dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET || "defaultsecret";
 
-// export interface AuthRequest extends Request {
-//   user?: mongoose.Document<unknown, any, IUser> & IUser;
-//   //user?: IUser | null;
-//   token?: string;
-// }
-
 interface DecodedToken {
   _id: string;
   role: string;
@@ -87,6 +81,7 @@ export const userAuth = async (
     }
 
     req.user = user;
+    req.token = token;
     next();
   } catch (error) {
     res.status(401).send({ error: "Please authenticate" });
