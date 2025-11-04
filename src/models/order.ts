@@ -39,10 +39,10 @@ const orderSchema = new Schema<IOrder>({
       required: true,
       ref: "User",
     },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
 });
 
