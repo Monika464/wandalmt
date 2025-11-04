@@ -19,6 +19,7 @@ interface IOrder extends Document {
   };
   stripeSessionId: string;
   createdAt: Date;
+  refundedAt: Date | null;
 }
 
 const orderSchema = new Schema<IOrder>({
@@ -44,6 +45,7 @@ const orderSchema = new Schema<IOrder>({
     type: Date,
     default: Date.now,
   },
+  refundedAt: { type: Date, default: null },
 });
 
 const Order = mongoose.model("Order", orderSchema);

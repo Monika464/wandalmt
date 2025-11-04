@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import mongoose from "mongoose";
 import Order from "../../models/order.js";
 import { adminAuth, userAuth } from "../../middleware/auth.js"; // zakładam, że masz AuthRequest z userem
-
+import Resource from "../../models/resource.js";
 const router = express.Router();
 
 /**
@@ -19,9 +19,31 @@ router.get("/", adminAuth, async (req: Request, res: Response) => {
   }
 });
 
+// /**
+//  * GET /api/orders/user
+//  * 📦 Zwraca zamówienia zalogowanego użytkownika
+//  */
+// router.get("/user", userAuth, async (req: Request, res: Response) => {
+//   try {
+//     if (!req.user?._id) {
+//       return res.status(401).json({ message: "Brak autoryzacji" });
+//     }
+
+//     const orders = await Order.find({ "user.userId": req.user._id }).sort({
+//       createdAt: -1,
+//     });
+
+//     res.status(200).json(orders);
+//   } catch (error) {
+//     console.error("Błąd przy pobieraniu zamówień użytkownika:", error);
+//     res
+//       .status(500)
+//       .json({ message: "Błąd serwera przy pobieraniu zamówień użytkownika" });
+//   }
+//});
 /**
  * GET /api/orders/user
- * 📦 Zwraca zamówienia zalogowanego użytkownika
+ * 📦 Zwraca zamówienia zalogowanego użytkownika wraz z zasobami produktów
  */
 router.get("/user", userAuth, async (req: Request, res: Response) => {
   try {
@@ -29,16 +51,45 @@ router.get("/user", userAuth, async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Brak autoryzacji" });
     }
 
-    const orders = await Order.find({ "user.userId": req.user._id }).sort({
-      createdAt: -1,
-    });
+    // 🔹 Pobierz zamówienia tylko tego użytkownika
+    const orders = await Order.find({ "user.userId": req.user._id })
+      .populate({
+        path: "user",
+        select: "email name",
+      })
+      .populate({
+        path: "products.product",
+      })
+      .sort({ createdAt: -1 });
 
-    res.status(200).json(orders);
+    // 🔹 Dociągnij zasoby (Resource) dla każdego produktu
+    const ordersWithResources = await Promise.all(
+      orders.map(async (order) => {
+        const enrichedProducts = await Promise.all(
+          order.products.map(async (item: any) => {
+            const resources = await Resource.find({
+              productId: item.product._id,
+            });
+            return {
+              ...item.toObject(),
+              resources,
+            };
+          })
+        );
+
+        return {
+          ...order.toObject(),
+          products: enrichedProducts,
+        };
+      })
+    );
+
+    res.status(200).json(ordersWithResources);
   } catch (error) {
     console.error("Błąd przy pobieraniu zamówień użytkownika:", error);
-    res
-      .status(500)
-      .json({ message: "Błąd serwera przy pobieraniu zamówień użytkownika" });
+    res.status(500).json({
+      message: "Błąd serwera przy pobieraniu zamówień użytkownika",
+    });
   }
 });
 
