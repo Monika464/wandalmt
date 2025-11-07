@@ -29,7 +29,7 @@ const productSchema = new Schema<IProduct>(
       type: String,
       required: true,
     },
-    content: { type: String, required: true },
+    //content: { type: String, required: true },
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
