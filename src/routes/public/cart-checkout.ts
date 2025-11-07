@@ -2,9 +2,9 @@ import express, { Request, Response } from "express";
 import Stripe from "stripe";
 import mongoose from "mongoose";
 import Order from "../../models/order.js";
-//import User from "../../models/user.js";
+import User from "../../models/user.js";
+import Resource from "../../models/resource.js";
 import { userAuth } from "../../middleware/auth.js"; // poprawnie
-//import type { AuthenticatedRequest } from "../../../types/express.js";
 
 const router = express.Router();
 
@@ -95,6 +95,7 @@ router.get(
       }
 
       if (session.payment_status === "paid") {
+        const userId = session.metadata?.userId;
         const userEmail = session.customer_email || req.user?.email;
         const productIds = session.metadata?.productIds
           ? session.metadata.productIds.split(",")
@@ -140,9 +141,34 @@ router.get(
           await order.save();
           console.log("Order saved!");
         } else {
-          console.log("Order already exists, skipping save");
+          //console.log("Order already exists, skipping save");
+        }
+        ////
+
+        // 🔹 Pobierz zasoby (resources) powiązane z zakupionymi produktami
+        const resources = await Resource.find({
+          productId: { $in: productIds },
+        }).select("_id");
+
+        // console.log("🔹 Resources found for products:", resources);
+
+        if (resources.length > 0) {
+          // 🔹 Dodaj zasoby do użytkownika (bez duplikatów)
+          const updateResult = await User.updateOne(
+            { _id: userId },
+            {
+              $addToSet: {
+                resources: { $each: resources.map((r) => r._id) },
+              },
+            }
+          );
+
+          console.log("🔹 User resources updated:", updateResult);
+        } else {
+          console.log("⚠️ Brak zasobów do przypisania użytkownikowi");
         }
 
+        ////
         res.json({
           status: "complete",
           message: "✅ Płatność zakończona sukcesem",

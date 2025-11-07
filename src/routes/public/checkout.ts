@@ -3,6 +3,8 @@ import { userAuth } from "middleware/auth.js";
 import Product from "models/product.js";
 import Stripe from "stripe";
 import Order from "../../models/order.js";
+import User from "../../models/user.js";
+import Resource from "../../models/resource.js";
 import mongoose from "mongoose";
 
 const router = express.Router();
@@ -115,8 +117,32 @@ router.get("/session-status", userAuth, async (req, res): Promise<void> => {
       await order.save();
       console.log("✅ Order saved for single product!");
     } else {
-      console.log("Order already exists, skipping save");
+      //console.log("Order already exists, skipping save");
     }
+    //
+    // 🔹 Pobierz zasoby (resources) powiązane z zakupionymi produktami
+    const resources = await Resource.find({
+      productId: session.metadata?.productId,
+    }).select("_id");
+
+    //console.log("🔹 Resources found for products:", resources);
+
+    if (resources.length > 0) {
+      // 🔹 Dodaj zasoby do użytkownika (bez duplikatów)
+      const updateResult = await User.updateOne(
+        { _id: userId },
+        {
+          $addToSet: {
+            resources: { $each: resources.map((r) => r._id) },
+          },
+        }
+      );
+
+      //console.log("🔹 User resources updated:", updateResult);
+    } else {
+      console.log("⚠️ Brak zasobów do przypisania użytkownikowi");
+    }
+    //
 
     res.json({
       status: "complete",

@@ -11,6 +11,7 @@ export interface IUser extends Document {
   surname: string;
   role: "user" | "admin";
   resources: mongoose.Types.ObjectId[];
+
   cart: {
     items: ICartItem[];
   };

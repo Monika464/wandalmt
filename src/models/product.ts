@@ -5,10 +5,10 @@ export interface IProduct extends Document {
   price: number;
   description: string;
   imageUrl: string;
-  content: Object;
-  status: Object;
+  content?: Object;
+  status: "draft" | "published" | "archived";
   userId: mongoose.Types.ObjectId;
-  resourceId: mongoose.Types.ObjectId;
+  resourceId?: mongoose.Types.ObjectId;
 }
 
 const productSchema = new Schema<IProduct>(
@@ -29,7 +29,7 @@ const productSchema = new Schema<IProduct>(
       type: String,
       required: true,
     },
-    // content: { type: String, required: true },
+    content: { type: String, required: true },
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -39,11 +39,11 @@ const productSchema = new Schema<IProduct>(
       enum: ["draft", "published", "archived"],
       default: "draft",
     },
-    // resourceId: {
-    //   type: Schema.Types.ObjectId,
-    //   ref: "Resource",
-    //   required: false,
-    // },
+    resourceId: {
+      type: Schema.Types.ObjectId,
+      ref: "Resource",
+      required: false,
+    },
   },
   { timestamps: true }
 );
