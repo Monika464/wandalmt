@@ -76,6 +76,13 @@ router.post(
   adminAuth,
   async (req, res, next): Promise<void> => {
     try {
+      if (!req.user || !req.token) {
+        return;
+      }
+      if (req.user.role !== "admin") {
+        res.status(403).send({ error: "Access denied" });
+        return;
+      }
       const { email, password, name, surname } = req.body;
 
       const existingUser = await User.findOne({ email });
