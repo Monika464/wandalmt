@@ -14,6 +14,7 @@ import cartCheckoutRouter from "./routes/public/cart-checkout.js";
 import orderRoutes from "./routes/order/orders.js";
 
 import dotenv from "dotenv";
+import emailRoutes from "routes/emailRoutes.js";
 dotenv.config();
 
 connectDB();
@@ -42,6 +43,7 @@ app.use("/api", uploadRouter);
 app.use("/", checkoutRouter);
 app.use("/", cartCheckoutRouter);
 app.use("/api/orders", orderRoutes);
+app.use("/api", emailRoutes);
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
