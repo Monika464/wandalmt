@@ -11,6 +11,8 @@ export interface IUser extends Document {
   surname: string;
   role: "user" | "admin";
   resources: mongoose.Types.ObjectId[];
+  resetToken?: string;
+  resetTokenExpiration?: Date;
 
   cart: {
     items: ICartItem[];
@@ -73,6 +75,8 @@ const userSchema = new Schema<IUser>({
       token: { type: String, required: true },
     },
   ],
+  resetToken: String,
+  resetTokenExpiration: Date,
 });
 
 userSchema.statics.findByCredentials = async function (
@@ -151,6 +155,14 @@ userSchema.methods.removeFromCart = async function (
   await user.save();
   return user;
 };
+
+// Hashowanie hasła przed zapisem
+userSchema.pre("save", async function (next) {
+  if (this.isModified("password")) {
+    this.password = await bcrypt.hash(this.password, 10);
+  }
+  next();
+});
 
 const User = mongoose.model<IUser, IUserModel>("User", userSchema);
 

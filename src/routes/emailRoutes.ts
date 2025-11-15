@@ -1,31 +1,137 @@
-// src/routes/emailRoutes.ts
-import express from "express";
-import { sendMail } from "../controllers/emailController.js";
+import { Router, Request, Response } from "express";
+import User from "../models/user.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { mg } from "../utils/mailgunClient.js";
+import { userAuth } from "../middleware/auth.js";
 
-const router = express.Router();
+const router = Router();
 
-router.post("/send-email", sendMail);
-
-// GET /api/test-mail → szybki test wysyłki przez przeglądarkę
-router.get("/test-mail", async (req, res) => {
+// ===========================
+// 1) REQUEST PASSWORD RESET
+// ===========================
+router.post("/request-reset", async (req: Request, res: Response) => {
   try {
-    const { mg } = await import("../utils/mailgunClient.js");
-    const data = await mg.messages.create(
-      process.env.MAILGUN_DOMAIN as string,
-      {
-        from: "Mailgun Test <postmaster@sandbox8ab4b9ccf4124222a10d8734f869e739.mailgun.org>",
-        to: "mkubianka@gmail.com",
-        subject: "✅ Test Mailgun EU",
-        text: "Gratulacje! Twój backend potrafi wysyłać e-maile z EU 🚀",
-      }
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email jest wymagany" });
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      // bezpieczeństwo — udawaj, że wszystko jest OK
+      return res.json({ message: "Email z resetem został wysłany" });
+    }
+
+    // token ważny 15 minut
+    const resetToken = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_RESET_SECRET as string,
+      { expiresIn: "15m" }
     );
-    res
-      .status(200)
-      .json({ success: true, message: "Test email wysłany!", data });
-  } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ success: false, error: error.message });
+
+    const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
+
+    // wysyłka maila przez Mailgun
+    await mg.messages.create(process.env.MAILGUN_DOMAIN!, {
+      from: "Reset Hasła <no-reply@twojadomena.pl>",
+      to: email,
+      subject: "Reset hasła",
+      text: `Kliknij, aby zresetować hasło: ${resetLink}`,
+    });
+
+    res.json({ message: "Email z resetem został wysłany" });
+  } catch (err) {
+    console.error("RESET ERROR:", err);
+    res.status(500).json({ error: "Błąd serwera przy wysyłaniu maila" });
   }
 });
 
+// ===========================
+// 2) RESET PASSWORD
+// ===========================
+router.post("/reset-password", async (req: Request, res: Response) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword)
+      return res.status(400).json({ error: "Brak danych" });
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_RESET_SECRET as string) as {
+        userId: string;
+      };
+    } catch (err) {
+      return res.status(400).json({ error: "Nieprawidłowy lub wygasły token" });
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await User.findByIdAndUpdate(decoded.userId, { password: hashed });
+
+    res.json({ message: "Hasło zostało zmienione" });
+  } catch (err) {
+    res.status(500).json({ error: "Błąd serwera przy zmianie hasła" });
+  }
+});
+
+// ===========================
+// 3) CHANGE EMAIL
+// ===========================
+router.patch(
+  "/change-email",
+  userAuth, // 🔒 WYMAGA bycia zalogowanym
+  async (req: Request, res: Response) => {
+    console.log("change-email called");
+    console.log("BODY:", req.body);
+    try {
+      const { newEmail } = req.body;
+      const userId = (req as any).user.id; // z userAuth
+
+      if (!newEmail)
+        return res.status(400).json({ error: "Nowy email jest wymagany" });
+
+      // sprawdz, czy email jest wolny
+      const exists = await User.findOne({ email: newEmail });
+      if (exists)
+        return res.status(400).json({ error: "Ten email jest już zajęty" });
+
+      await User.findByIdAndUpdate(userId, { email: newEmail });
+
+      res.json({ message: "Email został zmieniony" });
+    } catch (err) {
+      res.status(500).json({ error: "Błąd serwera przy zmianie emaila" });
+    }
+  }
+);
+
 export default router;
+
+// // src/routes/emailRoutes.ts
+// import express from "express";
+// import { sendMail } from "../controllers/emailController.js";
+
+// const router = express.Router();
+
+// router.post("/send-email", sendMail);
+
+// // GET /api/test-mail → szybki test wysyłki przez przeglądarkę
+// router.get("/test-mail", async (req, res) => {
+//   try {
+//     const { mg } = await import("../utils/mailgunClient.js");
+//     const data = await mg.messages.create(
+//       process.env.MAILGUN_DOMAIN as string,
+//       {
+//         from: "Mailgun Test <postmaster@sandbox8ab4b9ccf4124222a10d8734f869e739.mailgun.org>",
+//         to: "mkubianka@gmail.com",
+//         subject: "✅ Test Mailgun EU",
+//         text: "Gratulacje! Twój backend potrafi wysyłać e-maile z EU 🚀",
+//       }
+//     );
+//     res
+//       .status(200)
+//       .json({ success: true, message: "Test email wysłany!", data });
+//   } catch (error: any) {
+//     console.error(error);
+//     res.status(500).json({ success: false, error: error.message });
+//   }
+// });
+
+// export default router;

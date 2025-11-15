@@ -16,6 +16,11 @@ interface IAuthRequest extends Request {
   token?: string;
 }
 import bcrypt from "bcryptjs";
+import {
+  changeEmail,
+  requestPasswordReset,
+  resetPassword,
+} from "controllers/authController.js";
 
 const router = Router();
 
@@ -146,6 +151,7 @@ router.post(
   userAuth,
   async (req: IAuthRequest, res: Response): Promise<void> => {
     try {
+      //console.log("Logout user called", req.user, req.token);
       if (!req.user || !req.token) {
         res.status(401).json({
           message: "Brak autoryzacji (user lub token nie znaleziony)",
@@ -164,5 +170,14 @@ router.post(
     }
   }
 );
+
+// POST /api/auth/request-reset → wysyła maila z linkiem resetującym
+router.post("/request-reset", requestPasswordReset);
+
+// POST /api/auth/reset-password → zmienia hasło po kliknięciu w link
+router.post("/reset-password", resetPassword);
+
+// PATCH /api/auth/change-email → zmienia email (wymaga logowania)
+router.patch("/change-email", userAuth, changeEmail);
 
 export default router;

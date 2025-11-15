@@ -43,7 +43,7 @@ app.use("/api", uploadRouter);
 app.use("/", checkoutRouter);
 app.use("/", cartCheckoutRouter);
 app.use("/api/orders", orderRoutes);
-app.use("/api", emailRoutes);
+app.use("/email", emailRoutes);
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
