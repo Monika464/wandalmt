@@ -35,10 +35,12 @@ router.post("/login", async (req, res): Promise<void> => {
     // );
     if (!user) {
       res.status(400).send({ error: "Niepoprawny email lub hasło" });
+      return;
     }
     // Sprawdzamy rolę, jeśli podano
     if (role && user.role !== role) {
       res.status(403).send({ error: "Nie masz odpowiednich uprawnień" });
+      return;
     }
 
     const token = await user.generateAuthToken();
@@ -59,18 +61,20 @@ router.post("/register", async (req, res): Promise<void> => {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       res.status(400).send({ error: "Użytkownik z tym emailem już istnieje" });
+      return;
     }
-    const hashedPassword = await bcrypt.hash(password, 8);
+
     const user = new User({
       email,
-      password: hashedPassword,
+      password,
       name,
       surname,
       role,
     });
 
     await user.save();
-    res.status(201).send({ message: "User created", user });
+    const token = await user.generateAuthToken();
+    res.status(201).send({ message: "User created", user, token });
   } catch (error) {
     res.status(400).send(error);
   }
@@ -81,10 +85,10 @@ router.post(
   adminAuth,
   async (req, res, next): Promise<void> => {
     try {
-      if (!req.user || !req.token) {
-        return;
-      }
-      if (req.user.role !== "admin") {
+      // if (!req.user || !req.token) {
+      //   return;
+      // }
+      if (!req.user || req.user.role !== "admin") {
         res.status(403).send({ error: "Access denied" });
         return;
       }
@@ -95,15 +99,16 @@ router.post(
         res
           .status(400)
           .json({ error: "Użytkownik z tym emailem już istnieje" });
+        return;
       }
 
       const hashedPassword = await bcrypt.hash(password, 8);
       const user = new User({
         email,
-        password: hashedPassword,
+        password,
         name,
         surname,
-        role: "admin", // wymuszona rola
+        role: "admin",
       });
 
       console.log("Creating admin:", user);
@@ -170,6 +175,22 @@ router.post(
     }
   }
 );
+
+// GET /auth/me
+router.get("/me", userAuth, async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Nieautoryzowany" });
+    }
+
+    // zwracamy sam obiekt usera
+    return res.status(200).json(req.user);
+  } catch (error) {
+    return res.status(500).json({
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+});
 
 // POST /api/auth/request-reset → wysyła maila z linkiem resetującym
 router.post("/request-reset", requestPasswordReset);
