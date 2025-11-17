@@ -14,67 +14,79 @@ console.log("JWT_SECRET:", process.env.JWT_SECRET);
 // ===========================
 // 1) REQUEST PASSWORD RESET
 // ===========================
-router.post("/request-reset", async (req: Request, res: Response) => {
-  try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ error: "Email jest wymagany" });
+router.post(
+  "/request-reset",
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        res.status(400).json({ error: "Email jest wymagany" });
+        return;
+      }
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      // bezpieczeństwo — udawaj, że wszystko jest OK
-      return res.json({ message: "Wyglada na to że nie posiadasz konta" });
+      const user = await User.findOne({ email });
+      if (!user) {
+        // bezpieczeństwo — udawaj, że wszystko jest OK
+        res.json({ message: "Wyglada na to że nie posiadasz konta" });
+        return;
+      }
+
+      // token ważny 15 minut
+      const resetToken = jwt.sign(
+        { userId: user._id },
+        process.env.JWT_RESET_SECRET as string,
+        { expiresIn: "15m" }
+      );
+
+      const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
+
+      // wysyłka maila przez Mailgun
+      await mg.messages.create(process.env.MAILGUN_DOMAIN as string, {
+        from: "Reset Hasła <postmaster@sandbox8ab4b9ccf4124222a10d8734f869e739.mailgun.org>",
+        to: email,
+        subject: "Reset hasła",
+        text: `Kliknij, aby zresetować hasło: ${resetLink}`,
+      });
+
+      res.json({ message: "Email z resetem został wysłany" });
+    } catch (err) {
+      console.error("RESET ERROR:", err);
+      res.status(500).json({ error: "Błąd serwera przy wysyłaniu maila" });
     }
-
-    // token ważny 15 minut
-    const resetToken = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_RESET_SECRET as string,
-      { expiresIn: "15m" }
-    );
-
-    const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
-
-    // wysyłka maila przez Mailgun
-    await mg.messages.create(process.env.MAILGUN_DOMAIN as string, {
-      from: "Reset Hasła <postmaster@sandbox8ab4b9ccf4124222a10d8734f869e739.mailgun.org>",
-      to: email,
-      subject: "Reset hasła",
-      text: `Kliknij, aby zresetować hasło: ${resetLink}`,
-    });
-
-    res.json({ message: "Email z resetem został wysłany" });
-  } catch (err) {
-    console.error("RESET ERROR:", err);
-    res.status(500).json({ error: "Błąd serwera przy wysyłaniu maila" });
   }
-});
+);
 
 // ===========================
 // 2) RESET PASSWORD
 // ===========================
-router.post("/reset-password", async (req: Request, res: Response) => {
-  try {
-    const { token, newPassword } = req.body;
-    if (!token || !newPassword)
-      return res.status(400).json({ error: "Brak danych" });
-
-    let decoded;
+router.post(
+  "/reset-password",
+  async (req: Request, res: Response): Promise<void> => {
     try {
-      decoded = jwt.verify(token, process.env.JWT_RESET_SECRET as string) as {
-        userId: string;
-      };
+      const { token, newPassword } = req.body;
+      if (!token || !newPassword)
+        res.status(400).json({ error: "Brak danych" });
+      return;
+
+      let decoded;
+      try {
+        decoded = jwt.verify(token, process.env.JWT_RESET_SECRET as string) as {
+          userId: string;
+        };
+      } catch (err) {
+        res.status(400).json({ error: "Nieprawidłowy lub wygasły token" });
+        return;
+      }
+
+      const hashed = await bcrypt.hash(newPassword, 10);
+      await User.findByIdAndUpdate(decoded.userId, { password: hashed });
+
+      res.json({ message: "Hasło zostało zmienione" });
     } catch (err) {
-      return res.status(400).json({ error: "Nieprawidłowy lub wygasły token" });
+      res.status(500).json({ error: "Błąd serwera przy zmianie hasła" });
     }
-
-    const hashed = await bcrypt.hash(newPassword, 10);
-    await User.findByIdAndUpdate(decoded.userId, { password: hashed });
-
-    res.json({ message: "Hasło zostało zmienione" });
-  } catch (err) {
-    res.status(500).json({ error: "Błąd serwera przy zmianie hasła" });
   }
-});
+);
 
 // ===========================
 // 3) CHANGE EMAIL
@@ -82,20 +94,24 @@ router.post("/reset-password", async (req: Request, res: Response) => {
 router.patch(
   "/change-email",
   userAuth, // 🔒 WYMAGA bycia zalogowanym
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response): Promise<void> => {
     console.log("change-email called");
     console.log("BODY:", req.body);
     try {
       const { newEmail } = req.body;
       const userId = (req as any).user.id; // z userAuth
 
-      if (!newEmail)
-        return res.status(400).json({ error: "Nowy email jest wymagany" });
+      if (!newEmail) {
+        res.status(400).json({ error: "Nowy email jest wymagany" });
+        return;
+      }
 
       // sprawdz, czy email jest wolny
       const exists = await User.findOne({ email: newEmail });
-      if (exists)
-        return res.status(400).json({ error: "Ten email jest już zajęty" });
+      if (exists) {
+        res.status(400).json({ error: "Ten email jest już zajęty" });
+        return;
+      }
 
       await User.findByIdAndUpdate(userId, { email: newEmail });
 

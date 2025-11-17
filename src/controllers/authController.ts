@@ -3,11 +3,17 @@ import crypto from "crypto";
 import User from "../models/user.js";
 import { mg } from "../utils/mailgunClient.js";
 
-export const requestPasswordReset = async (req: Request, res: Response) => {
+export const requestPasswordReset = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const { email } = req.body;
   console.log("Request password reset for email:", email);
   const user = await User.findOne({ email });
-  if (!user) return res.status(404).json({ error: "User not found" });
+  if (!user) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
   console.log("Found user for password reset:", user);
   // Tworzymy token i zapisujemy w DB z expires
   const token = crypto.randomBytes(32).toString("hex");
@@ -29,13 +35,19 @@ export const requestPasswordReset = async (req: Request, res: Response) => {
   res.json({ success: true, message: "Link do resetu wysłany" });
 };
 
-export const resetPassword = async (req: Request, res: Response) => {
+export const resetPassword = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const { token, newPassword } = req.body;
   const user = await User.findOne({
     resetToken: token,
     resetTokenExpiration: { $gt: new Date() },
   });
-  if (!user) return res.status(400).json({ error: "Token invalid or expired" });
+  if (!user) {
+    res.status(400).json({ error: "Token invalid or expired" });
+    return;
+  }
 
   user.password = newPassword;
   user.resetToken = undefined;
@@ -45,11 +57,17 @@ export const resetPassword = async (req: Request, res: Response) => {
   res.json({ success: true, message: "Hasło zostało zmienione" });
 };
 
-export const changeEmail = async (req: Request, res: Response) => {
+export const changeEmail = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const { newEmail } = req.body;
 
   const user = req.user; // z authMiddleware
-  if (!user) return res.status(401).json({ error: "Unauthorized" });
+  if (!user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
 
   user.email = newEmail;
   await user.save();

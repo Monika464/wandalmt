@@ -16,7 +16,7 @@ const productSchema = new Schema({
         type: String,
         required: true,
     },
-    // content: { type: String, required: true },
+    //content: { type: String, required: true },
     userId: {
         type: Schema.Types.ObjectId,
         ref: "User",
@@ -26,11 +26,11 @@ const productSchema = new Schema({
         enum: ["draft", "published", "archived"],
         default: "draft",
     },
-    // resourceId: {
-    //   type: Schema.Types.ObjectId,
-    //   ref: "Resource",
-    //   required: false,
-    // },
+    resourceId: {
+        type: Schema.Types.ObjectId,
+        ref: "Resource",
+        required: false,
+    },
 }, { timestamps: true });
 const Product = model("Product", productSchema);
 export default Product;

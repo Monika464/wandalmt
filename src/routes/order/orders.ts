@@ -28,99 +28,52 @@ router.get("/", adminAuth, async (req: Request, res: Response) => {
  * GET /api/orders/user
  * 📦 Zwraca zamówienia zalogowanego użytkownika wraz z zasobami użytkownika
  */
-router.get("/user", userAuth, async (req: Request, res: Response) => {
-  try {
-    if (!req.user?._id) {
-      return res.status(401).json({ message: "Brak autoryzacji" });
+router.get(
+  "/user",
+  userAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      if (!req.user?._id) {
+        res.status(401).json({ message: "Brak autoryzacji" });
+        return;
+      }
+
+      // 🔹 Pobierz zamówienia użytkownika
+      const orders = await Order.find({ "user.userId": req.user._id })
+        .populate({
+          path: "user",
+          select: "email name",
+        })
+        .populate({
+          path: "products.product",
+        })
+        .sort({ createdAt: -1 });
+
+      // 🔹 Pobierz użytkownika wraz z jego zasobami
+      const user = await User.findById(req.user._id).populate("resources");
+      if (!user) {
+        res.status(404).json({ message: "Nie znaleziono użytkownika" });
+        return;
+      }
+
+      // 🔹 Zasoby przypisane użytkownikowi
+      const userResources = user.resources || [];
+
+      // 🔹 Połącz dane zamówień z zasobami użytkownika
+      const ordersWithUserResources = orders.map((order) => ({
+        ...order.toObject(),
+        userResources,
+      }));
+
+      res.status(200).json(ordersWithUserResources);
+    } catch (error) {
+      console.error("Błąd przy pobieraniu zamówień użytkownika:", error);
+      res.status(500).json({
+        message: "Błąd serwera przy pobieraniu zamówień użytkownika",
+      });
     }
-
-    // 🔹 Pobierz zamówienia użytkownika
-    const orders = await Order.find({ "user.userId": req.user._id })
-      .populate({
-        path: "user",
-        select: "email name",
-      })
-      .populate({
-        path: "products.product",
-      })
-      .sort({ createdAt: -1 });
-
-    // 🔹 Pobierz użytkownika wraz z jego zasobami
-    const user = await User.findById(req.user._id).populate("resources");
-    if (!user) {
-      return res.status(404).json({ message: "Nie znaleziono użytkownika" });
-    }
-
-    // 🔹 Zasoby przypisane użytkownikowi
-    const userResources = user.resources || [];
-
-    // 🔹 Połącz dane zamówień z zasobami użytkownika
-    const ordersWithUserResources = orders.map((order) => ({
-      ...order.toObject(),
-      userResources, // <--- zamiast zasobów z produktów
-    }));
-
-    res.status(200).json(ordersWithUserResources);
-  } catch (error) {
-    console.error("Błąd przy pobieraniu zamówień użytkownika:", error);
-    res.status(500).json({
-      message: "Błąd serwera przy pobieraniu zamówień użytkownika",
-    });
   }
-});
-
-//export default router;
-/**
- * GET /api/orders/user
- * 📦 Zwraca zamówienia zalogowanego użytkownika wraz z zasobami produktów
- */
-// router.get("/user", userAuth, async (req: Request, res: Response) => {
-//   try {
-//     if (!req.user?._id) {
-//       return res.status(401).json({ message: "Brak autoryzacji" });
-//     }
-
-//     // 🔹 Pobierz zamówienia tylko tego użytkownika
-//     const orders = await Order.find({ "user.userId": req.user._id })
-//       .populate({
-//         path: "user",
-//         select: "email name",
-//       })
-//       .populate({
-//         path: "products.product",
-//       })
-//       .sort({ createdAt: -1 });
-
-//     // 🔹 Dociągnij zasoby (Resource) dla każdego produktu
-//     const ordersWithResources = await Promise.all(
-//       orders.map(async (order) => {
-//         const enrichedProducts = await Promise.all(
-//           order.products.map(async (item: any) => {
-//             const resources = await Resource.find({
-//               productId: item.product._id,
-//             });
-//             return {
-//               ...item.toObject(),
-//               resources,
-//             };
-//           })
-//         );
-
-//         return {
-//           ...order.toObject(),
-//           products: enrichedProducts,
-//         };
-//       })
-//     );
-
-//     res.status(200).json(ordersWithResources);
-//   } catch (error) {
-//     console.error("Błąd przy pobieraniu zamówień użytkownika:", error);
-//     res.status(500).json({
-//       message: "Błąd serwera przy pobieraniu zamówień użytkownika",
-//     });
-//   }
-// });
+);
 
 /**
  * POST /api/orders/refund/:id
@@ -130,19 +83,21 @@ router.post(
   "/refund/:id",
   userAuth,
 
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
 
       if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res
+        res
           .status(400)
           .json({ message: "Nieprawidłowy identyfikator zamówienia" });
+        return;
       }
 
       const order = await Order.findById(id);
       if (!order) {
-        return res.status(404).json({ message: "Zamówienie nie znalezione" });
+        res.status(404).json({ message: "Zamówienie nie znalezione" });
+        return;
       }
 
       // Sprawdzenie czy użytkownik to właściciel lub admin
@@ -157,14 +112,16 @@ router.post(
         (order.user.userId.toString() !== req.user._id.toString() &&
           req.user.role !== "admin")
       ) {
-        return res.status(403).json({ message: "Brak uprawnień do zwrotu" });
+        res.status(403).json({ message: "Brak uprawnień do zwrotu" });
+        return;
       }
 
       // Jeśli już zwrócone
       if (order.refundedAt) {
-        return res
+        res
           .status(400)
           .json({ message: "To zamówienie zostało już zwrócone." });
+        return;
       }
 
       // 🔹 Znajdź payment_intent na podstawie sessionId
@@ -173,9 +130,10 @@ router.post(
       );
 
       if (!session.payment_intent) {
-        return res
+        res
           .status(400)
           .json({ message: "Nie znaleziono płatności do zwrotu." });
+        return;
       }
 
       // 🔹 Wykonaj zwrot

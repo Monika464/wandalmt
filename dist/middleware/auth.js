@@ -57,6 +57,7 @@ export const userAuth = async (req, res, next) => {
             return;
         }
         req.user = user;
+        req.token = token;
         next();
     }
     catch (error) {

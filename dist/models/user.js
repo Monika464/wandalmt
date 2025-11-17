@@ -44,6 +44,8 @@ const userSchema = new Schema({
             token: { type: String, required: true },
         },
     ],
+    resetToken: String,
+    resetTokenExpiration: Date,
 });
 userSchema.statics.findByCredentials = async function (email, password) {
     const user = await this.findOne({ email });
@@ -100,5 +102,12 @@ userSchema.methods.removeFromCart = async function (productId) {
     await user.save();
     return user;
 };
+// Hashowanie hasła przed zapisem
+userSchema.pre("save", async function (next) {
+    if (this.isModified("password")) {
+        this.password = await bcrypt.hash(this.password, 10);
+    }
+    next();
+});
 const User = mongoose.model("User", userSchema);
 export default User;

@@ -15,7 +15,7 @@ interface IAuthRequest extends Request {
   user?: IUser | null;
   token?: string;
 }
-import bcrypt from "bcryptjs";
+//import bcrypt from "bcryptjs";
 import {
   changeEmail,
   requestPasswordReset,
@@ -102,7 +102,7 @@ router.post(
         return;
       }
 
-      const hashedPassword = await bcrypt.hash(password, 8);
+      //const hashedPassword = await bcrypt.hash(password, 8);
       const user = new User({
         email,
         password,
@@ -111,7 +111,7 @@ router.post(
         role: "admin",
       });
 
-      console.log("Creating admin:", user);
+      //console.log("Creating admin:", user);
 
       await user.save();
       res.status(201).send({ message: "Admin created", user });
@@ -177,20 +177,26 @@ router.post(
 );
 
 // GET /auth/me
-router.get("/me", userAuth, async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Nieautoryzowany" });
-    }
+router.get(
+  "/me",
+  userAuth,
+  async (req: IAuthRequest, res: Response): Promise<void> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ message: "Nieautoryzowany" });
+        return;
+      }
 
-    // zwracamy sam obiekt usera
-    return res.status(200).json(req.user);
-  } catch (error) {
-    return res.status(500).json({
-      message: error instanceof Error ? error.message : "Unknown error",
-    });
+      // zwracamy sam obiekt usera
+      res.status(200).json(req.user);
+      return;
+    } catch (error) {
+      res.status(500).json({
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
   }
-});
+);
 
 // POST /api/auth/request-reset → wysyła maila z linkiem resetującym
 router.post("/request-reset", requestPasswordReset);

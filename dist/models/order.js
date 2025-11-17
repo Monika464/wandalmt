@@ -18,11 +18,13 @@ const orderSchema = new Schema({
             required: true,
             ref: "User",
         },
-        createdAt: {
-            type: Date,
-            default: Date.now,
-        },
     },
+    createdAt: {
+        type: Date,
+        default: Date.now,
+    },
+    refundedAt: { type: Date, default: null },
+    refundId: { type: String, default: null },
 });
 const Order = mongoose.model("Order", orderSchema);
 export default Order;
