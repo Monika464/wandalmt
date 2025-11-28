@@ -12,6 +12,7 @@ import checkoutRouter from "./routes/public/checkout.js";
 import stripeWebhookRouter from "./routes/stripeWebhook.js";
 import cartCheckoutRouter from "./routes/public/cart-checkout.js";
 import orderRoutes from "./routes/order/orders.js";
+import bunnyStreamRouter from "./routes/bunnyStream.js";
 
 import dotenv from "dotenv";
 import emailRoutes from "routes/emailRoutes.js";
@@ -44,6 +45,7 @@ app.use("/", checkoutRouter);
 app.use("/", cartCheckoutRouter);
 app.use("/api/orders", orderRoutes);
 app.use("/email", emailRoutes);
+app.use("/api/stream", bunnyStreamRouter);
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
