@@ -3,6 +3,8 @@ import express from "express";
 import axios from "axios";
 import multer from "multer";
 import stream from "stream";
+import Video from "../models/video.js";
+import { useEffect } from "react";
 
 const router = express.Router();
 const upload = multer();
@@ -15,9 +17,10 @@ if (!BUNNY_API_KEY || !BUNNY_LIBRARY_ID) {
   console.warn("Bunny: missing BUNNY_API_KEY or BUNNY_LIBRARY_ID");
 }
 
-/**
- * 1) Create video object in Bunny library -> returns videoId
- */
+router.get("/test", (req, res) => {
+  res.send("TEST ROUTE DZIAŁA");
+});
+
 router.post("/create-video", async (req, res) => {
   try {
     const { title } = req.body || {};
@@ -34,20 +37,32 @@ router.post("/create-video", async (req, res) => {
         },
       }
     );
+    const { guid, thumbnailFileName } = resp.data;
+    console.log("Bunny create-video response", resp.data);
+
+    const thumbnailUrl = thumbnailFileName
+      ? `https://vz-${BUNNY_LIBRARY_ID}-${guid}.b-cdn.net/${thumbnailFileName}`
+      : null;
+
+    const video = await Video.create({
+      title: title || "untitled",
+      bunnyGuid: guid, // jedyny prawdziwy identyfikator filmu
+      thumbnailUrl,
+    });
+
+    return res.json({ success: true, video });
 
     // resp.data contains the created video object with videoId (guid)
-    return res.json(resp.data);
+    // return res.json(resp.data);
   } catch (err: any) {
     console.error(
       "Bunny create-video error",
       err?.response?.data ?? err?.message
     );
-    return res
-      .status(500)
-      .json({
-        error: "create-video-failed",
-        details: err?.response?.data ?? err?.message,
-      });
+    return res.status(500).json({
+      error: "create-video-failed",
+      details: err?.response?.data ?? err?.message,
+    });
   }
 });
 
@@ -80,12 +95,44 @@ router.post("/upload/:videoId", upload.single("file"), async (req, res) => {
     return res.json({ success: true, bunnyResponse: resp.data });
   } catch (err: any) {
     console.error("Bunny upload error", err?.response?.data ?? err?.message);
-    return res
-      .status(500)
-      .json({
-        error: "upload-failed",
-        details: err?.response?.data ?? err?.message,
-      });
+    return res.status(500).json({
+      error: "upload-failed",
+      details: err?.response?.data ?? err?.message,
+    });
+  }
+});
+
+router.get("/videos", async (req, res) => {
+  try {
+    //const videos = await Video.find().sort({ createdAt: -1 });
+    const videos = await Video.find();
+
+    res.json(videos);
+  } catch (error) {
+    res.status(500).json({ error: "get-video-failed" });
+  }
+});
+
+router.get("/:videoId", async (req, res) => {
+  try {
+    const { videoId } = req.params;
+
+    const video = await Video.findById(videoId);
+    console.log("Found video:", video);
+    if (!video) return res.status(404).json({ error: "not-found" });
+    console.log("Found video:", {
+      _id: video._id.toString(),
+      bunnyGuid: video.bunnyGuid,
+    });
+    const playbackUrl = `https://vz-${BUNNY_LIBRARY_ID}-${video.bunnyGuid}.b-cdn.net`;
+
+    return res.json({
+      success: true,
+      playbackUrl,
+      video,
+    });
+  } catch (err) {
+    res.status(500).json({ error: "get-video-failed" });
   }
 });
 
