@@ -52,12 +52,11 @@ export const createResource = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { productId, title, content, videoUrl } = req.body;
+    const { productId, title, content } = req.body;
     const resource = new Resource({
       productId,
       title,
       content,
-      videoUrl,
       chapters: [],
     });
     //console.log("resource", resource);

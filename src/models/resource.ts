@@ -6,13 +6,13 @@ interface Chapter {
   _id?: Types.ObjectId;
   title: string;
   description?: string;
-  videoUrl?: string;
+  videoId?: string;
+  order?: number;
 }
 
 export interface IResource extends Document {
   title: string;
   content?: string;
-  videoUrl?: string;
   productId: mongoose.Types.ObjectId;
   chapters?: Chapter[];
   users?: IUser[];
@@ -21,14 +21,14 @@ export interface IResource extends Document {
 const ChapterSchema = new Schema<Chapter>({
   title: { type: String, required: true },
   description: { type: String },
-  videoUrl: { type: String },
+  videoId: { type: String },
+  order: { type: Number, default: 0 },
 });
 
 const ResourceSchema = new Schema<IResource>(
   {
     title: { type: String, required: true },
     content: { type: String },
-    videoUrl: { type: String },
     productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
     chapters: [ChapterSchema],
     users: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],

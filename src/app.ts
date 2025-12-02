@@ -13,6 +13,7 @@ import stripeWebhookRouter from "./routes/stripeWebhook.js";
 import cartCheckoutRouter from "./routes/public/cart-checkout.js";
 import orderRoutes from "./routes/order/orders.js";
 import bunnyStream from "./routes/bunnyStream.js";
+import { tokenRefreshMiddleware } from "./middleware/tokenRefreshMiddleware.js";
 
 import dotenv from "dotenv";
 import emailRoutes from "routes/emailRoutes.js";
@@ -36,6 +37,7 @@ app.use(
 //app.use(cors());
 
 app.use("/auth", authRouter);
+app.use(tokenRefreshMiddleware);
 app.use("/users", userRouter);
 app.use("/admin", adminRouter);
 app.use("/", productRouter);
