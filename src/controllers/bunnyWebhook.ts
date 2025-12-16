@@ -5,6 +5,22 @@ import Video from "../models/video.js";
 import fs from "fs";
 import path from "path";
 
+const BUNNY_LIBRARY_ID = process.env.BUNNY_LIBRARY_ID!;
+const BUNNY_API_KEY = process.env.BUNNY_API_KEY!;
+
+export async function getBunnyVideo(videoGuid: string) {
+  const url = `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${videoGuid}`;
+
+  const resp = await axios.get(url, {
+    headers: {
+      AccessKey: BUNNY_API_KEY,
+      Accept: "application/json",
+    },
+  });
+
+  return resp.data;
+}
+
 //https://www.google.com/search?client=ubuntu-sn&channel=fs&q=buny+how+to+make+video+public#fpstate=ive&vld=cid:745dcd86,vid:PjIuNZqyK8E,st:73
 
 export const checkVideoStatus = async (
@@ -16,87 +32,29 @@ export const checkVideoStatus = async (
 
     const { VideoGuid, Status } = req.body;
 
-    // Status 4 = VideoReady/Completed w Bunny
-    if (Status === 4) {
-      console.log("status 4 received");
-      console.log(`Video ${VideoGuid} is ready! Updating database...`);
+    const status = Number(Status);
 
-      // 1. Pobierz pełne info o wideo z Bunny API
-      const bunnyUrl = `https://video.bunnycdn.com/library/${process.env.BUNNY_LIBRARY_ID}/videos/${VideoGuid}`;
-      const bunnyResponse = await axios.get(bunnyUrl, {
-        headers: { AccessKey: process.env.BUNNY_API_KEY },
-      });
-
-      const bunnyData = bunnyResponse.data;
-      console.log("Bunny video data:", bunnyData);
-
-      // if (!bunnyData.isPublic) {
-      //   console.log("Setting video to public...");
-      //   try {
-      //     await axios.patch(
-      //       bunnyUrl, // TEN SAM URL CO W KROKU 1
-      //       { isPublic: true }, // TYLKO to pole zmieniamy
-      //       {
-      //         headers: { AccessKey: process.env.BUNNY_API_KEY },
-      //       }
-      //     );
-      //     console.log("✅ Video set to public");
-
-      //     // Poczekaj 3 sekundy na propagację
-      //     await new Promise((resolve) => setTimeout(resolve, 3000));
-      //   } catch (publicError) {
-      //     console.error("❌ Failed to set video public:", publicError.message);
-      //     // Kontynuuj mimo błędu - może już jest publiczne
-      //   }
-      // }
-
-      // 2. Zbuduj URL thumbnaila
-      const thumbnailUrl = `https://video.bunnycdn.com/library/${process.env.BUNNY_LIBRARY_ID}/videos/${VideoGuid}/thumbnail`;
-
-      try {
-        const response = await axios.post(
-          thumbnailUrl,
-          {},
-          {
-            headers: {
-              AccessKey: process.env.BUNNY_API_KEY,
-              accept: "application/json",
-            },
-            responseType: "arraybuffer",
-          }
-        );
-        // `response.data` zawiera teraz dane binarne pliku JPEG
-        // Możesz je zapisać lokalnie, np. fs.writeFileSync(ścieżka, response.data);
-        console.log(
-          "Miniaturka pobrana pomyślnie, rozmiar:",
-          response.data.length
-        );
-      } catch (error) {
-        console.error(
-          "Błąd API przy pobieraniu miniatury:",
-          error.response?.status,
-          error.message
-        );
-      }
-
-      // 3. Zaktualizuj wideo w bazie
-      await Video.findOneAndUpdate(
-        { bunnyGuid: VideoGuid },
-        {
-          status: "ready",
-          thumbnailUrl: thumbnailUrl || "/images/default-thumbnail.jpg",
-          lastUpdated: new Date(),
-        }
-      );
-
-      console.log(`Video ${VideoGuid} updated with thumbnail: ${thumbnailUrl}`);
+    if (!VideoGuid || Number.isNaN(status)) {
+      res.sendStatus(200);
+      return;
     }
 
-    // Zawsze odpowiadaj 200, żeby Bunny nie próbował ponownie
-    res.status(200).json({ received: true });
+    const update: any = { status };
+
+    if (Status === 4) {
+      const bunnyVideo = await getBunnyVideo(VideoGuid);
+      update.duration = bunnyVideo.length;
+      update.width = bunnyVideo.width;
+      update.height = bunnyVideo.height;
+    }
+
+    await Video.findOneAndUpdate({ bunnyGuid: VideoGuid }, update);
+
+    res.sendStatus(200);
+    return;
   } catch (error) {
     console.error("Error processing webhook:", error);
-    // Nadal odpowiadaj 200, żeby Bunny nie spamował
+
     res
       .status(200)
       .json({ received: true, error: "Processing failed but acknowledged" });

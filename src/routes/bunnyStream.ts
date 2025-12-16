@@ -92,25 +92,25 @@ router.post("/upload/:videoId", upload.single("file"), async (req, res) => {
       maxBodyLength: Infinity,
     });
     console.log("✅ File uploaded successfully");
-    const updateUrl = `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${videoId}`;
+    //const updateUrl = `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${videoId}`;
 
-    try {
-      await axios.put(
-        // Lub PUT - musisz sprawdzić co działa
-        updateUrl,
-        { isPublic: true }, // TYLKO metadane w formacie JSON
-        {
-          headers: {
-            AccessKey: BUNNY_API_KEY,
-            "Content-Type": "application/json", // WAŻNE: application/json!
-          },
-        }
-      );
-      console.log("✅ Video set to public");
-    } catch (updateError) {
-      console.error("❌ Failed to set video public:", updateError.message);
-      // Kontynuuj mimo błędu - upload był udany
-    }
+    // try {
+    //   await axios.put(
+    //     // Lub PUT - musisz sprawdzić co działa
+    //     updateUrl,
+
+    //     {
+    //       headers: {
+    //         AccessKey: BUNNY_API_KEY,
+    //         "Content-Type": "application/json", // WAŻNE: application/json!
+    //       },
+    //     }
+    //   );
+
+    // } catch (updateError) {
+    //   console.error("❌ Failed to set video public:", updateError.message);
+    //   // Kontynuuj mimo błędu - upload był udany
+    // }
 
     return res.json({ success: true, bunnyResponse: resp.data });
   } catch (err: any) {
