@@ -17,9 +17,9 @@ if (!BUNNY_API_KEY || !BUNNY_LIBRARY_ID) {
   console.warn("Bunny: missing BUNNY_API_KEY or BUNNY_LIBRARY_ID");
 }
 
-router.get("/test", (req, res) => {
-  res.send("TEST ROUTE DZIAŁA");
-});
+// router.get("/test", (req, res) => {
+//   res.send("TEST ROUTE DZIAŁA");
+// });
 
 router.post("/create-video", async (req, res) => {
   try {
@@ -153,6 +153,49 @@ router.get("/:videoId", async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: "get-video-failed" });
+  }
+});
+
+router.delete("/videos/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1️⃣ znajdź w bazie
+    const video = await Video.findById(id);
+    if (!video) {
+      return res.status(404).json({ error: "video-not-found" });
+    }
+
+    // 2️⃣ usuń z Bunny
+    try {
+      await axios.delete(
+        `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${video.bunnyGuid}`,
+        {
+          headers: {
+            AccessKey: BUNNY_API_KEY,
+            Accept: "application/json",
+          },
+        }
+      );
+      console.log("✅ Video removed from Bunny:", video.bunnyGuid);
+    } catch (bunnyErr: any) {
+      // Bunny może zwrócić 404 – np. już usunięty
+      console.warn(
+        "⚠️ Bunny delete failed (continuing):",
+        bunnyErr?.response?.data ?? bunnyErr?.message
+      );
+    }
+
+    // 3️⃣ usuń z Mongo
+    await Video.findByIdAndDelete(id);
+
+    return res.json({
+      success: true,
+      removedId: id,
+    });
+  } catch (err: any) {
+    console.error("❌ Delete video failed:", err?.message);
+    return res.status(500).json({ error: "delete-video-failed" });
   }
 });
 
