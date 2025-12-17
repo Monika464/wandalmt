@@ -4,10 +4,10 @@ import type { IUser } from "../models/user.js";
 
 interface Chapter {
   _id?: Types.ObjectId;
+  number?: number;
   title: string;
   description?: string;
   videoId?: string;
-  order?: number;
 }
 
 export interface IResource extends Document {
@@ -19,10 +19,10 @@ export interface IResource extends Document {
 }
 
 const ChapterSchema = new Schema<Chapter>({
+  number: { type: Number, required: true },
   title: { type: String, required: true },
   description: { type: String },
   videoId: { type: String },
-  order: { type: Number, default: 0 },
 });
 
 const ResourceSchema = new Schema<IResource>(

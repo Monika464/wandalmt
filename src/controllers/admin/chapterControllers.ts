@@ -5,9 +5,9 @@ import Resource from "../../models/resource.js";
 // ADD Chapter
 export const addChapter = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { videoId, description, title } = req.body;
+  const { videoId, description, title, number } = req.body;
   console.log("Adding chapter to resource ID:", id);
-  console.log("Chapter data:", { videoId, description, title });
+  console.log("Chapter data:", { videoId, description, title, number });
 
   try {
     const resource = await Resource.findById(id);
@@ -24,7 +24,7 @@ export const addChapter = async (req: Request, res: Response) => {
         .json({ error: "Maximum number of chapters reached (100)" });
       return;
     }
-    resource.chapters.push({ videoId, description, title });
+    resource.chapters.push({ videoId, description, title, number });
     await resource.save();
 
     res
