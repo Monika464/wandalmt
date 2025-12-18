@@ -12,7 +12,8 @@ import {
   addChapter,
   editChapter,
   deleteChapter,
-  setChapterVideo,
+  deleteChapterVideo,
+  getChapterWithVideo,
 } from "../../controllers/admin/chapterControllers.js";
 const router = express.Router();
 import Resource from "../../models/resource.js";
@@ -32,11 +33,9 @@ router.get("/resources/product/:productId", adminAuth, getResourceByProductId);
 router.post("/resources/:id/chapters", adminAuth, addChapter);
 router.put("/resources/:id/chapters/:chapterId", adminAuth, editChapter);
 router.delete("/resources/:id/chapters/:chapterId", adminAuth, deleteChapter);
-router.put(
-  "/resources/:id/chapters/:chapterId/video",
-  adminAuth,
-  setChapterVideo
-);
+router.delete("/:id/chapters/:chapterId/video", deleteChapterVideo); // Nowy endpoint
+router.get("/:id/chapters/:chapterId", getChapterWithVideo); // Nowy endpoint
+
 export default router;
 
 // import express from "express";
