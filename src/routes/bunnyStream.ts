@@ -4,6 +4,7 @@ import axios from "axios";
 import multer from "multer";
 import stream from "stream";
 import Video from "../models/video.js";
+import sharp from "sharp";
 
 import { getBunnyVideo } from "../controllers/bunnyWebhook.js";
 
@@ -243,6 +244,37 @@ router.delete("/videos/:id", async (req, res) => {
   } catch (err: any) {
     console.error("❌ Delete video failed:", err?.message);
     return res.status(500).json({ error: "delete-video-failed" });
+  }
+});
+
+router.get("/proxy-thumbnail/:bunnyVideoId", async (req, res) => {
+  const { width = 96, height = 64 } = req.query; // Domyślne wymiary
+  const imageUrl = `https://vz-b1e17e22-226.b-cdn.net/${req.params.bunnyVideoId}/thumbnail.jpg`;
+
+  try {
+    const response = await fetch(imageUrl);
+    const buffer = await response.arrayBuffer();
+
+    // Wymuś resize z Sharp
+
+    const resized = await sharp(Buffer.from(buffer))
+      .resize(parseInt(width), parseInt(height), {
+        fit: "cover",
+        withoutEnlargement: true,
+      })
+      .jpeg({ quality: 70 })
+      .toBuffer();
+
+    res.set("Content-Type", "image/jpeg");
+    res.set("Cache-Control", "public, max-age=86400");
+    res.send(resized);
+    // const response = await fetch(imageUrl);
+    // // Ważne: przekaż odpowiednie nagłówki
+    // res.set("Content-Type", response.headers.get("content-type"));
+    // const imageBuffer = await response.arrayBuffer();
+    // res.send(Buffer.from(imageBuffer));
+  } catch (error) {
+    res.status(500).send("Nie udało się pobrać obrazu");
   }
 });
 
