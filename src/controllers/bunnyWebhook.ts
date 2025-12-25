@@ -28,27 +28,68 @@ export const checkVideoStatus = async (
   res: Response
 ): Promise<void> => {
   try {
-    console.log("Webhook Bunny received:", req.body);
+    console.log("Webhook Bunny received:");
 
-    const { VideoGuid, Status } = req.body;
+    const { VideoGuid, Status, Message, EncodeProgress } = req.body;
 
-    const status = Number(Status);
+    console.log("Webhook data:", VideoGuid, Status, Message, EncodeProgress);
 
-    if (!VideoGuid || Number.isNaN(status)) {
+    if (!VideoGuid || Number.isNaN(Status)) {
       res.sendStatus(200);
       return;
     }
 
-    const update: any = { status };
+    const statusNumber = Number(Status);
+    let newStatus: "uploading" | "processing" | "ready" | "error" =
+      "processing";
+    let processingProgress = 0;
+    let errorMessage = "";
+
+    // Mapowanie statusów Bunny na nasze
+    if (statusNumber === 0 || statusNumber === 1) {
+      newStatus = "uploading";
+    } else if (statusNumber === 2 || statusNumber === 3) {
+      newStatus = "processing";
+      processingProgress = Number(EncodeProgress) || 0;
+    } else if (statusNumber === 4) {
+      newStatus = "ready";
+      processingProgress = 100;
+    } else if (statusNumber === 5) {
+      newStatus = "error";
+      errorMessage = Message || "Processing failed";
+    }
+
+    const update: any = {
+      status: newStatus,
+      processingProgress,
+    };
+
+    console.log("Updating video:", update);
+
+    if (errorMessage) {
+      update.errorMessage = errorMessage;
+    }
+
+    //const update: any = { status: statusNumber };
 
     if (Status === 4) {
-      const bunnyVideo = await getBunnyVideo(VideoGuid);
-      update.duration = bunnyVideo.length;
-      update.width = bunnyVideo.width;
-      update.height = bunnyVideo.height;
+      try {
+        const bunnyVideo = await getBunnyVideo(VideoGuid);
+        update.duration = bunnyVideo.length;
+        update.width = bunnyVideo.width;
+        update.height = bunnyVideo.height;
+        if (bunnyVideo.thumbnailFileName) {
+          update.thumbnailUrl = `https://vz-${BUNNY_LIBRARY_ID}-${VideoGuid}.b-cdn.net/${bunnyVideo.thumbnailFileName}`;
+        }
+      } catch (error) {
+        console.error("Error fetching video details:", error);
+      }
     }
 
     await Video.findOneAndUpdate({ bunnyGuid: VideoGuid }, update);
+    console.log(
+      `Video ${VideoGuid} status updated to ${newStatus} (${processingProgress}%)`
+    );
 
     res.sendStatus(200);
     return;
@@ -58,5 +99,58 @@ export const checkVideoStatus = async (
     res
       .status(200)
       .json({ received: true, error: "Processing failed but acknowledged" });
+  }
+};
+
+// Nowy endpoint do pobierania statusu video
+export const getVideoStatus = async (req: Request, res: Response) => {
+  try {
+    const { videoId } = req.params; // To może być videoId (Mongo) lub bunnyGuid
+
+    let video;
+
+    // Sprawdź czy to ObjectId
+    if (videoId.match(/^[0-9a-fA-F]{24}$/)) {
+      video = await Video.findById(videoId);
+    } else {
+      // To prawdopodobnie bunnyGuid
+      video = await Video.findOne({ bunnyGuid: videoId });
+    }
+
+    if (!video) {
+      return res.status(404).json({ error: "Video not found" });
+    }
+
+    // Opcjonalnie: sprawdź bezpośrednio w Bunny, jeśli potrzebujemy najświeższych danych
+    let bunnyStatus = null;
+    try {
+      const bunnyVideo = await getBunnyVideo(video.bunnyGuid);
+      bunnyStatus = {
+        status: bunnyVideo.status,
+        encodeProgress: bunnyVideo.encodeProgress,
+      };
+    } catch (error) {
+      console.error("Error fetching Bunny status:", error);
+    }
+
+    res.json({
+      success: true,
+      video: {
+        _id: video._id,
+        bunnyGuid: video.bunnyGuid,
+        title: video.title,
+        status: video.status,
+        processingProgress: video.processingProgress,
+        duration: video.duration,
+        thumbnailUrl: video.thumbnailUrl,
+        errorMessage: video.errorMessage,
+        createdAt: video.createdAt,
+        updatedAt: video.updatedAt,
+      },
+      bunnyStatus,
+    });
+  } catch (error) {
+    console.error("Error getting video status:", error);
+    res.status(500).json({ error: "Server error" });
   }
 };

@@ -17,7 +17,7 @@ import { tokenRefreshMiddleware } from "./middleware/tokenRefreshMiddleware.js";
 
 import dotenv from "dotenv";
 import emailRoutes from "routes/emailRoutes.js";
-import { checkVideoStatus } from "controllers/bunnyWebhook.js";
+import { checkVideoStatus, getVideoStatus } from "controllers/bunnyWebhook.js";
 dotenv.config();
 
 connectDB();
@@ -37,6 +37,7 @@ app.use(
 );
 //app.use(cors());
 app.post("/vbp/stream/webhook/bunny/", checkVideoStatus);
+app.get("/vbp/stream/webhook/bunny/:videoId", getVideoStatus);
 
 app.use("/auth", authRouter);
 app.use(tokenRefreshMiddleware);

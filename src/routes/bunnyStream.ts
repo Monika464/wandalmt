@@ -4,7 +4,8 @@ import axios from "axios";
 import multer from "multer";
 import stream from "stream";
 import Video from "../models/video.js";
-import { useEffect } from "react";
+
+import { getBunnyVideo } from "../controllers/bunnyWebhook.js";
 
 const router = express.Router();
 const upload = multer();
@@ -46,11 +47,13 @@ router.post("/create-video", async (req, res) => {
 
     const video = await Video.create({
       title: title || "untitled",
-      bunnyGuid: guid, // jedyny prawdziwy identyfikator filmu
+      bunnyGuid: guid,
       thumbnailUrl,
+      status: "uploading",
+      processingProgress: 0,
     });
 
-    return res.json({ success: true, video });
+    return res.json({ success: true, video, bunnyGuid: guid });
 
     // resp.data contains the created video object with videoId (guid)
     // return res.json(resp.data);
@@ -113,6 +116,69 @@ router.get("/videos", async (req, res) => {
     res.status(500).json({ error: "get-video-failed" });
   }
 });
+///CHECK STATUS
+
+router.get("/status/:videoId", async (req, res) => {
+  try {
+    const { videoId } = req.params;
+
+    console.log("Getting video status for:", videoId);
+
+    let video;
+
+    // Sprawdź czy to ObjectId
+    if (videoId.match(/^[0-9a-fA-F]{24}$/)) {
+      video = await Video.findById(videoId);
+    } else {
+      // To prawdopodobnie bunnyGuid
+      video = await Video.findOne({ bunnyGuid: videoId });
+    }
+
+    if (!video) {
+      return res.status(404).json({
+        success: false,
+        error: "Video not found",
+      });
+    }
+
+    // Opcjonalnie: sprawdź w Bunny
+    let bunnyStatus = null;
+    if (video.bunnyGuid) {
+      try {
+        const bunnyVideo = await getBunnyVideo(video.bunnyGuid);
+        bunnyStatus = {
+          status: bunnyVideo.status,
+          encodeProgress: bunnyVideo.encodeProgress,
+        };
+      } catch (error) {
+        console.warn("Could not fetch Bunny status:", error.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      video: {
+        _id: video._id,
+        bunnyGuid: video.bunnyGuid,
+        title: video.title,
+        status: video.status,
+        processingProgress: video.processingProgress,
+        thumbnailUrl: video.thumbnailUrl,
+        errorMessage: video.errorMessage,
+        createdAt: video.createdAt,
+      },
+      bunnyStatus,
+    });
+  } catch (error) {
+    console.error("Error getting video status:", error);
+    res.status(500).json({
+      success: false,
+      error: "get-video-status-failed",
+    });
+  }
+});
+
+////
 
 router.get("/:videoId", async (req, res) => {
   try {

@@ -15,6 +15,7 @@ import {
   deleteChapterVideo,
   getChapterWithVideo,
 } from "../../controllers/admin/chapterControllers.js";
+import { getVideoStatus } from "controllers/bunnyWebhook.js";
 const router = express.Router();
 import Resource from "../../models/resource.js";
 import { adminAuth } from "middleware/auth.js";
@@ -33,8 +34,9 @@ router.get("/resources/product/:productId", adminAuth, getResourceByProductId);
 router.post("/resources/:id/chapters", adminAuth, addChapter);
 router.put("/resources/:id/chapters/:chapterId", adminAuth, editChapter);
 router.delete("/resources/:id/chapters/:chapterId", adminAuth, deleteChapter);
-router.delete("/:id/chapters/:chapterId/video", deleteChapterVideo); // Nowy endpoint
-router.get("/:id/chapters/:chapterId", getChapterWithVideo); // Nowy endpoint
+router.delete("/:id/chapters/:chapterId/video", adminAuth, deleteChapterVideo); // Nowy endpoint
+router.get("/:id/chapters/:chapterId", adminAuth, getChapterWithVideo);
+router.get("/status/:videoId", getVideoStatus);
 
 export default router;
 

@@ -7,7 +7,8 @@ interface Chapter {
   number?: number;
   title: string;
   description?: string;
-  videoId?: string;
+  bunnyVideoId?: string;
+  videoId?: Types.ObjectId | string;
 }
 
 export interface IResource extends Document {
@@ -19,10 +20,15 @@ export interface IResource extends Document {
 }
 
 const ChapterSchema = new Schema<Chapter>({
-  number: { type: Number, required: true },
+  number: { type: Number, default: 1, required: true },
   title: { type: String, required: true },
   description: { type: String },
-  videoId: { type: String },
+  bunnyVideoId: {
+    type: String,
+    default: null,
+    index: true,
+  },
+  videoId: { type: Schema.Types.ObjectId, ref: "Video", default: null },
 });
 
 const ResourceSchema = new Schema<IResource>(
