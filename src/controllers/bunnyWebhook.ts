@@ -30,9 +30,9 @@ export const checkVideoStatus = async (
   try {
     console.log("Webhook Bunny received:");
 
-    const { VideoGuid, Status, Message, EncodeProgress } = req.body;
+    const { VideoGuid, Status } = req.body;
 
-    console.log("Webhook data:", VideoGuid, Status, Message, EncodeProgress);
+    console.log("Webhook data:", VideoGuid, Status);
 
     if (!VideoGuid || Number.isNaN(Status)) {
       res.sendStatus(200);
@@ -45,23 +45,33 @@ export const checkVideoStatus = async (
     let processingProgress = 0;
     let errorMessage = "";
 
-    // Mapowanie statusów Bunny na nasze
+    // Mapowanie statusów
     if (statusNumber === 0 || statusNumber === 1) {
       newStatus = "uploading";
     } else if (statusNumber === 2 || statusNumber === 3) {
       newStatus = "processing";
-      processingProgress = Number(EncodeProgress) || 0;
+      // Pobierz POSTĘP z API Bunny (bo webhook go nie ma!)
+      try {
+        const bunnyVideo = await getBunnyVideo(VideoGuid);
+        processingProgress = bunnyVideo.encodeProgress || 0;
+        console.log(`Progress from API: ${processingProgress}%`);
+      } catch (err) {
+        console.log("Could not fetch progress from API");
+      }
+
+      //processingProgress = Number(EncodeProgress) || 0;
     } else if (statusNumber === 4) {
       newStatus = "ready";
       processingProgress = 100;
     } else if (statusNumber === 5) {
       newStatus = "error";
-      errorMessage = Message || "Processing failed";
+      errorMessage = "Processing failed";
     }
 
     const update: any = {
       status: newStatus,
       processingProgress,
+      lastWebhook: new Date(),
     };
 
     console.log("Updating video:", update);
@@ -79,8 +89,13 @@ export const checkVideoStatus = async (
         update.width = bunnyVideo.width;
         update.height = bunnyVideo.height;
         if (bunnyVideo.thumbnailFileName) {
-          update.thumbnailUrl = `https://vz-${BUNNY_LIBRARY_ID}-${VideoGuid}.b-cdn.net/${bunnyVideo.thumbnailFileName}`;
+          update.thumbnailUrl = `https://vz-b1e17e22-226.b-cdn.net/${VideoGuid}/${bunnyVideo.thumbnailFileName}`;
         }
+        update.bunnyData = {
+          availableResolutions: bunnyVideo.availableResolutions,
+          size: bunnyVideo.size,
+          framerate: bunnyVideo.framerate,
+        };
       } catch (error) {
         console.error("Error fetching video details:", error);
       }

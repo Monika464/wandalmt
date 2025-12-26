@@ -40,7 +40,7 @@ router.post("/create-video", async (req, res) => {
       }
     );
     const { guid, thumbnailFileName } = resp.data;
-    console.log("Bunny create-video response", resp.data);
+    //console.log("Bunny create-video response", resp.data);
 
     const thumbnailUrl = thumbnailFileName
       ? `https://vz-${BUNNY_LIBRARY_ID}-${guid}.b-cdn.net/${thumbnailFileName}`
@@ -123,7 +123,7 @@ router.get("/status/:videoId", async (req, res) => {
   try {
     const { videoId } = req.params;
 
-    console.log("Getting video status for:", videoId);
+    //console.log("Getting video status for:", videoId);
 
     let video;
 
@@ -186,12 +186,12 @@ router.get("/:videoId", async (req, res) => {
     const { videoId } = req.params;
 
     const video = await Video.findById(videoId);
-    console.log("Found video:", video);
+    //console.log("Found video:", video);
     if (!video) return res.status(404).json({ error: "not-found" });
-    console.log("Found video:", {
-      _id: video._id.toString(),
-      bunnyGuid: video.bunnyGuid,
-    });
+    // console.log("Found video:", {
+    //   _id: video._id.toString(),
+    //   bunnyGuid: video.bunnyGuid,
+    // });
     const playbackUrl = `https://vz-${BUNNY_LIBRARY_ID}-${video.bunnyGuid}.b-cdn.net`;
 
     return res.json({
