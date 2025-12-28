@@ -42,4 +42,53 @@ const ResourceSchema = new Schema<IResource>(
   { timestamps: true }
 );
 
+ResourceSchema.pre("save", function (next) {
+  if (this.chapters && this.chapters.length > 0) {
+    this.chapters.sort((a, b) => {
+      const numA = a.number || 0;
+      const numB = b.number || 0;
+      return numA - numB;
+    });
+  }
+  next();
+});
+
+ResourceSchema.virtual("sortedChapters").get(function () {
+  if (!this.chapters) return [];
+  return [...this.chapters].sort((a, b) => {
+    const numA = a.number || 0;
+    const numB = b.number || 0;
+    return numA - numB;
+  });
+});
+
+ResourceSchema.set("toJSON", {
+  virtuals: true,
+  transform: function (doc, ret) {
+    // Ręcznie sortuj chapters w zwracanym obiekcie
+    if (ret.chapters && Array.isArray(ret.chapters)) {
+      ret.chapters.sort((a, b) => {
+        const numA = a.number || 0;
+        const numB = b.number || 0;
+        return numA - numB;
+      });
+    }
+    return ret;
+  },
+});
+
+ResourceSchema.set("toObject", {
+  virtuals: true,
+  transform: function (doc, ret) {
+    if (ret.chapters && Array.isArray(ret.chapters)) {
+      ret.chapters.sort((a, b) => {
+        const numA = a.number || 0;
+        const numB = b.number || 0;
+        return numA - numB;
+      });
+    }
+    return ret;
+  },
+});
+
 export default mongoose.model<IResource>("Resource", ResourceSchema);
