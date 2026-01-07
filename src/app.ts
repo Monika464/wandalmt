@@ -25,6 +25,7 @@ const app = express();
 
 app.use("/api", stripeWebhookRouter);
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 //app.use("/api", myOrdersRouter);
 
 app.use(
@@ -46,12 +47,13 @@ app.use("/admin", adminRouter);
 app.use("/", productRouter);
 app.use("/", resourceRouter);
 app.use("/api", uploadRouter);
-app.use("/", checkoutRouter);
-app.use("/", cartCheckoutRouter);
+app.use("/api", checkoutRouter);
+app.use("/api", cartCheckoutRouter);
 app.use("/api/orders", orderRoutes);
 app.use("/email", emailRoutes);
 app.use("/api/stream", bunnyStream);
 
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

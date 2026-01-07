@@ -33,11 +33,50 @@ router.get(
   userAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
+      console.log("=== DEBUG /api/orders/user ===");
+      console.log("1. Authenticated user:", {
+        _id: req.user?._id,
+        email: req.user?.email,
+        role: req.user?.role,
+      });
       if (!req.user?._id) {
         res.status(401).json({ message: "Brak autoryzacji" });
         return;
       }
+      ///
 
+      const userId = new mongoose.Types.ObjectId(req.user._id);
+      console.log("2. User ID as ObjectId:", userId);
+      // 🔍 SPRAWDŹ ILE ZAMÓWIEŃ JEST W BAZIE DLA TEGO USERA
+      const userOrdersCount = await Order.countDocuments({
+        "user.userId": userId,
+      });
+      console.log(`3. Orders count for user ${userId}: ${userOrdersCount}`);
+
+      // 🔍 SPRAWDŹ WSZYSTKIE ZAMÓWIENIA
+      const allOrdersCount = await Order.countDocuments({});
+      console.log(`4. Total orders in DB: ${allOrdersCount}`);
+
+      // 🔍 POKAŻ PRZYKŁADOWE ZAMÓWIENIA
+      const sampleOrders = await Order.find({})
+        .limit(3)
+        .select("user.userId user.email");
+      console.log("5. Sample orders from DB:");
+      sampleOrders.forEach((order, i) => {
+        console.log(`   Order ${i + 1}:`, {
+          orderId: order._id,
+          userId: order.user?.userId,
+          userEmail: order.user?.email,
+          isCurrentUser: order.user?.userId?.toString() === userId.toString(),
+        });
+      });
+
+      ///
+      console.log(
+        '6. Executing query: Order.find({ "user.userId":',
+        userId,
+        "})"
+      );
       // 🔹 Pobierz zamówienia użytkownika
       const orders = await Order.find({ "user.userId": req.user._id })
         .populate({
@@ -49,6 +88,11 @@ router.get(
         })
         .sort({ createdAt: -1 });
 
+      console.log(`7. Query returned ${orders.length} orders`);
+      console.log(
+        "8. Order IDs returned:",
+        orders.map((o) => o._id)
+      );
       // 🔹 Pobierz użytkownika wraz z jego zasobami
       const user = await User.findById(req.user._id).populate("resources");
       if (!user) {

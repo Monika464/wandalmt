@@ -131,7 +131,15 @@ export const createProduct = async (
     const { title, description, price, imageUrl } = req.body;
 
     if (!title || !description || !price || !imageUrl) {
-      //return res.status(400).json({ error: "Missing required fields" });
+      res.status(400).json({
+        error: "Missing required fields",
+        missingFields: {
+          title: !title,
+          description: !description,
+          price: !price,
+          imageUrl: !imageUrl,
+        },
+      });
       return;
     }
 
