@@ -33,83 +33,76 @@ router.get(
   userAuth,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      console.log("=== DEBUG /api/orders/user ===");
-      console.log("1. Authenticated user:", {
-        _id: req.user?._id,
-        email: req.user?.email,
-        role: req.user?.role,
-      });
       if (!req.user?._id) {
         res.status(401).json({ message: "Brak autoryzacji" });
         return;
       }
-      ///
 
       const userId = new mongoose.Types.ObjectId(req.user._id);
-      console.log("2. User ID as ObjectId:", userId);
-      // 🔍 SPRAWDŹ ILE ZAMÓWIEŃ JEST W BAZIE DLA TEGO USERA
-      const userOrdersCount = await Order.countDocuments({
-        "user.userId": userId,
-      });
-      console.log(`3. Orders count for user ${userId}: ${userOrdersCount}`);
 
-      // 🔍 SPRAWDŹ WSZYSTKIE ZAMÓWIENIA
-      const allOrdersCount = await Order.countDocuments({});
-      console.log(`4. Total orders in DB: ${allOrdersCount}`);
-
-      // 🔍 POKAŻ PRZYKŁADOWE ZAMÓWIENIA
-      const sampleOrders = await Order.find({})
-        .limit(3)
-        .select("user.userId user.email");
-      console.log("5. Sample orders from DB:");
-      sampleOrders.forEach((order, i) => {
-        console.log(`   Order ${i + 1}:`, {
-          orderId: order._id,
-          userId: order.user?.userId,
-          userEmail: order.user?.email,
-          isCurrentUser: order.user?.userId?.toString() === userId.toString(),
-        });
-      });
-
-      ///
-      console.log(
-        '6. Executing query: Order.find({ "user.userId":',
-        userId,
-        "})"
-      );
       // 🔹 Pobierz zamówienia użytkownika
-      const orders = await Order.find({ "user.userId": req.user._id })
-        .populate({
-          path: "user",
-          select: "email name",
-        })
-        .populate({
-          path: "products.product",
-        })
-        .sort({ createdAt: -1 });
+      const orders = await Order.find({ "user.userId": userId })
+        .sort({ createdAt: -1 })
+        .lean();
 
-      console.log(`7. Query returned ${orders.length} orders`);
-      console.log(
-        "8. Order IDs returned:",
-        orders.map((o) => o._id)
-      );
       // 🔹 Pobierz użytkownika wraz z jego zasobami
-      const user = await User.findById(req.user._id).populate("resources");
+      const user = await User.findById(userId).populate("resources");
       if (!user) {
         res.status(404).json({ message: "Nie znaleziono użytkownika" });
         return;
       }
 
-      // 🔹 Zasoby przypisane użytkownikowi
       const userResources = user.resources || [];
 
-      // 🔹 Połącz dane zamówień z zasobami użytkownika
-      const ordersWithUserResources = orders.map((order) => ({
-        ...order.toObject(),
-        userResources,
-      }));
+      // 🔹 Przygotuj odpowiedź - NIE potrzebujesz dodatkowych danych produktów
+      // bo już masz wszystko w order.products
+      const response = orders.map((order: any) => {
+        // Upewnij się że każdy produkt ma spójną strukturę
+        const normalizedProducts = order.products
+          ? order.products.map((product: any) => {
+              // Jeśli produkt ma zagnieżdżony obiekt 'product', wypłaszcz go
+              if (product.product && typeof product.product === "object") {
+                return {
+                  productId: product.product._id || product.productId,
+                  title: product.title || product.product.title,
+                  price: product.price || product.product.price,
+                  quantity: product.quantity || 1,
+                  imageUrl: product.imageUrl || product.product.imageUrl,
+                  content: product.content || product.product.content,
+                  description:
+                    product.description || product.product.description,
+                  // Pola do zwrotów
+                  refunded: product.refunded,
+                  refundedAt: product.refundedAt,
+                  refundId: product.refundId,
+                  refundAmount: product.refundAmount,
+                  refundQuantity: product.refundQuantity,
+                  // Zachowaj oryginał dla kompatybilności
+                  product: product.product,
+                };
+              }
+              // Jeśli już ma płaską strukturę, zwróć jak jest
+              return product;
+            })
+          : [];
 
-      res.status(200).json(ordersWithUserResources);
+        return {
+          ...order,
+          products: normalizedProducts,
+          userResources: userResources.filter((resource: any) => {
+            return normalizedProducts.some((p: any) => {
+              const productId = p.productId || (p.product && p.product._id);
+              return (
+                productId &&
+                resource.productId &&
+                resource.productId.toString() === productId.toString()
+              );
+            });
+          }),
+        };
+      });
+
+      res.status(200).json(response);
     } catch (error) {
       console.error("Błąd przy pobieraniu zamówień użytkownika:", error);
       res.status(500).json({
@@ -118,6 +111,96 @@ router.get(
     }
   }
 );
+// router.get(
+//   "/user",
+//   userAuth,
+//   async (req: Request, res: Response): Promise<void> => {
+//     try {
+//       console.log("=== DEBUG /api/orders/user ===");
+//       console.log("1. Authenticated user:", {
+//         _id: req.user?._id,
+//         email: req.user?.email,
+//         role: req.user?.role,
+//       });
+//       if (!req.user?._id) {
+//         res.status(401).json({ message: "Brak autoryzacji" });
+//         return;
+//       }
+//       ///
+
+//       const userId = new mongoose.Types.ObjectId(req.user._id);
+//       console.log("2. User ID as ObjectId:", userId);
+//       // 🔍 SPRAWDŹ ILE ZAMÓWIEŃ JEST W BAZIE DLA TEGO USERA
+//       const userOrdersCount = await Order.countDocuments({
+//         "user.userId": userId,
+//       });
+//       console.log(`3. Orders count for user ${userId}: ${userOrdersCount}`);
+
+//       // 🔍 SPRAWDŹ WSZYSTKIE ZAMÓWIENIA
+//       const allOrdersCount = await Order.countDocuments({});
+//       console.log(`4. Total orders in DB: ${allOrdersCount}`);
+
+//       // 🔍 POKAŻ PRZYKŁADOWE ZAMÓWIENIA
+//       const sampleOrders = await Order.find({})
+//         .limit(3)
+//         .select("user.userId user.email");
+//       console.log("5. Sample orders from DB:");
+//       sampleOrders.forEach((order, i) => {
+//         console.log(`   Order ${i + 1}:`, {
+//           orderId: order._id,
+//           userId: order.user?.userId,
+//           userEmail: order.user?.email,
+//           isCurrentUser: order.user?.userId?.toString() === userId.toString(),
+//         });
+//       });
+
+//       ///
+//       console.log(
+//         '6. Executing query: Order.find({ "user.userId":',
+//         userId,
+//         "})"
+//       );
+//       // 🔹 Pobierz zamówienia użytkownika
+//       const orders = await Order.find({ "user.userId": req.user._id })
+//         .populate({
+//           path: "user",
+//           select: "email name",
+//         })
+//         .populate({
+//           path: "products.product",
+//         })
+//         .sort({ createdAt: -1 });
+
+//       console.log(`7. Query returned ${orders.length} orders`);
+//       console.log(
+//         "8. Order IDs returned:",
+//         orders.map((o) => o._id)
+//       );
+//       // 🔹 Pobierz użytkownika wraz z jego zasobami
+//       const user = await User.findById(req.user._id).populate("resources");
+//       if (!user) {
+//         res.status(404).json({ message: "Nie znaleziono użytkownika" });
+//         return;
+//       }
+
+//       // 🔹 Zasoby przypisane użytkownikowi
+//       const userResources = user.resources || [];
+
+//       // 🔹 Połącz dane zamówień z zasobami użytkownika
+//       const ordersWithUserResources = orders.map((order) => ({
+//         ...order.toObject(),
+//         userResources,
+//       }));
+
+//       res.status(200).json(ordersWithUserResources);
+//     } catch (error) {
+//       console.error("Błąd przy pobieraniu zamówień użytkownika:", error);
+//       res.status(500).json({
+//         message: "Błąd serwera przy pobieraniu zamówień użytkownika",
+//       });
+//     }
+//   }
+// );
 
 /**
  * POST /api/orders/refund/:id
@@ -233,6 +316,168 @@ router.post(
     } catch (error) {
       console.error("Błąd przy zwrocie zamówienia:", error);
       res.status(500).json({ message: "Błąd serwera przy zwrocie" });
+    }
+  }
+);
+
+// routes/orders.ts - endpoint dla częściowego zwrotu
+router.post(
+  "/refund/:orderId/partial",
+  userAuth,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { orderId } = req.params;
+      const { refundItems } = req.body; // Array<{productId, quantity, reason}>
+
+      if (
+        !refundItems ||
+        !Array.isArray(refundItems) ||
+        refundItems.length === 0
+      ) {
+        res.status(400).json({ error: "Brak produktów do zwrotu" });
+        return;
+      }
+
+      // Znajdź zamówienie
+      const order = await Order.findById(orderId);
+      if (!order) {
+        res.status(404).json({ error: "Zamówienie nie znalezione" });
+        return;
+      }
+
+      // Sprawdź czy zamówienie zostało opłacone
+      if (order.status !== "paid" && order.status !== "partially_refunded") {
+        res.status(400).json({ error: "Zamówienie nie nadaje się do zwrotu" });
+        return;
+      }
+
+      // Sprawdź czy użytkownik ma uprawnienia
+      if (
+        req.user._id.toString() !== order.user.userId.toString() &&
+        req.user.role !== "admin"
+      ) {
+        res.status(403).json({ error: "Brak uprawnień" });
+        return;
+      }
+
+      // Oblicz kwotę zwrotu
+      let totalRefundAmount = 0;
+      const refundDetails = [];
+
+      for (const refundItem of refundItems) {
+        const product = order.products.find(
+          (p) => p.productId.toString() === refundItem.productId
+        );
+
+        if (!product) {
+          continue;
+        }
+
+        // Sprawdź dostępną ilość do zwrotu
+        const alreadyRefunded = product.refundQuantity || 0;
+        const availableToRefund = product.quantity - alreadyRefunded;
+
+        if (availableToRefund < refundItem.quantity) {
+          res.status(400).json({
+            error: `Niewystarczająca ilość do zwrotu dla produktu: ${product.title}`,
+          });
+          return;
+        }
+
+        const productRefundAmount = product.price * refundItem.quantity;
+        totalRefundAmount += productRefundAmount;
+
+        refundDetails.push({
+          productId: product.productId,
+          title: product.title,
+          quantity: refundItem.quantity,
+          amount: productRefundAmount,
+          reason: refundItem.reason,
+        });
+
+        // Zaktualizuj produkt w zamówieniu
+        product.refundQuantity =
+          (product.refundQuantity || 0) + refundItem.quantity;
+        product.refunded = product.refundQuantity === product.quantity;
+
+        if (product.refundQuantity === product.quantity) {
+          product.refundedAt = new Date().toISOString();
+        }
+      }
+
+      if (totalRefundAmount <= 0) {
+        res.status(400).json({ error: "Brak kwoty do zwrotu" });
+        return;
+      }
+
+      // Wykonaj zwrot w Stripe
+      const refund = await stripe.refunds.create({
+        payment_intent: order.stripePaymentIntentId,
+        amount: Math.round(totalRefundAmount * 100), // grosze
+        reason: "requested_by_customer",
+        metadata: {
+          orderId: order._id.toString(),
+          refundType: "partial",
+          refundItems: JSON.stringify(refundItems),
+        },
+      });
+
+      // Zaktualizuj zamówienie
+      order.partialRefunds = order.partialRefunds || [];
+      order.partialRefunds.push({
+        refundId: refund.id,
+        amount: totalRefundAmount,
+        createdAt: new Date().toISOString(),
+        reason: "Partial refund - customer request",
+        products: refundDetails,
+      });
+
+      // Sprawdź czy wszystkie produkty są zwrócone
+      const allProductsRefunded = order.products.every(
+        (p) => p.refundQuantity === p.quantity
+      );
+
+      if (allProductsRefunded) {
+        order.status = "refunded";
+        order.refundedAt = new Date().toISOString();
+        order.refundId = refund.id;
+        order.refundAmount = order.totalAmount;
+      } else {
+        order.status = "partially_refunded";
+      }
+
+      await order.save();
+
+      // Usuń zasoby użytkownika dla zwróconych produktów
+      if (order.user.userId) {
+        const refundedProductIds = refundDetails.map((item) => item.productId);
+
+        await User.updateOne(
+          { _id: order.user.userId },
+          {
+            $pull: {
+              resources: {
+                productId: { $in: refundedProductIds },
+              },
+            },
+          }
+        );
+      }
+
+      res.json({
+        success: true,
+        message: `Częściowy zwrot ${totalRefundAmount.toFixed(
+          2
+        )} PLN został wykonany`,
+        order,
+        refundId: refund.id,
+      });
+    } catch (err: any) {
+      console.error("Partial refund error:", err);
+      res.status(500).json({
+        error: "Błąd podczas częściowego zwrotu",
+        details: err.message,
+      });
     }
   }
 );
