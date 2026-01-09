@@ -12,7 +12,14 @@ const orderSchema = new mongoose.Schema({
   status: {
     type: String,
     sparse: true,
-    enum: ["pending", "paid", "failed", "canceled"],
+    enum: [
+      "pending",
+      "paid",
+      "failed",
+      "canceled",
+      "refunded",
+      "partially_refunded",
+    ],
     default: "pending",
   },
 
@@ -38,6 +45,9 @@ const orderSchema = new mongoose.Schema({
       quantity: Number,
       imageUrl: String,
       content: String,
+      refundQuantity: { type: Number, default: 0 },
+      refunded: { type: Boolean, default: false },
+      refundedAt: Date,
     },
   ],
 
@@ -55,21 +65,10 @@ const orderSchema = new mongoose.Schema({
   requireInvoice: Boolean,
   invoiceData: {
     companyName: String,
-    //taxId: String,
     address: String,
   },
   invoiceId: String,
 
-  // Podatki
-  // tax: [
-  //   {
-  //     amount: Number,
-  //     rate: Number,
-  //     description: String,
-  //   },
-  // ],
-
-  // Dane billingowe
   billingDetails: {
     name: String,
     email: String,
@@ -83,6 +82,30 @@ const orderSchema = new mongoose.Schema({
       country: String,
     },
   },
+  refundId: String,
+  refundAmount: Number,
+  refundedAt: Date,
+
+  partialRefunds: [
+    {
+      refundId: String,
+      amount: Number,
+      createdAt: {
+        type: Date,
+        default: Date.now,
+      },
+      reason: String,
+      products: [
+        {
+          productId: mongoose.Schema.Types.ObjectId,
+          title: String,
+          quantity: Number,
+          amount: Number,
+          reason: String,
+        },
+      ],
+    },
+  ],
 
   // Timestamps
   createdAt: {
@@ -95,7 +118,7 @@ orderSchema.index(
   { stripeSessionId: 1 },
   {
     sparse: true,
-    name: "stripeSessionId_sparse_idx", // Unikalna nazwa
+    name: "stripeSessionId_sparse_idx",
   }
 );
 
