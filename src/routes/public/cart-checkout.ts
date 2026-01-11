@@ -106,9 +106,7 @@ router.post(
         status: "pending",
         couponCode: couponCode || null,
         requireInvoice: requireInvoice || false,
-        invoiceData: requireInvoice ? invoiceData : null,
         createdAt: new Date(),
-        // NIE DODAWAJ stripeSessionId JESZCZE!
       });
 
       await newOrder.save();
@@ -142,7 +140,7 @@ router.post(
       });
 
       // 3. KONFIGURACJA SESJI STRIPE
-      console.log("fronturl", process.env.FRONTEND_URL);
+
       const sessionConfig: any = {
         payment_method_types: ["card", "p24", "blik"],
         mode: "payment",
@@ -160,19 +158,15 @@ router.post(
           orderId: newOrder._id.toString(),
           userId: req.user._id.toString(),
         },
+        invoice_creation: {
+          enabled: true, // Włącz tworzenie faktur
+        },
       };
 
       // Faktura
       if (requireInvoice) {
-        sessionConfig.billing_address_collection = "required";
         sessionConfig.invoice_creation = { enabled: true };
-
-        if (invoiceData?.companyName) {
-          sessionConfig.metadata.companyName =
-            invoiceData.companyName.substring(0, 50);
-          sessionConfig.metadata.taxId =
-            invoiceData.taxId?.substring(0, 20) || "";
-        }
+        sessionConfig.billing_address_collection = "required";
       } else {
         sessionConfig.billing_address_collection = "auto";
       }
@@ -191,25 +185,25 @@ router.post(
         },
       };
 
-      sessionConfig.automatic_tax = { enabled: true };
+      //sessionConfig.automatic_tax = { enabled: true };
 
       // 4. STWÓRZ SESJĘ STRIPE
       const session = await stripe.checkout.sessions.create(sessionConfig);
       console.log("✅ Stripe session created!");
-      console.log("Session ID:", session.id);
-      console.log("Session URL:", session.url);
-      console.log("Success URL in session:", session.success_url);
-      console.log("Cancel URL in session:", session.cancel_url);
+      // console.log("Session ID:", session.id);
+      // console.log("Session URL:", session.url);
+      // console.log("Success URL in session:", session.success_url);
+      // console.log("Cancel URL in session:", session.cancel_url);
 
       // 5. ZAKTUALIZUJ ZAMÓWIENIE O PRAWDZIWE stripeSessionId
       newOrder.stripeSessionId = session.id;
       await newOrder.save();
 
-      console.log(`✅ Order updated with Stripe session ID: ${session.id}`);
+      // console.log(`✅ Order updated with Stripe session ID: ${session.id}`);
 
-      console.log(
-        `🔄 Order ${newOrder._id} updated with Stripe session ID: ${session.id}`
-      );
+      // console.log(
+      //   `🔄 Order ${newOrder._id} updated with Stripe session ID: ${session.id}`
+      // );
 
       res.json({
         url: session.url,
@@ -328,13 +322,24 @@ router.get(
           order.discount = session.total_details.breakdown.discounts[0];
         }
 
+        // Dodaj fakturę jeśli istnieje
         if (session.invoice) {
-          order.invoiceId = session.invoice.toString();
-        }
+          const invoice = session.invoice as any;
+          order.invoiceId = invoice.id;
 
-        // if (session.total_details?.breakdown?.taxes) {
-        //   order.tax = session.total_details.breakdown.taxes;
-        // }
+          order.invoiceDetails = {
+            invoiceNumber: invoice.number,
+            invoicePdf: invoice.invoice_pdf,
+            hostedInvoiceUrl: invoice.hosted_invoice_url,
+            status: invoice.status,
+            amountPaid: invoice.amount_paid / 100,
+            createdAt: new Date(invoice.created * 1000),
+          };
+
+          console.log(
+            `🧾 Invoice created: ${order.invoiceId}, Number: ${invoice.number}`
+          );
+        }
 
         if (session.customer_details) {
           order.billingDetails = {
@@ -436,8 +441,6 @@ router.get(
           requireInvoice: session.metadata?.requireInvoice === "true",
 
           discount: session.total_details?.breakdown?.discounts?.[0] || null,
-          invoiceId: session.invoice?.toString() || null,
-          //tax: session.total_details?.breakdown?.taxes || [],
 
           billingDetails: session.customer_details
             ? {
@@ -450,6 +453,44 @@ router.get(
 
           createdAt: new Date(session.created * 1000),
         });
+
+        console.log("Invoice debug:", {
+          hasInvoice: !!session.invoice,
+          invoiceType: typeof session.invoice,
+          invoiceValue: session.invoice,
+          sessionId: session.id,
+          paymentStatus: session.payment_status,
+        });
+
+        if (session.invoice) {
+          console.log(
+            "Invoice object keys:",
+            Object.keys(session.invoice as any)
+          );
+          console.log(
+            "Invoice object:",
+            JSON.stringify(session.invoice, null, 2)
+          );
+        }
+
+        // DODAJ FAKTURĘ JEŚLI ISTNIEJE
+        if (session.invoice) {
+          const invoice = session.invoice as any;
+          newOrder.invoiceId = invoice.id;
+
+          newOrder.invoiceDetails = {
+            invoiceNumber: invoice.number,
+            invoicePdf: invoice.invoice_pdf,
+            hostedInvoiceUrl: invoice.hosted_invoice_url,
+            status: invoice.status,
+            amountPaid: invoice.amount_paid / 100,
+            createdAt: new Date(invoice.created * 1000),
+          };
+
+          console.log(
+            `🧾 Invoice created: ${newOrder.invoiceId}, Number: ${invoice.number}`
+          );
+        }
 
         await newOrder.save();
         order = newOrder;

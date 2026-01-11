@@ -41,7 +41,10 @@ router.get(
       const userId = new mongoose.Types.ObjectId(req.user._id);
 
       // 🔹 Pobierz zamówienia użytkownika
-      const orders = await Order.find({ "user.userId": userId })
+      const orders = await Order.find({
+        "user.userId": userId,
+        status: { $in: ["paid", "partially_refunded", "refunded"] },
+      })
         .sort({ createdAt: -1 })
         .lean();
 
@@ -54,10 +57,7 @@ router.get(
 
       const userResources = user.resources || [];
 
-      // 🔹 Przygotuj odpowiedź - NIE potrzebujesz dodatkowych danych produktów
-      // bo już masz wszystko w order.products
       const response = orders.map((order: any) => {
-        // Upewnij się że każdy produkt ma spójną strukturę
         const normalizedProducts = order.products
           ? order.products.map((product: any) => {
               // Jeśli produkt ma zagnieżdżony obiekt 'product', wypłaszcz go
@@ -101,8 +101,19 @@ router.get(
           }),
         };
       });
+      const pendingOrdersCount = await Order.countDocuments({
+        "user.userId": userId,
+        status: "pending",
+      });
 
-      res.status(200).json(response);
+      res.status(200).json({
+        orders: response,
+        stats: {
+          total: response.length,
+          pending: pendingOrdersCount,
+          lastUpdated: new Date().toISOString(),
+        },
+      });
     } catch (error) {
       console.error("Błąd przy pobieraniu zamówień użytkownika:", error);
       res.status(500).json({
@@ -111,101 +122,7 @@ router.get(
     }
   }
 );
-// router.get(
-//   "/user",
-//   userAuth,
-//   async (req: Request, res: Response): Promise<void> => {
-//     try {
-//       console.log("=== DEBUG /api/orders/user ===");
-//       console.log("1. Authenticated user:", {
-//         _id: req.user?._id,
-//         email: req.user?.email,
-//         role: req.user?.role,
-//       });
-//       if (!req.user?._id) {
-//         res.status(401).json({ message: "Brak autoryzacji" });
-//         return;
-//       }
-//       ///
 
-//       const userId = new mongoose.Types.ObjectId(req.user._id);
-//       console.log("2. User ID as ObjectId:", userId);
-//       // 🔍 SPRAWDŹ ILE ZAMÓWIEŃ JEST W BAZIE DLA TEGO USERA
-//       const userOrdersCount = await Order.countDocuments({
-//         "user.userId": userId,
-//       });
-//       console.log(`3. Orders count for user ${userId}: ${userOrdersCount}`);
-
-//       // 🔍 SPRAWDŹ WSZYSTKIE ZAMÓWIENIA
-//       const allOrdersCount = await Order.countDocuments({});
-//       console.log(`4. Total orders in DB: ${allOrdersCount}`);
-
-//       // 🔍 POKAŻ PRZYKŁADOWE ZAMÓWIENIA
-//       const sampleOrders = await Order.find({})
-//         .limit(3)
-//         .select("user.userId user.email");
-//       console.log("5. Sample orders from DB:");
-//       sampleOrders.forEach((order, i) => {
-//         console.log(`   Order ${i + 1}:`, {
-//           orderId: order._id,
-//           userId: order.user?.userId,
-//           userEmail: order.user?.email,
-//           isCurrentUser: order.user?.userId?.toString() === userId.toString(),
-//         });
-//       });
-
-//       ///
-//       console.log(
-//         '6. Executing query: Order.find({ "user.userId":',
-//         userId,
-//         "})"
-//       );
-//       // 🔹 Pobierz zamówienia użytkownika
-//       const orders = await Order.find({ "user.userId": req.user._id })
-//         .populate({
-//           path: "user",
-//           select: "email name",
-//         })
-//         .populate({
-//           path: "products.product",
-//         })
-//         .sort({ createdAt: -1 });
-
-//       console.log(`7. Query returned ${orders.length} orders`);
-//       console.log(
-//         "8. Order IDs returned:",
-//         orders.map((o) => o._id)
-//       );
-//       // 🔹 Pobierz użytkownika wraz z jego zasobami
-//       const user = await User.findById(req.user._id).populate("resources");
-//       if (!user) {
-//         res.status(404).json({ message: "Nie znaleziono użytkownika" });
-//         return;
-//       }
-
-//       // 🔹 Zasoby przypisane użytkownikowi
-//       const userResources = user.resources || [];
-
-//       // 🔹 Połącz dane zamówień z zasobami użytkownika
-//       const ordersWithUserResources = orders.map((order) => ({
-//         ...order.toObject(),
-//         userResources,
-//       }));
-
-//       res.status(200).json(ordersWithUserResources);
-//     } catch (error) {
-//       console.error("Błąd przy pobieraniu zamówień użytkownika:", error);
-//       res.status(500).json({
-//         message: "Błąd serwera przy pobieraniu zamówień użytkownika",
-//       });
-//     }
-//   }
-// );
-
-/**
- * POST /api/orders/refund/:id
- * 🔁 Zwraca zamówienie (zwrot)
- */
 router.post(
   "/refund/:id",
   userAuth,
@@ -630,232 +547,5 @@ router.post(
     }
   }
 );
-// router.post(
-//   "/refund/:orderId/partial",
-//   userAuth,
-//   async (req: Request, res: Response): Promise<void> => {
-//     try {
-//       const { orderId } = req.params;
-//       const { refundItems } = req.body;
-
-//       if (
-//         !refundItems ||
-//         !Array.isArray(refundItems) ||
-//         refundItems.length === 0
-//       ) {
-//         res.status(400).json({ error: "Brak produktów do zwrotu" });
-//         return;
-//       }
-
-//       // Znajdź zamówienie
-//       const order = await Order.findById(orderId);
-//       if (!order) {
-//         res.status(404).json({ error: "Zamówienie nie znalezione" });
-//         return;
-//       }
-
-//       console.log("🔄 Current order status:", order.status);
-//       console.log("📦 Products before refund:");
-//       order.products.forEach((p: any, i: number) => {
-//         console.log(`  Product ${i}: ${p.title}`);
-//         console.log(
-//           `    Quantity: ${p.quantity}, Refunded: ${p.refundQuantity || 0}`
-//         );
-//       });
-
-//       // Sprawdź czy zamówienie zostało opłacone
-//       if (order.status !== "paid" && order.status !== "partially_refunded") {
-//         res.status(400).json({ error: "Zamówienie nie nadaje się do zwrotu" });
-//         return;
-//       }
-
-//       // Sprawdź czy użytkownik ma uprawnienia
-//       if (
-//         req.user._id.toString() !== order.user.userId.toString() &&
-//         req.user.role !== "admin"
-//       ) {
-//         res.status(403).json({ error: "Brak uprawnień" });
-//         return;
-//       }
-
-//       // Oblicz kwotę zwrotu
-//       let totalRefundAmount = 0;
-//       const refundDetails = [];
-
-//       for (const refundItem of refundItems) {
-//         const product = order.products.find(
-//           (p: any) =>
-//             p.productId && p.productId.toString() === refundItem.productId
-//         );
-
-//         if (!product) {
-//           console.log(`❌ Product not found: ${refundItem.productId}`);
-//           continue;
-//         }
-
-//         // Sprawdź dostępną ilość do zwrotu
-//         const alreadyRefunded = (product as any).refundQuantity || 0;
-//         const availableToRefund = product.quantity - alreadyRefunded;
-
-//         console.log(`📊 Product: ${product.title}`);
-//         console.log(`   Already refunded: ${alreadyRefunded}`);
-//         console.log(`   Available to refund: ${availableToRefund}`);
-//         console.log(`   Requested refund: ${refundItem.quantity}`);
-
-//         if (availableToRefund < refundItem.quantity) {
-//           res.status(400).json({
-//             error: `Niewystarczająca ilość do zwrotu dla produktu: ${product.title}`,
-//             available: availableToRefund,
-//             requested: refundItem.quantity,
-//           });
-//           return;
-//         }
-
-//         const productRefundAmount = product.price * refundItem.quantity;
-//         totalRefundAmount += productRefundAmount;
-
-//         refundDetails.push({
-//           productId: product.productId,
-//           title: product.title,
-//           quantity: refundItem.quantity,
-//           amount: productRefundAmount,
-//           reason: refundItem.reason,
-//         });
-
-//         // Zaktualizuj produkt w zamówieniu - JEDNA AKTUALIZACJA
-//         (product as any).refundQuantity = alreadyRefunded + refundItem.quantity;
-//         (product as any).refunded =
-//           (product as any).refundQuantity === product.quantity;
-
-//         if ((product as any).refundQuantity === product.quantity) {
-//           (product as any).refundedAt = new Date();
-//         }
-
-//         console.log(`✅ Updated product ${product.title}:`);
-//         console.log(
-//           `   New refundQuantity: ${(product as any).refundQuantity}`
-//         );
-//       } // KONIEC PĘTLI FOR - TEN NAWIAS BYŁ W ZŁYM MIEJSCU
-
-//       if (totalRefundAmount <= 0) {
-//         res.status(400).json({ error: "Brak kwoty do zwrotu" });
-//         return;
-//       }
-
-//       // PRZED wykonaniem refundacji, sprawdź dostępną kwotę w Stripe
-//       const paymentIntent = await stripe.paymentIntents.retrieve(
-//         order.stripePaymentIntentId
-//       );
-
-//       // Oblicz już zwróconą kwotę
-//       let alreadyRefundedInStripe = 0;
-//       if (paymentIntent.charges.data[0]?.refunds?.data) {
-//         alreadyRefundedInStripe =
-//           paymentIntent.charges.data[0].refunds.data.reduce(
-//             (sum: number, refund: any) => sum + refund.amount,
-//             0
-//           );
-//       }
-
-//       const chargeAmount = paymentIntent.amount; // Całkowita kwota (w groszach)
-//       const availableForRefund = chargeAmount - alreadyRefundedInStripe; // Dostępne do zwrotu
-//       const requestedRefundAmountInCents = Math.round(totalRefundAmount * 100);
-
-//       // Sprawdź czy kwota jest dostępna
-//       if (requestedRefundAmountInCents > availableForRefund) {
-//         res.status(400).json({
-//           error: `Żądana kwota zwrotu (${totalRefundAmount.toFixed(
-//             2
-//           )} zł) jest większa niż dostępna (${(
-//             availableForRefund / 100
-//           ).toFixed(2)} zł).`,
-//           availableForRefund: availableForRefund / 100,
-//           alreadyRefunded: alreadyRefundedInStripe / 100,
-//           totalAmount: chargeAmount / 100,
-//         });
-//         return;
-//       }
-
-//       // Wykonaj zwrot w Stripe
-//       const refund = await stripe.refunds.create({
-//         payment_intent: order.stripePaymentIntentId,
-//         amount: requestedRefundAmountInCents,
-//         reason: "requested_by_customer",
-//         metadata: {
-//           orderId: order._id.toString(),
-//           refundType: "partial",
-//           refundItems: JSON.stringify(refundItems),
-//         },
-//       });
-
-//       // Zaktualizuj zamówienie
-//       (order as any).partialRefunds = (order as any).partialRefunds || [];
-//       (order as any).partialRefunds.push({
-//         refundId: refund.id,
-//         amount: totalRefundAmount,
-//         createdAt: new Date(),
-//         reason: "Partial refund - customer request",
-//         products: refundDetails,
-//       });
-
-//       // Sprawdź czy wszystkie produkty są zwrócone
-//       const allProductsRefunded = order.products.every(
-//         (p: any) => (p.refundQuantity || 0) === p.quantity
-//       );
-
-//       if (allProductsRefunded) {
-//         order.status = "refunded";
-//         (order as any).refundedAt = new Date();
-//         (order as any).refundId = refund.id;
-//         (order as any).refundAmount = order.totalAmount;
-//       } else {
-//         order.status = "partially_refunded";
-//       }
-
-//       // ZAPISZ ZMIANY
-//       await order.save();
-
-//       console.log("✅ Order saved with new status:", order.status);
-//       console.log("📦 Products after refund:");
-//       order.products.forEach((p: any, i: number) => {
-//         console.log(`  Product ${i}: ${p.title}`);
-//         console.log(
-//           `    Quantity: ${p.quantity}, Refunded: ${p.refundQuantity || 0}`
-//         );
-//       });
-
-//       // Usuń zasoby użytkownika dla zwróconych produktów
-//       if (order.user.userId) {
-//         const refundedProductIds = refundDetails.map((item) => item.productId);
-
-//         await User.updateOne(
-//           { _id: order.user.userId },
-//           {
-//             $pull: {
-//               resources: {
-//                 productId: { $in: refundedProductIds },
-//               },
-//             },
-//           }
-//         );
-//       }
-
-//       res.json({
-//         success: true,
-//         message: `Częściowy zwrot ${totalRefundAmount.toFixed(
-//           2
-//         )} PLN został wykonany`,
-//         order,
-//         refundId: refund.id,
-//       });
-//     } catch (err: any) {
-//       console.error("Partial refund error:", err);
-//       res.status(500).json({
-//         error: "Błąd podczas częściowego zwrotu",
-//         details: err.message,
-//       });
-//     }
-//   }
-// );
 
 export default router;
