@@ -250,14 +250,14 @@ router.post(
         return;
       }
 
-      console.log("🔄 Current order status:", order.status);
-      console.log("📦 Products before refund:");
-      order.products.forEach((p: any, i: number) => {
-        console.log(`  Product ${i}: ${p.title}`);
-        console.log(
-          `    Quantity: ${p.quantity}, Refunded: ${p.refundQuantity || 0}`
-        );
-      });
+      //console.log("🔄 Current order status:", order.status);
+      //console.log("📦 Products before refund:");
+      // order.products.forEach((p: any, i: number) => {
+      //   console.log(`  Product ${i}: ${p.title}`);
+      //   console.log(
+      //     `    Quantity: ${p.quantity}, Refunded: ${p.refundQuantity || 0}`
+      //   );
+      // });
 
       // Sprawdź czy zamówienie zostało opłacone
       if (order.status !== "paid" && order.status !== "partially_refunded") {

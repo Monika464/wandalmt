@@ -9,6 +9,25 @@ const orderSchema = new mongoose.Schema({
     default: null,
   },
   stripePaymentIntentId: String,
+  // Zniżka Stripe
+  stripeDiscount: {
+    coupon: String,
+    promotion_code: String,
+    amount_off: Number,
+    percent_off: Number,
+  },
+
+  // Zniżka z naszego systemu
+  discountApplied: {
+    type: {
+      type: String,
+      enum: ["coupon", "promotion", "manual", null],
+      default: null,
+    },
+    code: String,
+    amount: Number,
+    description: String,
+  },
   status: {
     type: String,
     sparse: true,
@@ -42,6 +61,7 @@ const orderSchema = new mongoose.Schema({
       },
       title: String,
       price: Number,
+      discountedPrice: Number,
       quantity: Number,
       imageUrl: String,
       content: String,
@@ -53,6 +73,10 @@ const orderSchema = new mongoose.Schema({
 
   // Suma
   totalAmount: Number,
+  totalDiscount: {
+    type: Number,
+    default: 0,
+  },
 
   // Kupon rabatowy
   couponCode: String,

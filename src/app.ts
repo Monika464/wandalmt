@@ -13,11 +13,14 @@ import stripeWebhookRouter from "./routes/stripeWebhook.js";
 import cartCheckoutRouter from "./routes/public/cart-checkout.js";
 import orderRoutes from "./routes/order/orders.js";
 import bunnyStream from "./routes/bunnyStream.js";
+import discountPublicRouter from "./routes/public/discount-public.js";
+import discountAdminRouter from "./routes/admin/discount.js";
 import { tokenRefreshMiddleware } from "./middleware/tokenRefreshMiddleware.js";
 
 import dotenv from "dotenv";
 import emailRoutes from "routes/emailRoutes.js";
 import { checkVideoStatus, getVideoStatus } from "controllers/bunnyWebhook.js";
+//import discount from "models/discount.js";
 dotenv.config();
 
 connectDB();
@@ -52,6 +55,8 @@ app.use("/api", cartCheckoutRouter);
 app.use("/api/orders", orderRoutes);
 app.use("/email", emailRoutes);
 app.use("/api/stream", bunnyStream);
+app.use("/api/discounts", discountPublicRouter);
+app.use("/api/admin/discounts", discountAdminRouter);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

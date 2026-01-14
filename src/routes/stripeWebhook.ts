@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 router.get("/test", (req, res) => {
   res.send("Webhook router działa!");
@@ -90,6 +91,73 @@ router.post(
     }
 
     res.status(200).send("Received");
+  }
+);
+
+// Webhook dla faktur
+router.post(
+  "/stripe-invoice-webhook",
+  express.raw({ type: "application/json" }),
+  async (req: Request, res: Response): Promise<void> => {
+    const sig = req.headers["stripe-signature"] as string;
+
+    let event;
+
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    } catch (err: any) {
+      console.error(`⚠️ Webhook signature verification failed:`, err.message);
+      res.status(400).send(`Webhook Error: ${err.message}`);
+      return;
+    }
+
+    // Obsłuż różne eventy związane z fakturami
+    switch (event.type) {
+      case "invoice.created":
+      case "invoice.finalized":
+      case "invoice.paid":
+      case "invoice.payment_succeeded":
+        const invoice = event.data.object as any;
+
+        try {
+          // Znajdź zamówienie po payment_intent
+          const order = await Order.findOne({
+            stripePaymentIntentId: invoice.payment_intent,
+          });
+
+          if (order) {
+            console.log(`📄 Webhook: Updating invoice for order ${order._id}`);
+
+            order.invoiceId = invoice.id;
+            order.invoiceDetails = {
+              invoiceNumber:
+                invoice.number || `INV-${order._id.toString().slice(-8)}`,
+              invoicePdf: invoice.invoice_pdf || "",
+              hostedInvoiceUrl: invoice.hosted_invoice_url || "",
+              status: invoice.status || "paid",
+              amountPaid: invoice.amount_paid
+                ? invoice.amount_paid / 100
+                : order.totalAmount,
+              createdAt: invoice.created
+                ? new Date(invoice.created * 1000)
+                : new Date(),
+            };
+
+            await order.save();
+            console.log(
+              `✅ Invoice updated via webhook for order ${order._id}`
+            );
+          }
+        } catch (error) {
+          console.error("Error updating invoice from webhook:", error);
+        }
+        break;
+
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
+    }
+
+    res.json({ received: true });
   }
 );
 
