@@ -66,18 +66,19 @@ router.get(
                   productId: product.product._id || product.productId,
                   title: product.title || product.product.title,
                   price: product.price || product.product.price,
+                  discountedPrice: product.discountedPrice,
                   quantity: product.quantity || 1,
                   imageUrl: product.imageUrl || product.product.imageUrl,
                   content: product.content || product.product.content,
                   description:
                     product.description || product.product.description,
-                  // Pola do zwrotów
+
                   refunded: product.refunded,
                   refundedAt: product.refundedAt,
                   refundId: product.refundId,
                   refundAmount: product.refundAmount,
                   refundQuantity: product.refundQuantity,
-                  // Zachowaj oryginał dla kompatybilności
+
                   product: product.product,
                 };
               }
@@ -172,16 +173,25 @@ router.post(
           .json({ message: "Nie znaleziono płatności do zwrotu." });
         return;
       }
-
+      const refundAmount = order.totalAmount;
       // 🔹 Wykonaj zwrot
       const refund = await stripe.refunds.create({
         payment_intent: session.payment_intent as string,
+        amount: Math.round(refundAmount * 100), // Użyj totalAmount (po zniżce)
+        metadata: {
+          orderId: order._id.toString(),
+          couponApplied: order.couponCode || "none",
+          originalTotal: order.totalAmount + (order.totalDiscount || 0),
+          discountAmount: order.totalDiscount || 0,
+        },
       });
 
       // 🔹 Zaktualizuj dokument w MongoDB
       order.set({
         refundedAt: new Date(),
-        refundId: refund.id, // opcjonalnie dodaj to do schematu
+        refundId: refund.id,
+        refundAmount: refundAmount,
+        status: "refunded",
       });
 
       await order.save();
@@ -213,8 +223,16 @@ router.post(
       res.status(200).json({
         message:
           "Zwrot wykonany pomyślnie. Zasoby usunięte z konta użytkownika",
-        refund,
-        order,
+        refund: {
+          id: refund.id,
+          amount: refundAmount,
+          currency: "pln",
+        },
+        order: {
+          id: order._id,
+          status: order.status,
+          refundedAt: order.refundedAt,
+        },
       });
     } catch (error) {
       console.error("Błąd przy zwrocie zamówienia:", error);
@@ -293,10 +311,10 @@ router.post(
         const alreadyRefunded = (product as any).refundQuantity || 0;
         const availableToRefund = product.quantity - alreadyRefunded;
 
-        console.log(`📊 Product: ${product.title}`);
-        console.log(`   Already refunded: ${alreadyRefunded}`);
-        console.log(`   Available to refund: ${availableToRefund}`);
-        console.log(`   Requested refund: ${refundItem.quantity}`);
+        // console.log(`📊 Product: ${product.title}`);
+        // console.log(`   Already refunded: ${alreadyRefunded}`);
+        // console.log(`   Available to refund: ${availableToRefund}`);
+        // console.log(`   Requested refund: ${refundItem.quantity}`);
 
         if (availableToRefund < refundItem.quantity) {
           res.status(400).json({
@@ -307,13 +325,19 @@ router.post(
           return;
         }
 
-        const productRefundAmount = product.price * refundItem.quantity;
+        //const productRefundAmount = product.price * refundItem.quantity;
+        const unitPrice = (product as any).discountedPrice || product.price;
+        const productRefundAmount = unitPrice * refundItem.quantity;
+
         totalRefundAmount += productRefundAmount;
 
         refundDetails.push({
           productId: product.productId,
           title: product.title,
           quantity: refundItem.quantity,
+          originalPrice: product.price,
+          discountedPrice: (product as any).discountedPrice || product.price, // Cena po zniżce
+          refundPerUnit: unitPrice,
           amount: productRefundAmount,
           reason: refundItem.reason,
         });
@@ -327,10 +351,10 @@ router.post(
           (product as any).refundedAt = new Date();
         }
 
-        console.log(`✅ Updated product ${product.title}:`);
-        console.log(
-          `   New refundQuantity: ${(product as any).refundQuantity}`
-        );
+        // console.log(`✅ Updated product ${product.title}:`);
+        // console.log(
+        //   `   New refundQuantity: ${(product as any).refundQuantity}`
+        // );
       } // KONIEC PĘTLI FOR
 
       if (totalRefundAmount <= 0) {
@@ -345,11 +369,11 @@ router.post(
           { expand: ["charges.data.refunds"] }
         );
 
-        console.log("💰 Payment Intent retrieved:", {
-          id: paymentIntent.id,
-          amount: paymentIntent.amount,
-          charges: paymentIntent.charges?.data?.length || 0,
-        });
+        // console.log("💰 Payment Intent retrieved:", {
+        //   id: paymentIntent.id,
+        //   amount: paymentIntent.amount,
+        //   charges: paymentIntent.charges?.data?.length || 0,
+        // });
 
         // Oblicz już zwróconą kwotę
         let alreadyRefundedInStripe = 0;
@@ -372,10 +396,10 @@ router.post(
             (sum: number, refund: any) => sum + refund.amount,
             0
           );
-          console.log(
-            "💸 Refunds found in payment intent:",
-            paymentIntent.refunds.data.length
-          );
+          // console.log(
+          //   "💸 Refunds found in payment intent:",
+          //   paymentIntent.refunds.data.length
+          // );
         }
 
         // Alternatywnie: pobierz listę refundacji dla payment intent
@@ -397,13 +421,13 @@ router.post(
           totalRefundAmount * 100
         );
 
-        console.log("📊 Refund calculations:", {
-          chargeAmount: chargeAmount / 100,
-          alreadyRefundedInStripe: alreadyRefundedInStripe / 100,
-          availableForRefund: availableForRefund / 100,
-          requestedRefundAmount: totalRefundAmount,
-          requestedRefundAmountInCents,
-        });
+        // console.log("📊 Refund calculations:", {
+        //   chargeAmount: chargeAmount / 100,
+        //   alreadyRefundedInStripe: alreadyRefundedInStripe / 100,
+        //   availableForRefund: availableForRefund / 100,
+        //   requestedRefundAmount: totalRefundAmount,
+        //   requestedRefundAmountInCents,
+        // });
 
         // Sprawdź czy kwota jest dostępna
         if (requestedRefundAmountInCents > availableForRefund) {
@@ -434,6 +458,8 @@ router.post(
             orderId: order._id.toString(),
             refundType: "partial",
             refundItems: JSON.stringify(refundItems),
+            totalDiscount: order.totalDiscount || 0,
+            appliedCoupon: order.couponCode || "none",
           },
         });
 
@@ -447,6 +473,11 @@ router.post(
           createdAt: new Date(),
           reason: "Partial refund - customer request",
           products: refundDetails,
+          metadata: {
+            usedDiscountedPrice: true,
+            originalTotal: order.totalAmount + (order.totalDiscount || 0),
+            discountApplied: order.totalDiscount || 0,
+          },
         });
 
         // Sprawdź czy wszystkie produkty są zwrócone
@@ -466,14 +497,14 @@ router.post(
         // ZAPISZ ZMIANY
         await order.save();
 
-        console.log("✅ Order saved with new status:", order.status);
-        console.log("📦 Products after refund:");
-        order.products.forEach((p: any, i: number) => {
-          console.log(`  Product ${i}: ${p.title}`);
-          console.log(
-            `    Quantity: ${p.quantity}, Refunded: ${p.refundQuantity || 0}`
-          );
-        });
+        // console.log("✅ Order saved with new status:", order.status);
+        // console.log("📦 Products after refund:");
+        // order.products.forEach((p: any, i: number) => {
+        //   console.log(`  Product ${i}: ${p.title}`);
+        //   console.log(
+        //     `    Quantity: ${p.quantity}, Refunded: ${p.refundQuantity || 0}`
+        //   );
+        // });
 
         // Usuń zasoby użytkownika dla zwróconych produktów
         if (order.user.userId) {
@@ -500,6 +531,16 @@ router.post(
           )} PLN został wykonany`,
           order,
           refundId: refund.id,
+          details: {
+            usedDiscountedPrices: refundDetails.map((item) => ({
+              product: item.title,
+              originalPrice: item.originalPrice,
+              refundPrice: item.refundPerUnit,
+              quantity: item.quantity,
+              total: item.amount,
+            })),
+            totalDiscount: order.totalDiscount || 0,
+          },
         });
       } catch (stripeRefundError: any) {
         console.error("Stripe refund creation error:", stripeRefundError);

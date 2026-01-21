@@ -77,44 +77,18 @@ router.post(
         productMap[product._id.toString()] = product;
       });
 
-      // Przygotuj dane produktów do zamówienia
-      const orderProducts = items.map((item) => {
+      // ⭐ PIERWSZE: Oblicz początkową sumę zamówienia BEZ zniżki
+      let totalAmount = items.reduce((sum, item) => {
         const product = productMap[item._id];
-
-        // Oblicz cenę po zniżce dla tego produktu
-        let finalPrice = product.price;
-        if (discountAmount > 0) {
-          // Dla uproszczenia: podziel zniżkę równo między produkty
-          const totalItems = items.reduce(
-            (sum, i) => sum + (i.quantity || 1),
-            0
-          );
-          const discountPerItem = discountAmount / totalItems;
-          finalPrice = Math.max(0, product.price - discountPerItem);
-        }
-
-        return {
-          productId: product._id,
-          title: product.title,
-          price: product.price,
-          discountedPrice: finalPrice,
-          quantity: item.quantity || 1,
-          imageUrl: product.imageUrl,
-          content: product.content,
-          userId: product.userId,
-        };
-      });
-
-      // Oblicz początkową sumę zamówienia
-      let totalAmount = orderProducts.reduce((sum, item) => {
-        return sum + item.price * item.quantity;
+        return sum + product.price * (item.quantity || 1);
       }, 0);
 
+      // ⭐ DRUGIE: Inicjalizuj zmienne zniżki
       let discountAmount = 0;
       let discountDetails = null;
       let validatedCoupon = null;
 
-      // Walidacja i obliczenie zniżki z kuponu
+      // ⭐ TRZECIE: Walidacja i obliczenie zniżki z kuponu
       if (couponCode) {
         try {
           // Znajdź kupon w bazie
@@ -201,6 +175,136 @@ router.post(
           return;
         }
       }
+
+      //tdo tad
+      // Przygotuj dane produktów do zamówienia
+      const orderProducts = items.map((item) => {
+        const product = productMap[item._id];
+
+        // Oblicz cenę po zniżce dla tego produktu
+        let finalPrice = product.price;
+        if (discountAmount > 0) {
+          // Dla uproszczenia: podziel zniżkę równo między produkty
+          const totalItems = items.reduce(
+            (sum, i) => sum + (i.quantity || 1),
+            0
+          );
+          const discountPerItem = discountAmount / totalItems;
+          finalPrice = Math.max(0, product.price - discountPerItem);
+        }
+
+        return {
+          productId: product._id,
+          title: product.title,
+          price: product.price,
+          discountedPrice: finalPrice,
+          quantity: item.quantity || 1,
+          imageUrl: product.imageUrl,
+          content: product.content,
+          userId: product.userId,
+        };
+      });
+
+      // let totalAmount = items.reduce((sum, item) => {
+      //   const product = productMap[item._id];
+      //   return sum + product.price * (item.quantity || 1);
+      // }, 0);
+      // Oblicz początkową sumę zamówienia
+      // let totalAmount = orderProducts.reduce((sum, item) => {
+      //   return sum + item.price * item.quantity;
+      // }, 0);
+
+      // let discountAmount = 0;
+      // let discountDetails = null;
+      // let validatedCoupon = null;
+
+      // Walidacja i obliczenie zniżki z kuponu
+      // if (couponCode) {
+      //   try {
+
+      //     const discount = await Discount.findOne({
+      //       code: couponCode.toUpperCase(),
+      //       isActive: true,
+      //     }).populate("productId", "title price");
+
+      //     if (!discount) {
+      //       res.status(400).json({
+      //         error: "Nieprawidłowy kod kuponu",
+      //       });
+      //       return;
+      //     }
+
+      //     // Sprawdź czy kupon jest ważny
+      //     if (!discount.isValid()) {
+      //       res.status(400).json({
+      //         error: "Kupon wygasł lub został wyczerpany",
+      //       });
+      //       return;
+      //     }
+
+      //     // Sprawdź minimalną kwotę zamówienia
+      //     if (totalAmount < discount.minPurchaseAmount) {
+      //       res.status(400).json({
+      //         error: `Minimalna kwota zamówienia dla tego kuponu to ${discount.minPurchaseAmount} PLN`,
+      //       });
+      //       return;
+      //     }
+
+      //     // Sprawdź czy kupon jest przypisany do użytkownika
+      //     if (
+      //       discount.userId &&
+      //       (!req.user._id || !discount.userId.equals(req.user._id))
+      //     ) {
+      //       res.status(403).json({
+      //         error: "Ten kupon nie jest dostępny dla Twojego konta",
+      //       });
+      //       return;
+      //     }
+
+      //     // Oblicz zniżkę w zależności od typu kuponu
+      //     if (discount.type === "product" && discount.productId) {
+      //       // Kupon na konkretny produkt
+      //       const productId = discount.productId._id.toString();
+      //       const cartItem = items.find((item: any) => item._id === productId);
+
+      //       if (cartItem) {
+      //         const product = productMap[productId];
+      //         const itemTotal = product.price * (cartItem.quantity || 1);
+      //         discountAmount = discount.calculateDiscount(itemTotal, productId);
+      //       }
+      //     } else {
+      //       // Kupon na całe zamówienie
+      //       discountAmount = discount.calculateDiscount(totalAmount);
+      //     }
+
+      //     if (discountAmount > 0) {
+      //       validatedCoupon = discount;
+      //       discountDetails = {
+      //         type: "coupon",
+      //         code: discount.code,
+      //         amount: discountAmount,
+      //         description:
+      //           discount.type === "percentage"
+      //             ? `${discount.value}% zniżki`
+      //             : `${discount.value} PLN zniżki`,
+      //       };
+
+      //       // Oblicz końcową kwotę po zniżce
+      //       totalAmount = Math.max(0, totalAmount - discountAmount);
+      //     } else {
+      //       res.status(400).json({
+      //         error: "Kupon nie może być zastosowany do tego zamówienia",
+      //       });
+      //       return;
+      //     }
+      //   } catch (discountError: any) {
+      //     console.error("Discount validation error:", discountError);
+      //     res.status(400).json({
+      //       error: "Błąd walidacji kuponu",
+      //     });
+      //     return;
+      //   }
+      // }
 
       // 1. ZAPISZ ZAMÓWIENIE W BAZIE (BEZ stripeSessionId NA POCZĄTKU)
       const newOrder = new Order({
