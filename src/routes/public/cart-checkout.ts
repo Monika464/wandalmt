@@ -30,7 +30,7 @@ const getOptimizedImageUrl = (imageUrl: string): string => {
   if (imageUrl.includes("cloudinary.com") && imageUrl.includes("/upload/")) {
     return imageUrl.replace(
       "/upload/",
-      "/upload/w_400,h_400,c_fill,f_auto,q_auto/"
+      "/upload/w_400,h_400,c_fill,f_auto,q_auto/",
     );
   }
   if (imageUrl.includes("imgix.net")) {
@@ -176,136 +176,102 @@ router.post(
         }
       }
 
-      //tdo tad
       // Przygotuj dane produktów do zamówienia
       const orderProducts = items.map((item) => {
         const product = productMap[item._id];
+        const quantity = item.quantity || 1;
 
-        // Oblicz cenę po zniżce dla tego produktu
-        let finalPrice = product.price;
-        if (discountAmount > 0) {
-          // Dla uproszczenia: podziel zniżkę równo między produkty
-          const totalItems = items.reduce(
-            (sum, i) => sum + (i.quantity || 1),
-            0
-          );
-          const discountPerItem = discountAmount / totalItems;
-          finalPrice = Math.max(0, product.price - discountPerItem);
-        }
+        // Oblicz proporcjonalny udział produktu w całej wartości koszyka
+        const productTotal = product.price * quantity;
+        const cartTotalWithoutDiscount = items.reduce((sum, i) => {
+          const p = productMap[i._id];
+          return sum + p.price * (i.quantity || 1);
+        }, 0);
+
+        // Oblicz zniżkę dla tego produktu proporcjonalnie
+        const productDiscount =
+          (productTotal / cartTotalWithoutDiscount) * discountAmount;
+
+        // Oblicz cenę jednostkową po zniżce
+        const pricePerUnitAfterDiscount =
+          (productTotal - productDiscount) / quantity;
+
+        // Zaokrąglij do 2 miejsc po przecinku
+        const discountedPrice =
+          Math.round(pricePerUnitAfterDiscount * 100) / 100;
+
+        console.log("💰 Product price calculation:", {
+          product: product.title,
+          originalPrice: product.price,
+          productTotal,
+          productDiscount,
+          pricePerUnitAfterDiscount,
+          discountedPrice,
+          quantity,
+        });
 
         return {
           productId: product._id,
           title: product.title,
           price: product.price,
-          discountedPrice: finalPrice,
-          quantity: item.quantity || 1,
+          discountedPrice: discountedPrice,
+          quantity: quantity,
           imageUrl: product.imageUrl,
           content: product.content,
           userId: product.userId,
         };
       });
 
-      // let totalAmount = items.reduce((sum, item) => {
-      //   const product = productMap[item._id];
-      //   return sum + product.price * (item.quantity || 1);
-      // }, 0);
-      // Oblicz początkową sumę zamówienia
-      // let totalAmount = orderProducts.reduce((sum, item) => {
-      //   return sum + item.price * item.quantity;
-      // }, 0);
+      // ========== DODAJ TUTAJ WALIDACJĘ SUMA ==========
+      console.log("🔍 Validating price calculations...");
 
-      // let discountAmount = 0;
-      // let discountDetails = null;
-      // let validatedCoupon = null;
+      const totalDiscounted = orderProducts.reduce(
+        (sum, p) => sum + p.discountedPrice * p.quantity,
+        0,
+      );
 
-      // Walidacja i obliczenie zniżki z kuponu
-      // if (couponCode) {
-      //   try {
+      const totalOriginal = orderProducts.reduce(
+        (sum, p) => sum + p.price * p.quantity,
+        0,
+      );
 
-      //     const discount = await Discount.findOne({
-      //       code: couponCode.toUpperCase(),
-      //       isActive: true,
-      //     }).populate("productId", "title price");
+      console.log("📊 Price summary:", {
+        totalOriginal,
+        discountAmount,
+        totalAfterDiscount: totalAmount, // To już obliczone wcześniej
+        calculatedDiscountedTotal: totalDiscounted,
+        difference: totalAmount - totalDiscounted,
+        shouldBeZero: Math.abs(totalAmount - totalDiscounted) < 0.01,
+      });
 
-      //     if (!discount) {
-      //       res.status(400).json({
-      //         error: "Nieprawidłowy kod kuponu",
-      //       });
-      //       return;
-      //     }
+      // Walidacja - różnica powinna być < 1 grosza
+      if (Math.abs(totalAmount - totalDiscounted) > 0.01) {
+        console.error("❌ ERROR: Discount calculation mismatch!");
+        console.error("Recalculating with correction...");
 
-      //     // Sprawdź czy kupon jest ważny
-      //     if (!discount.isValid()) {
-      //       res.status(400).json({
-      //         error: "Kupon wygasł lub został wyczerpany",
-      //       });
-      //       return;
-      //     }
+        // Korekta: przelicz jeszcze raz z lepszą precyzją
+        orderProducts.forEach((p) => {
+          const productTotal = p.price * p.quantity;
+          const productDiscount =
+            (productTotal / totalOriginal) * discountAmount;
+          p.discountedPrice =
+            Math.round(((productTotal - productDiscount) / p.quantity) * 100) /
+            100;
+        });
 
-      //     // Sprawdź minimalną kwotę zamówienia
-      //     if (totalAmount < discount.minPurchaseAmount) {
-      //       res.status(400).json({
-      //         error: `Minimalna kwota zamówienia dla tego kuponu to ${discount.minPurchaseAmount} PLN`,
-      //       });
-      //       return;
-      //     }
+        // Sprawdź ponownie
+        const correctedTotal = orderProducts.reduce(
+          (sum, p) => sum + p.discountedPrice * p.quantity,
+          0,
+        );
 
-      //     // Sprawdź czy kupon jest przypisany do użytkownika
-      //     if (
-      //       discount.userId &&
-      //       (!req.user._id || !discount.userId.equals(req.user._id))
-      //     ) {
-      //       res.status(403).json({
-      //         error: "Ten kupon nie jest dostępny dla Twojego konta",
-      //       });
-      //       return;
-      //     }
-
-      //     // Oblicz zniżkę w zależności od typu kuponu
-      //     if (discount.type === "product" && discount.productId) {
-      //       // Kupon na konkretny produkt
-      //       const productId = discount.productId._id.toString();
-      //       const cartItem = items.find((item: any) => item._id === productId);
-
-      //       if (cartItem) {
-      //         const product = productMap[productId];
-      //         const itemTotal = product.price * (cartItem.quantity || 1);
-      //         discountAmount = discount.calculateDiscount(itemTotal, productId);
-      //       }
-      //     } else {
-      //       // Kupon na całe zamówienie
-      //       discountAmount = discount.calculateDiscount(totalAmount);
-      //     }
-
-      //     if (discountAmount > 0) {
-      //       validatedCoupon = discount;
-      //       discountDetails = {
-      //         type: "coupon",
-      //         code: discount.code,
-      //         amount: discountAmount,
-      //         description:
-      //           discount.type === "percentage"
-      //             ? `${discount.value}% zniżki`
-      //             : `${discount.value} PLN zniżki`,
-      //       };
-
-      //       // Oblicz końcową kwotę po zniżce
-      //       totalAmount = Math.max(0, totalAmount - discountAmount);
-      //     } else {
-      //       res.status(400).json({
-      //         error: "Kupon nie może być zastosowany do tego zamówienia",
-      //       });
-      //       return;
-      //     }
-      //   } catch (discountError: any) {
-      //     console.error("Discount validation error:", discountError);
-      //     res.status(400).json({
-      //       error: "Błąd walidacji kuponu",
-      //     });
-      //     return;
-      //   }
-      // }
-
+        console.log("📊 Corrected price summary:", {
+          correctedTotal,
+          expectedTotal: totalAmount,
+          newDifference: totalAmount - correctedTotal,
+        });
+      }
+      // ========== KONIEC WALIDACJI ==========
       // 1. ZAPISZ ZAMÓWIENIE W BAZIE (BEZ stripeSessionId NA POCZĄTKU)
       const newOrder = new Order({
         user: {
@@ -347,28 +313,39 @@ router.post(
       // UWAGA: Musimy wysłać ceny ORYGINALNE do Stripe, a zniżkę obsłużyć przez promotion code
       const lineItems = items.map((item) => {
         const product = productMap[item._id];
-        //
-        // Oblicz cenę jednostkową po zniżce
+        const itemQuantity = item.quantity || 1;
+
+        // Znajdź odpowiedni produkt w orderProducts
+        const orderProduct = orderProducts.find(
+          (op) => op.productId.toString() === product._id.toString(),
+        );
+
+        // Użyj discountedPrice jeśli istnieje, w przeciwnym razie oblicz
         let unitPrice = product.price;
-        let itemQuantity = item.quantity || 1;
-        let itemTotal = unitPrice * itemQuantity;
 
-        // Jeśli mamy zniżkę, oblicz nową cenę
-        if (discountAmount > 0) {
-          // Dla uproszczenia: podziel zniżkę proporcjonalnie między produkty
-          const totalCartValue = orderProducts.reduce(
-            (sum, p) => sum + p.price * p.quantity,
-            0
-          );
-          const itemPercentage = itemTotal / totalCartValue;
-          const itemDiscount = discountAmount * itemPercentage;
-          const discountedItemTotal = itemTotal - itemDiscount;
+        if (orderProduct && orderProduct.discountedPrice !== undefined) {
+          unitPrice = orderProduct.discountedPrice;
+          console.log("✅ Using discountedPrice from orderProduct:", {
+            product: product.title,
+            original: product.price,
+            discounted: orderProduct.discountedPrice,
+          });
+        } else if (discountAmount > 0) {
+          // Oblicz proporcjonalnie jak w orderProducts
+          const productTotal = product.price * itemQuantity;
+          const cartTotalWithoutDiscount = items.reduce((sum, i) => {
+            const p = productMap[i._id];
+            return sum + p.price * (i.quantity || 1);
+          }, 0);
 
-          // Nowa cena jednostkowa po zniżce
-          unitPrice = discountedItemTotal / itemQuantity;
+          const productDiscount =
+            (productTotal / cartTotalWithoutDiscount) * discountAmount;
+          unitPrice = (productTotal - productDiscount) / itemQuantity;
+          console.log("📊 Calculated unit price:", {
+            product: product.title,
+            calculated: unitPrice,
+          });
         }
-
-        //
 
         const productData: any = {
           name: product.title,
@@ -389,9 +366,9 @@ router.post(
           price_data: {
             currency: "pln",
             product_data: productData,
-            unit_amount: Math.round(unitPrice * 100), // Cena ORYGINALNA
+            unit_amount: Math.round(unitPrice * 100),
           },
-          quantity: item.quantity || 1,
+          quantity: itemQuantity,
         };
       });
 
@@ -517,7 +494,7 @@ router.post(
         });
       }
     }
-  }
+  },
 );
 // router.post(
 //   "/cart-checkout-session",
@@ -738,7 +715,7 @@ router.get(
             "total_details.breakdown",
             "invoice",
           ],
-        }
+        },
       );
 
       if (session.payment_status !== "paid") {
@@ -758,7 +735,7 @@ router.get(
         console.log(
           `🔍 Looking for order by orderId: ${orderId}, found: ${
             order ? "yes" : "no"
-          }`
+          }`,
         );
       }
 
@@ -768,7 +745,7 @@ router.get(
         console.log(
           `🔍 Looking for order by stripeSessionId: ${session.id}, found: ${
             order ? "yes" : "no"
-          }`
+          }`,
         );
       }
 
@@ -778,7 +755,7 @@ router.get(
         console.log(
           `🔍 Looking for order by metadata.orderId: ${
             session.metadata.orderId
-          }, found: ${order ? "yes" : "no"}`
+          }, found: ${order ? "yes" : "no"}`,
         );
       }
 
@@ -816,7 +793,7 @@ router.get(
           };
 
           console.log(
-            `🧾 Invoice created: ${order.invoiceId}, Number: ${invoice.number}`
+            `🧾 Invoice created: ${order.invoiceId}, Number: ${invoice.number}`,
           );
         }
 
@@ -893,7 +870,7 @@ router.get(
 
           user: {
             userId: new mongoose.Types.ObjectId(
-              session.metadata?.userId || req.user?._id
+              session.metadata?.userId || req.user?._id,
             ),
             email:
               session.customer_email ||
@@ -944,11 +921,11 @@ router.get(
         if (session.invoice) {
           console.log(
             "Invoice object keys:",
-            Object.keys(session.invoice as any)
+            Object.keys(session.invoice as any),
           );
           console.log(
             "Invoice object:",
-            JSON.stringify(session.invoice, null, 2)
+            JSON.stringify(session.invoice, null, 2),
           );
         }
 
@@ -967,14 +944,14 @@ router.get(
           };
 
           console.log(
-            `🧾 Invoice created: ${newOrder.invoiceId}, Number: ${invoice.number}`
+            `🧾 Invoice created: ${newOrder.invoiceId}, Number: ${invoice.number}`,
           );
         }
 
         await newOrder.save();
         order = newOrder;
         console.log(
-          `✅ Created new order ${order._id} from cart-session-status`
+          `✅ Created new order ${order._id} from cart-session-status`,
         );
       }
 
@@ -996,10 +973,10 @@ router.get(
                 $addToSet: {
                   resources: { $each: resources.map((r) => r._id) },
                 },
-              }
+              },
             );
             console.log(
-              `🔹 ${resources.length} resources assigned to user ${order.user.userId}`
+              `🔹 ${resources.length} resources assigned to user ${order.user.userId}`,
             );
           }
         }
@@ -1054,6 +1031,6 @@ router.get(
         code: err.code || "UNKNOWN_ERROR",
       });
     }
-  }
+  },
 );
 export default router;
