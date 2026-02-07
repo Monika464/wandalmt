@@ -35,14 +35,14 @@ router.post(
       const resetToken = jwt.sign(
         { userId: user._id },
         process.env.JWT_RESET_SECRET as string,
-        { expiresIn: "15m" }
+        { expiresIn: "15m" },
       );
 
       const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
 
       // wysyłka maila przez Mailgun
       await mg.messages.create(process.env.MAILGUN_DOMAIN as string, {
-        from: "Reset Hasła <postmaster@sandbox8ab4b9ccf4124222a10d8734f869e739.mailgun.org>",
+        from: "Reset Hasła <postmaster@boxingonline.eu>",
         to: email,
         subject: "Reset hasła",
         text: `Kliknij, aby zresetować hasło: ${resetLink}`,
@@ -53,7 +53,7 @@ router.post(
       console.error("RESET ERROR:", err);
       res.status(500).json({ error: "Błąd serwera przy wysyłaniu maila" });
     }
-  }
+  },
 );
 
 // ===========================
@@ -64,9 +64,13 @@ router.post(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { token, newPassword } = req.body;
-      if (!token || !newPassword)
+      console.log("Reset password called with token:", token);
+      console.log("New password:", newPassword);
+
+      if (!token || !newPassword) {
         res.status(400).json({ error: "Brak danych" });
-      return;
+        return;
+      }
 
       let decoded;
       try {
@@ -85,7 +89,7 @@ router.post(
     } catch (err) {
       res.status(500).json({ error: "Błąd serwera przy zmianie hasła" });
     }
-  }
+  },
 );
 
 // ===========================
@@ -119,7 +123,7 @@ router.patch(
     } catch (err) {
       res.status(500).json({ error: "Błąd serwera przy zmianie emaila" });
     }
-  }
+  },
 );
 
 export default router;

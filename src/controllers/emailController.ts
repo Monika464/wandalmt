@@ -14,11 +14,11 @@ export const sendMail = async (req: Request, res: Response): Promise<void> => {
     const data = await mg.messages.create(
       process.env.MAILGUN_DOMAIN as string,
       {
-        from: "Mailgun Sandbox <postmaster@sandbox8ab4b9ccf4124222a10d8734f869e739.mailgun.org>",
+        from: "Mailgun Sandbox <postmaster@boxingonline.eu>",
         to: "muaythaikrakow@gmail.com",
         subject: "✅ Test Mailgun działa!",
         text: "Gratulacje, Twój backend potrafi wysyłać e-maile 🚀",
-      }
+      },
     );
 
     console.log("mailgun response sent", data);
