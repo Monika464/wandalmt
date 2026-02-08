@@ -7,6 +7,7 @@ import Product from "../../models/product.js";
 import Resource from "../../models/resource.js";
 import Discount from "../../models/discount.js";
 import { userAuth } from "../../middleware/auth.js";
+import { sendOrderConfirmation } from "../../services/emailService.js";
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -425,27 +426,8 @@ router.post(
       // DODAJ TOTAL Z NIŻKĄ DO SESJI STRIPE
       // To jest WAŻNE - Stripe musi wiedzieć o końcowej kwocie
       if (discountAmount > 0) {
-        // Ustawiamy całkowitą kwotę po zniżce
-        // Stripe będzie pokazywał tę kwotę jako całkowitą do zapłaty
-        // W line_items mamy ceny oryginalne, ale zniżka jest uwzględniona przez metadata
         sessionConfig.metadata.hasDiscount = "true";
         sessionConfig.metadata.discountAmount = discountAmount.toFixed(2);
-
-        // Alternatywnie możesz dodać discount jako separate line item z ujemną kwotą
-        // To pokaże zniżkę w podsumowaniu Stripe
-        // if (discountAmount > 0) {
-        //   lineItems.push({
-        //     price_data: {
-        //       currency: "pln",
-        //       product_data: {
-        //         name: "Zniżka z kuponu",
-        //         description: discountDetails?.description || "Rabat",
-        //       },
-        //       unit_amount: Math.round(-discountAmount * 100), // Ujemna kwota
-        //     },
-        //     quantity: 1,
-        //   });
-        // }
       }
 
       // 4. STWÓRZ SESJĘ STRIPE
@@ -496,201 +478,6 @@ router.post(
     }
   },
 );
-// router.post(
-//   "/cart-checkout-session",
-//   userAuth,
-//   async (req: Request, res: Response): Promise<void> => {
-//     try {
-//       const { items, couponCode, requireInvoice, invoiceData } = req.body;
-
-//       if (!items || !Array.isArray(items) || items.length === 0) {
-//         res.status(400).json({ error: "Brak produktów w koszyku" });
-//         return;
-//       }
-
-//       if (!req.user) {
-//         res.status(401).json({ error: "Użytkownik nieautoryzowany" });
-//         return;
-//       }
-
-//       // Pobierz pełne dane produktów
-//       const productIds = items.map((item) => item._id);
-//       const products = await Product.find({ _id: { $in: productIds } })
-//         .select("title price description imageUrl content userId")
-//         .lean();
-
-//       if (products.length !== items.length) {
-//         res
-//           .status(404)
-//           .json({ error: "Niektóre produkty nie zostały znalezione" });
-//         return;
-//       }
-
-//       // Przygotuj mapę produktów
-//       const productMap: Record<string, any> = {};
-//       products.forEach((product) => {
-//         productMap[product._id.toString()] = product;
-//       });
-
-//       // Przygotuj dane produktów do zamówienia
-//       const orderProducts = items.map((item) => {
-//         const product = productMap[item._id];
-//         return {
-//           productId: product._id,
-//           title: product.title,
-//           price: product.price,
-//           quantity: item.quantity || 1,
-//           imageUrl: product.imageUrl,
-//           content: product.content,
-//           userId: product.userId,
-//         };
-//       });
-
-//       // Oblicz sumę zamówienia
-//       const totalAmount = orderProducts.reduce((sum, item) => {
-//         return sum + item.price * item.quantity;
-//       }, 0);
-
-//       // 1. ZAPISZ ZAMÓWIENIE W BAZIE (BEZ stripeSessionId NA POCZĄTKU)
-//       const newOrder = new Order({
-//         user: {
-//           userId: new mongoose.Types.ObjectId(req.user._id),
-//           email: req.user.email,
-//         },
-//         products: orderProducts,
-//         totalAmount,
-//         status: "pending",
-//         couponCode: couponCode || null,
-//         requireInvoice: requireInvoice || false,
-//         createdAt: new Date(),
-//       });
-
-//       await newOrder.save();
-//       console.log(`✅ Order saved in DB with ID: ${newOrder._id}`);
-
-//       // 2. PRZYGOTUJ LINE_ITEMS DLA STRIPE (Z OBRAZKAMI!)
-//       const lineItems = items.map((item) => {
-//         const product = productMap[item._id];
-//         const productData: any = {
-//           name: product.title,
-//           description: product.description?.substring(0, 200) || "",
-//           metadata: {
-//             productId: product._id.toString(),
-//           },
-//         };
-
-//         // DODAJ OBRAZEK
-//         if (product.imageUrl && isValidImageUrl(product.imageUrl)) {
-//           const optimizedImage = getOptimizedImageUrl(product.imageUrl);
-//           productData.images = [optimizedImage];
-//         }
-
-//         return {
-//           price_data: {
-//             currency: "pln",
-//             product_data: productData,
-//             unit_amount: Math.round(product.price * 100),
-//           },
-//           quantity: item.quantity || 1,
-//         };
-//       });
-
-//       // 3. KONFIGURACJA SESJI STRIPE
-
-//       const sessionConfig: any = {
-//         payment_method_types: ["card", "p24", "blik"],
-//         mode: "payment",
-//         line_items: lineItems,
-//         success_url: `${
-//           process.env.FRONTEND_URL || "http://localhost:5173"
-//         }/cart/return?session_id={CHECKOUT_SESSION_ID}&success=true&orderId=${
-//           newOrder._id
-//         }`,
-//         cancel_url: `${
-//           process.env.FRONTEND_URL || "http://localhost:5173"
-//         }/cart/cancel?canceled=true&orderId=${newOrder._id}`,
-//         customer_email: req.user.email,
-//         metadata: {
-//           orderId: newOrder._id.toString(),
-//           userId: req.user._id.toString(),
-//         },
-//         invoice_creation: {
-//           enabled: true, // Włącz tworzenie faktur
-//         },
-//       };
-
-//       // Faktura
-//       if (requireInvoice) {
-//         sessionConfig.invoice_creation = { enabled: true };
-//         sessionConfig.billing_address_collection = "required";
-//       } else {
-//         sessionConfig.billing_address_collection = "auto";
-//       }
-
-//       // Kupon
-//       if (couponCode) {
-//         sessionConfig.allow_promotion_codes = true;
-//         sessionConfig.metadata.couponCode = couponCode.substring(0, 20);
-//       }
-
-//       // Custom text
-//       sessionConfig.custom_text = {
-//         submit: {
-//           message:
-//             "Dziękujemy za zakupy! Dostęp do kursów otrzymasz natychmiast po płatności.",
-//         },
-//       };
-
-//       //sessionConfig.automatic_tax = { enabled: true };
-
-//       // 4. STWÓRZ SESJĘ STRIPE
-//       const session = await stripe.checkout.sessions.create(sessionConfig);
-//       console.log("✅ Stripe session created!");
-//       // console.log("Session ID:", session.id);
-//       // console.log("Session URL:", session.url);
-//       // console.log("Success URL in session:", session.success_url);
-//       // console.log("Cancel URL in session:", session.cancel_url);
-
-//       // 5. ZAKTUALIZUJ ZAMÓWIENIE O PRAWDZIWE stripeSessionId
-//       newOrder.stripeSessionId = session.id;
-//       await newOrder.save();
-
-//       // console.log(`✅ Order updated with Stripe session ID: ${session.id}`);
-
-//       // console.log(
-//       //   `🔄 Order ${newOrder._id} updated with Stripe session ID: ${session.id}`
-//       // );
-
-//       res.json({
-//         url: session.url,
-//         sessionId: session.id,
-//         orderId: newOrder._id,
-//       });
-//     } catch (err: any) {
-//       console.error("Stripe error:", err);
-
-//       if (err.code === 11000 && err.keyPattern?.stripeSessionId) {
-//         // Błąd duplikatu - najprawdopodobniej masz unikalny indeks
-//         res.status(400).json({
-//           error: "Konflikt danych. Proszę spróbować ponownie.",
-//           code: "DUPLICATE_SESSION_ID",
-//         });
-//       } else if (
-//         err.type === "StripeInvalidRequestError" &&
-//         err.message.includes("metadata")
-//       ) {
-//         res.status(400).json({
-//           error: "Błąd danych - zbyt duże metadane",
-//         });
-//       } else {
-//         res.status(500).json({
-//           error: "Błąd tworzenia sesji płatności",
-//           message: err.message,
-//         });
-//       }
-//     }
-//   }
-// );
 
 // ==================== CART SESSION STATUS ====================
 
@@ -982,7 +769,58 @@ router.get(
         }
       }
 
-      // 5. PRZYGOTUJ ODPOWIEDŹ
+      // 5. WYŚLIJ EMAIL POTWIERDZAJĄCY
+      // Używamy setTimeout aby nie blokować odpowiedzi do frontendu
+      setTimeout(async () => {
+        try {
+          console.log(
+            `📧 Preparing to send confirmation email for order ${order._id}`,
+          );
+
+          // Przygotuj dane do emaila
+          const emailData = {
+            orderId: order._id.toString(),
+            email: order.user.email,
+            userName: order.user.name || order.user.email.split("@")[0],
+            totalAmount: order.totalAmount,
+            products: order.products.map((p: any) => ({
+              name: p.title || p.name || "Produkt",
+              quantity: p.quantity,
+              price: p.discountedPrice || p.price,
+            })),
+            invoiceUrl: order.invoiceId
+              ? `https://dashboard.stripe.com/invoices/${order.invoiceId}`
+              : null,
+            requireInvoice: order.requireInvoice || false,
+            createdAt: order.paidAt || order.createdAt,
+            billingDetails: order.billingDetails || null,
+          };
+
+          // Wywołaj endpoint
+          const response = await fetch(
+            "http://localhost:3000/api/email/send-order-confirmation",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(emailData),
+            },
+          );
+
+          const result = await response.json();
+
+          if (result.success) {
+            console.log(
+              `✅ Order confirmation email sent to ${order.user.email}`,
+            );
+          } else {
+            console.log(`⚠️ Email sending failed: ${result.error}`);
+          }
+        } catch (emailError) {
+          console.error("❌ Error in email sending process:", emailError);
+        }
+      }, 500);
+
+      // 6. PRZYGOTUJ ODPOWIEDŹ
       const response: any = {
         status: "complete",
         message: "✅ Płatność zakończona sukcesem",

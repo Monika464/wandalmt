@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import { mg } from "../utils/mailgunClient.js";
 import { userAuth } from "../middleware/auth.js";
 //import { sendMail } from "controllers/emailController.js";
+import { sendOrderConfirmation } from "../controllers/emailController.js";
 
 const router = Router();
 
@@ -125,6 +126,14 @@ router.patch(
     }
   },
 );
+
+//=====================
+//4 send email after order
+//=====================
+
+// routes/emailRoutes.ts
+
+router.post("/send-order-confirmation", sendOrderConfirmation);
 
 export default router;
 

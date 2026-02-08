@@ -37,7 +37,7 @@ app.use(
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
-  })
+  }),
 );
 //app.use(cors());
 app.post("/vbp/stream/webhook/bunny/", checkVideoStatus);
@@ -53,7 +53,7 @@ app.use("/api", uploadRouter);
 app.use("/api", checkoutRouter);
 app.use("/api", cartCheckoutRouter);
 app.use("/api/orders", orderRoutes);
-app.use("/email", emailRoutes);
+app.use("/api/email", emailRoutes);
 app.use("/api/stream", bunnyStream);
 app.use("/api/discounts", discountPublicRouter);
 app.use("/api/admin/discounts", discountAdminRouter);
