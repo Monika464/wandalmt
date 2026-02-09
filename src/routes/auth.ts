@@ -8,6 +8,7 @@ import {
   changeEmail,
   requestPasswordReset,
   resetPassword,
+  validateResetToken,
 } from "controllers/authController.js";
 
 interface IAuthRequestBody {
@@ -175,7 +176,7 @@ router.post(
     } catch (error) {
       res.status(400).send({ error });
     }
-  }
+  },
 );
 
 // Refresh token - Z WERYFIKACJĄ
@@ -191,7 +192,7 @@ router.post(
 
       // Usuń stary token z bazy danych
       req.user.tokens = req.user.tokens.filter(
-        (t: { token: string }) => t.token !== req.token
+        (t: { token: string }) => t.token !== req.token,
       );
 
       // Wygeneruj nowy token
@@ -219,7 +220,7 @@ router.post(
       console.error("Błąd odświeżania tokena:", error);
       res.status(500).send({ error: "Nie udało się odświeżyć tokena" });
     }
-  }
+  },
 );
 
 // GET /auth/me
@@ -240,7 +241,7 @@ router.get(
         message: error instanceof Error ? error.message : "Unknown error",
       });
     }
-  }
+  },
 );
 
 router.post(
@@ -258,7 +259,7 @@ router.post(
       // await req.user.removeAuthToken(req.token);
 
       req.user.tokens = req.user.tokens.filter(
-        (t: { token: string }) => t.token !== req.token
+        (t: { token: string }) => t.token !== req.token,
       );
 
       await req.user.save();
@@ -270,7 +271,7 @@ router.post(
       console.error("Logout-admin error:", error);
       res.status(500).send({ error: "Failed to log out" });
     }
-  }
+  },
 );
 
 router.post(
@@ -286,7 +287,7 @@ router.post(
         return;
       }
       req.user.tokens = req.user.tokens.filter(
-        (t: { token: string }) => t.token !== req.token
+        (t: { token: string }) => t.token !== req.token,
       );
       await req.user.save();
 
@@ -295,14 +296,22 @@ router.post(
     } catch (e) {
       res.status(500).send({ error: "Failed to log out" });
     }
-  }
+  },
 );
 
+// Żądanie resetu hasła (wysłanie linku)
+router.post("/forgot-password", requestPasswordReset);
+
+// Ustawienie nowego hasła
+router.post("/reset-password", resetPassword);
+
+// Walidacja tokena resetującego (dla frontendu)
+router.get("/validate-reset-token", validateResetToken);
 // POST /api/auth/request-reset → wysyła maila z linkiem resetującym
-router.post("/request-reset", requestPasswordReset);
+//router.post("/request-reset", requestPasswordReset);
 
 // POST /api/auth/reset-password → zmienia hasło po kliknięciu w link
-router.post("/reset-password", resetPassword);
+//router.post("/reset-password", resetPassword);
 
 // PATCH /api/auth/change-email → zmienia email (wymaga logowania)
 router.patch("/change-email", userAuth, changeEmail);

@@ -15,83 +15,84 @@ console.log("JWT_SECRET:", process.env.JWT_SECRET);
 // ===========================
 // 1) REQUEST PASSWORD RESET
 // ===========================
-router.post(
-  "/request-reset",
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { email } = req.body;
-      if (!email) {
-        res.status(400).json({ error: "Email jest wymagany" });
-        return;
-      }
 
-      const user = await User.findOne({ email });
-      if (!user) {
-        // bezpieczeństwo — udawaj, że wszystko jest OK
-        res.json({ message: "Wyglada na to że nie posiadasz konta" });
-        return;
-      }
+// router.post(
+//   "/request-reset",
+//   async (req: Request, res: Response): Promise<void> => {
+//     try {
+//       const { email } = req.body;
+//       if (!email) {
+//         res.status(400).json({ error: "Email jest wymagany" });
+//         return;
+//       }
 
-      // token ważny 15 minut
-      const resetToken = jwt.sign(
-        { userId: user._id },
-        process.env.JWT_RESET_SECRET as string,
-        { expiresIn: "15m" },
-      );
+//       const user = await User.findOne({ email });
+//       if (!user) {
+//         // bezpieczeństwo — udawaj, że wszystko jest OK
+//         res.json({ message: "Wyglada na to że nie posiadasz konta" });
+//         return;
+//       }
 
-      const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
+//       // token ważny 15 minut
+//       const resetToken = jwt.sign(
+//         { userId: user._id },
+//         process.env.JWT_RESET_SECRET as string,
+//         { expiresIn: "15m" },
+//       );
 
-      // wysyłka maila przez Mailgun
-      await mg.messages.create(process.env.MAILGUN_DOMAIN as string, {
-        from: "Reset Hasła <postmaster@boxingonline.eu>",
-        to: email,
-        subject: "Reset hasła",
-        text: `Kliknij, aby zresetować hasło: ${resetLink}`,
-      });
+//       const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
 
-      res.json({ message: "Email z resetem został wysłany" });
-    } catch (err) {
-      console.error("RESET ERROR:", err);
-      res.status(500).json({ error: "Błąd serwera przy wysyłaniu maila" });
-    }
-  },
-);
+//       // wysyłka maila przez Mailgun
+//       await mg.messages.create(process.env.MAILGUN_DOMAIN as string, {
+//         from: "Reset Hasła <postmaster@boxingonline.eu>",
+//         to: email,
+//         subject: "Reset hasła",
+//         text: `Kliknij, aby zresetować hasło: ${resetLink}`,
+//       });
+
+//       res.json({ message: "Email z resetem został wysłany" });
+//     } catch (err) {
+//       console.error("RESET ERROR:", err);
+//       res.status(500).json({ error: "Błąd serwera przy wysyłaniu maila" });
+//     }
+//   },
+// );
 
 // ===========================
 // 2) RESET PASSWORD
 // ===========================
-router.post(
-  "/reset-password",
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { token, newPassword } = req.body;
-      console.log("Reset password called with token:", token);
-      console.log("New password:", newPassword);
+// router.post(
+//   "/reset-password",
+//   async (req: Request, res: Response): Promise<void> => {
+//     try {
+//       const { token, newPassword } = req.body;
+//       console.log("Reset password called with token:", token);
+//       console.log("New password:", newPassword);
 
-      if (!token || !newPassword) {
-        res.status(400).json({ error: "Brak danych" });
-        return;
-      }
+//       if (!token || !newPassword) {
+//         res.status(400).json({ error: "Brak danych" });
+//         return;
+//       }
 
-      let decoded;
-      try {
-        decoded = jwt.verify(token, process.env.JWT_RESET_SECRET as string) as {
-          userId: string;
-        };
-      } catch (err) {
-        res.status(400).json({ error: "Nieprawidłowy lub wygasły token" });
-        return;
-      }
+//       let decoded;
+//       try {
+//         decoded = jwt.verify(token, process.env.JWT_RESET_SECRET as string) as {
+//           userId: string;
+//         };
+//       } catch (err) {
+//         res.status(400).json({ error: "Nieprawidłowy lub wygasły token" });
+//         return;
+//       }
 
-      const hashed = await bcrypt.hash(newPassword, 10);
-      await User.findByIdAndUpdate(decoded.userId, { password: hashed });
+//       const hashed = await bcrypt.hash(newPassword, 10);
+//       await User.findByIdAndUpdate(decoded.userId, { password: hashed });
 
-      res.json({ message: "Hasło zostało zmienione" });
-    } catch (err) {
-      res.status(500).json({ error: "Błąd serwera przy zmianie hasła" });
-    }
-  },
-);
+//       res.json({ message: "Hasło zostało zmienione" });
+//     } catch (err) {
+//       res.status(500).json({ error: "Błąd serwera przy zmianie hasła" });
+//     }
+//   },
+// );
 
 // ===========================
 // 3) CHANGE EMAIL
