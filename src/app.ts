@@ -15,6 +15,7 @@ import orderRoutes from "./routes/order/orders.js";
 import bunnyStream from "./routes/bunnyStream.js";
 import discountPublicRouter from "./routes/public/discount-public.js";
 import discountAdminRouter from "./routes/admin/discount.js";
+import progressRouter from "./routes/progress.js";
 import { tokenRefreshMiddleware } from "./middleware/tokenRefreshMiddleware.js";
 
 import dotenv from "dotenv";
@@ -57,6 +58,7 @@ app.use("/api/email", emailRoutes);
 app.use("/api/stream", bunnyStream);
 app.use("/api/discounts", discountPublicRouter);
 app.use("/api/admin/discounts", discountAdminRouter);
+app.use("/api/progress", progressRouter);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
