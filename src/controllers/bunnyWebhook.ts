@@ -2,8 +2,6 @@
 import { Request, Response } from "express";
 import axios from "axios";
 import Video from "../models/video.js";
-import fs from "fs";
-import path from "path";
 
 const BUNNY_LIBRARY_ID = process.env.BUNNY_LIBRARY_ID!;
 const BUNNY_API_KEY = process.env.BUNNY_API_KEY!;
@@ -25,14 +23,14 @@ export async function getBunnyVideo(videoGuid: string) {
 
 export const checkVideoStatus = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
-    console.log("Webhook Bunny received:");
+    //console.log("Webhook Bunny received:");
 
     const { VideoGuid, Status } = req.body;
 
-    console.log("Webhook data:", VideoGuid, Status);
+    // console.log("Webhook data:", VideoGuid, Status);
 
     if (!VideoGuid || Number.isNaN(Status)) {
       res.sendStatus(200);
@@ -103,7 +101,7 @@ export const checkVideoStatus = async (
 
     await Video.findOneAndUpdate({ bunnyGuid: VideoGuid }, update);
     console.log(
-      `Video ${VideoGuid} status updated to ${newStatus} (${processingProgress}%)`
+      `Video ${VideoGuid} status updated to ${newStatus} (${processingProgress}%)`,
     );
 
     res.sendStatus(200);
@@ -120,7 +118,7 @@ export const checkVideoStatus = async (
 // Nowy endpoint do pobierania statusu video
 export const getVideoStatus = async (req: Request, res: Response) => {
   try {
-    const { videoId } = req.params; // To może być videoId (Mongo) lub bunnyGuid
+    const { videoId } = req.params;
 
     let video;
 

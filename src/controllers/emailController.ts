@@ -191,7 +191,6 @@ Zespół Kurs MT
 
     console.log("🔧 Sending email via Mailgun EU endpoint...");
 
-    // UŻYJ TEJ SAMEJ METODY CO W RESECIE HASŁA
     const result = await mg.messages.create(
       process.env.MAILGUN_DOMAIN as string,
       {

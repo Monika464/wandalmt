@@ -71,7 +71,7 @@ router.post(
       res.status(500).json({ error: error.message || "Server error" });
     }
   },
-  handleUploadErrors
+  handleUploadErrors,
 );
 
 router.post(
@@ -102,19 +102,7 @@ router.post(
         });
 
         await s3.send(command);
-        // await s3
-        //   .putObject({
-        //     Bucket: process.env.B2_BUCKET_NAME!,
-        //     Key: key,
-        //     Body: file.buffer,
-        //     ContentType: file.mimetype,
-        //     ACL: "private",
-        //   })
-        //   .promise();
 
-        // console.log("File uploaded: ", key);
-        //console.log("Response: ", response);
-        // Build the URL after upload
         const url = `https://s3.eu-central-003.backblazeb2.com/${process.env.B2_BUCKET_NAME}/${key}`;
         uploadedUrls.push(url);
       }
@@ -127,7 +115,7 @@ router.post(
       res.status(500).json({ error: error.message || "Błąd serwera" });
     }
   },
-  handleUploadErrors
+  handleUploadErrors,
 );
 
 export default router;

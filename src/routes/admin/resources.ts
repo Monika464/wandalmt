@@ -17,7 +17,6 @@ import {
 } from "../../controllers/admin/chapterControllers.js";
 import { getVideoStatus } from "controllers/bunnyWebhook.js";
 const router = express.Router();
-import Resource from "../../models/resource.js";
 import { adminAuth } from "middleware/auth.js";
 
 // Fetch all resources

@@ -1,7 +1,7 @@
 import express, { Request, Response, Router } from "express";
 //import { Request, Response, NextFunction } from "express";
-import { adminAuth, userAuth } from "../middleware/auth.js";
-import User, { IUser } from "../models/user.js";
+import { adminAuth, userAuth } from "../../middleware/auth.js";
+import User, { IUser } from "../../models/user.js";
 import jwt from "jsonwebtoken";
 
 import {
@@ -307,13 +307,7 @@ router.post("/reset-password", resetPassword);
 
 // Walidacja tokena resetującego (dla frontendu)
 router.get("/validate-reset-token", validateResetToken);
-// POST /api/auth/request-reset → wysyła maila z linkiem resetującym
-//router.post("/request-reset", requestPasswordReset);
 
-// POST /api/auth/reset-password → zmienia hasło po kliknięciu w link
-//router.post("/reset-password", resetPassword);
-
-// PATCH /api/auth/change-email → zmienia email (wymaga logowania)
 router.patch("/change-email", userAuth, changeEmail);
 
 export default router;
