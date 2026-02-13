@@ -18,9 +18,12 @@ router.get(
       const query: any = {};
 
       if (search) {
+        const searchString = Array.isArray(search)
+          ? search[0]?.toString() || ""
+          : search.toString();
         query.$or = [
-          { name: { $regex: search, $options: "i" } },
-          { code: { $regex: search.toUpperCase(), $options: "i" } },
+          { name: { $regex: searchString, $options: "i" } },
+          { code: { $regex: searchString.toUpperCase(), $options: "i" } },
         ];
       }
 
@@ -50,7 +53,7 @@ router.get(
       console.error("Error fetching discounts:", error);
       res.status(500).json({ error: "Błąd podczas pobierania kuponów" });
     }
-  }
+  },
 );
 
 // Stwórz nowy kupon (admin)
@@ -154,7 +157,7 @@ router.post(
       console.error("Error creating discount:", error);
       res.status(500).json({ error: "Błąd podczas tworzenia kuponu" });
     }
-  }
+  },
 );
 
 // Pobierz pojedynczy kupon (admin)
@@ -179,7 +182,7 @@ router.get(
       console.error("Error fetching discount:", error);
       res.status(500).json({ error: "Błąd podczas pobierania kuponu" });
     }
-  }
+  },
 );
 
 // Aktualizuj kupon (admin)
@@ -232,7 +235,7 @@ router.put(
       console.error("Error updating discount:", error);
       res.status(500).json({ error: "Błąd podczas aktualizacji kuponu" });
     }
-  }
+  },
 );
 
 // Usuń kupon (admin)
@@ -255,7 +258,7 @@ router.delete(
       console.error("Error deleting discount:", error);
       res.status(500).json({ error: "Błąd podczas usuwania kuponu" });
     }
-  }
+  },
 );
 
 // Pobierz historię użyć kuponu (admin)
@@ -294,7 +297,7 @@ router.get(
       console.error("Error fetching discount usage:", error);
       res.status(500).json({ error: "Błąd podczas pobierania historii użyć" });
     }
-  }
+  },
 );
 
 // Generuj raport kuponów (admin)
@@ -363,7 +366,7 @@ router.get(
       console.error("Error generating discount report:", error);
       res.status(500).json({ error: "Błąd podczas generowania raportu" });
     }
-  }
+  },
 );
 
 export default router;

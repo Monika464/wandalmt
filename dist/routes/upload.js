@@ -76,18 +76,6 @@ router.post("/upload", adminAuth, upload.array("files", 5), async (req, res) => 
                 ACL: "private",
             });
             await s3.send(command);
-            // await s3
-            //   .putObject({
-            //     Bucket: process.env.B2_BUCKET_NAME!,
-            //     Key: key,
-            //     Body: file.buffer,
-            //     ContentType: file.mimetype,
-            //     ACL: "private",
-            //   })
-            //   .promise();
-            // console.log("File uploaded: ", key);
-            //console.log("Response: ", response);
-            // Build the URL after upload
             const url = `https://s3.eu-central-003.backblazeb2.com/${process.env.B2_BUCKET_NAME}/${key}`;
             uploadedUrls.push(url);
         }

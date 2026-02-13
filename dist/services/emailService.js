@@ -1,63 +1,27 @@
 import { mg } from "../utils/mailgunClient.js";
-
-export interface OrderConfirmationData {
-  orderId: string;
-  email: string;
-  userName?: string;
-  totalAmount: number;
-  products: Array<{
-    name: string;
-    quantity: number;
-    price: number;
-  }>;
-  invoiceUrl?: string;
-  requireInvoice: boolean;
-  createdAt: Date;
-  billingDetails?: {
-    companyName?: string;
-    taxId?: string;
-    address?: string;
-  };
-}
-
 // 🔧 CZYSTA FUNKCJA DO WYSYŁANIA EMAILI - NIE JEST KONTROLEREM
-export const sendOrderConfirmationEmail = async (
-  orderData: OrderConfirmationData,
-): Promise<{ id: string; message: string }> => {
-  console.log("🔧 sendOrderConfirmationEmail called with data:", {
-    orderId: orderData.orderId,
-    email: orderData.email,
-    totalAmount: orderData.totalAmount,
-    productsCount: orderData.products.length,
-    hasInvoice: !!orderData.invoiceUrl,
-  });
-
-  const {
-    orderId,
-    email,
-    totalAmount,
-    products,
-    invoiceUrl,
-    requireInvoice,
-    billingDetails,
-  } = orderData;
-
-  // Tworzenie treści emaila (ten sam kod co wcześniej)
-  const productList = products
-    .map((p) => `- ${p.name} x${p.quantity}: ${p.price.toFixed(2)} PLN`)
-    .join("\n");
-
-  const invoiceSection = invoiceUrl
-    ? `\n\n📄 Faktura została wygenerowana i jest dostępna pod linkiem:\n${invoiceUrl}`
-    : requireInvoice
-      ? "\n\nℹ️ Faktura nie została wygenerowana. Skontaktuj się z obsługą klienta w sprawie faktury."
-      : "\n\nℹ️ Zamówienie zostało złożone bez faktury.";
-
-  const billingInfo = billingDetails?.companyName
-    ? `\n\nDane do faktury:\nFirma: ${billingDetails.companyName}\nNIP: ${billingDetails.taxId || "brak"}\nAdres: ${billingDetails.address || "brak"}`
-    : "";
-
-  const text = `
+export const sendOrderConfirmationEmail = async (orderData) => {
+    console.log("🔧 sendOrderConfirmationEmail called with data:", {
+        orderId: orderData.orderId,
+        email: orderData.email,
+        totalAmount: orderData.totalAmount,
+        productsCount: orderData.products.length,
+        hasInvoice: !!orderData.invoiceUrl,
+    });
+    const { orderId, email, totalAmount, products, invoiceUrl, requireInvoice, billingDetails, } = orderData;
+    // Tworzenie treści emaila (ten sam kod co wcześniej)
+    const productList = products
+        .map((p) => `- ${p.name} x${p.quantity}: ${p.price.toFixed(2)} PLN`)
+        .join("\n");
+    const invoiceSection = invoiceUrl
+        ? `\n\n📄 Faktura została wygenerowana i jest dostępna pod linkiem:\n${invoiceUrl}`
+        : requireInvoice
+            ? "\n\nℹ️ Faktura nie została wygenerowana. Skontaktuj się z obsługą klienta w sprawie faktury."
+            : "\n\nℹ️ Zamówienie zostało złożone bez faktury.";
+    const billingInfo = billingDetails?.companyName
+        ? `\n\nDane do faktury:\nFirma: ${billingDetails.companyName}\nNIP: ${billingDetails.taxId || "brak"}\nAdres: ${billingDetails.address || "brak"}`
+        : "";
+    const text = `
 Dziękujemy za złożenie zamówienia w Kurs MT!
 
 📋 Numer zamówienia: ${orderId}
@@ -76,8 +40,7 @@ ${invoiceSection}
 Pozdrawiamy,
 Zespół Kurs MT
   `.trim();
-
-  const html = `<!DOCTYPE html>
+    const html = `<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -104,36 +67,31 @@ Zespół Kurs MT
             <div class="order-details">
                 <h3>📋 Szczegóły zamówienia</h3>
                 <p><strong>Numer zamówienia:</strong> ${orderId}</p>
-                <p><strong>Data:</strong> ${new Date(
-                  orderData.createdAt,
-                ).toLocaleDateString("pl-PL", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}</p>
+                <p><strong>Data:</strong> ${new Date(orderData.createdAt).toLocaleDateString("pl-PL", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    })}</p>
                 
                 <h4>🛒 Produkty:</h4>
                 ${products
-                  .map(
-                    (p) => `
+        .map((p) => `
                     <div class="product-item">
                         <strong>${p.name}</strong><br>
                         Ilość: ${p.quantity} × ${p.price.toFixed(2)} PLN = ${(p.quantity * p.price).toFixed(2)} PLN
                     </div>
-                `,
-                  )
-                  .join("")}
+                `)
+        .join("")}
                 
                 <div style="text-align: right; margin-top: 15px;">
                     <div class="total">Suma: ${totalAmount.toFixed(2)} PLN</div>
                 </div>
             </div>
             
-            ${
-              billingDetails?.companyName
-                ? `
+            ${billingDetails?.companyName
+        ? `
             <div class="order-details">
                 <h3>🏢 Dane do faktury</h3>
                 <p><strong>Firma:</strong> ${billingDetails.companyName}</p>
@@ -141,12 +99,10 @@ Zespół Kurs MT
                 ${billingDetails.address ? `<p><strong>Adres:</strong> ${billingDetails.address}</p>` : ""}
             </div>
             `
-                : ""
-            }
+        : ""}
             
-            ${
-              invoiceUrl
-                ? `
+            ${invoiceUrl
+        ? `
             <div style="text-align: center; margin: 25px 0;">
                 <h3>📄 Faktura gotowa do pobrania</h3>
                 <p>Twoja faktura została wygenerowana i jest dostępna pod poniższym linkiem:</p>
@@ -156,15 +112,14 @@ Zespół Kurs MT
                 </p>
             </div>
             `
-                : requireInvoice
-                  ? `
+        : requireInvoice
+            ? `
             <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 15px 0;">
                 <h3>ℹ️ Informacja o fakturze</h3>
                 <p>Faktura nie została wygenerowana automatycznie. Skontaktuj się z obsługą klienta w sprawie faktury.</p>
             </div>
             `
-                  : ""
-            }
+            : ""}
             
             <div style="background-color: #e8f5e9; border: 1px solid #c8e6c9; padding: 15px; border-radius: 5px; margin: 15px 0;">
                 <h3>✅ Dostęp do kursów</h3>
@@ -181,40 +136,24 @@ Zespół Kurs MT
     </div>
 </body>
 </html>`;
-
-  console.log("🔧 Sending email via Mailgun EU endpoint...");
-
-  const result = await mg.messages.create(
-    process.env.MAILGUN_DOMAIN as string,
-    {
-      from: `Kurs MT <no-reply@${process.env.MAILGUN_DOMAIN}>`,
-      to: email,
-      subject: `Potwierdzenie zamówienia #${orderId}`,
-      text: text,
-      html: html,
-    },
-  );
-
-  console.log(
-    `✅ Order confirmation email sent to ${email} for order ${orderId}, ID: ${result.id}`,
-  );
-
-  return {
-    id: result.id,
-    message: "Email wysłany pomyślnie",
-  };
+    console.log("🔧 Sending email via Mailgun EU endpoint...");
+    const result = await mg.messages.create(process.env.MAILGUN_DOMAIN, {
+        from: `Kurs MT <no-reply@${process.env.MAILGUN_DOMAIN}>`,
+        to: email,
+        subject: `Potwierdzenie zamówienia #${orderId}`,
+        text: text,
+        html: html,
+    });
+    console.log(`✅ Order confirmation email sent to ${email} for order ${orderId}, ID: ${result.id}`);
+    return {
+        id: result.id,
+        message: "Email wysłany pomyślnie",
+    };
 };
-
 // 📧 DODATKOWA FUNKCJA DO WYSYŁANIA FAKTURY OSOBNO
-export const sendInvoiceEmail = async (
-  email: string,
-  orderId: string,
-  invoiceUrl: string,
-  invoiceNumber: string,
-): Promise<{ id: string; message: string }> => {
-  console.log(`📧 Sending invoice email for order ${orderId} to ${email}`);
-
-  const text = `
+export const sendInvoiceEmail = async (email, orderId, invoiceUrl, invoiceNumber) => {
+    console.log(`📧 Sending invoice email for order ${orderId} to ${email}`);
+    const text = `
 Szanowni Państwo,
 
 Faktura VAT nr ${invoiceNumber} dla zamówienia #${orderId} została wygenerowana.
@@ -227,8 +166,7 @@ Link jest aktywny przez 30 dni.
 Pozdrawiamy,
 Zespół Kurs MT
   `.trim();
-
-  const html = `
+    const html = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -266,32 +204,22 @@ Zespół Kurs MT
 </body>
 </html>
   `;
-
-  const result = await mg.messages.create(
-    process.env.MAILGUN_DOMAIN as string,
-    {
-      from: `Kurs MT <no-reply@${process.env.MAILGUN_DOMAIN}>`,
-      to: email,
-      subject: `Faktura VAT #${invoiceNumber} dla zamówienia #${orderId}`,
-      text: text,
-      html: html,
-    },
-  );
-
-  console.log(
-    `✅ Invoice email sent to ${email} for order ${orderId}, ID: ${result.id}`,
-  );
-
-  return {
-    id: result.id,
-    message: "Faktura wysłana pomyślnie",
-  };
+    const result = await mg.messages.create(process.env.MAILGUN_DOMAIN, {
+        from: `Kurs MT <no-reply@${process.env.MAILGUN_DOMAIN}>`,
+        to: email,
+        subject: `Faktura VAT #${invoiceNumber} dla zamówienia #${orderId}`,
+        text: text,
+        html: html,
+    });
+    console.log(`✅ Invoice email sent to ${email} for order ${orderId}, ID: ${result.id}`);
+    return {
+        id: result.id,
+        message: "Faktura wysłana pomyślnie",
+    };
 };
-
 // // services/emailService.ts
 // import formData from "form-data";
 // import {mg} from "../utils/mailgunClient.js"; // Import klienta Mailgun z utils
-
 // interface OrderConfirmationData {
 //   orderId: string;
 //   email: string;
@@ -311,21 +239,17 @@ Zespół Kurs MT
 //     address?: string;
 //   };
 // }
-
 // export async function sendOrderConfirmation(
 //   data: OrderConfirmationData,
 // ): Promise<boolean> {
 //   try {
 //     console.log("🔧 EmailService starting...");
-
 //     // Sprawdź zmienne środowiskowe
 //     if (!process.env.MAILGUN_API_KEY || !process.env.MAILGUN_DOMAIN) {
 //       console.error("❌ Missing Mailgun environment variables");
 //       return false;
 //     }
-
 //     console.log("🔧 Sending email to:", data.email);
-
 //     const {
 //       orderId,
 //       email,
@@ -335,42 +259,32 @@ Zespół Kurs MT
 //       requireInvoice,
 //       billingDetails,
 //     } = data;
-
 //     // Tworzenie treści emaila
 //     const productList = products
 //       .map((p) => `- ${p.name} x${p.quantity}: ${p.price.toFixed(2)} PLN`)
 //       .join("\n");
-
 //     const invoiceSection = invoiceUrl
 //       ? `\n\n📄 Faktura została wygenerowana i jest dostępna pod linkiem:\n${invoiceUrl}`
 //       : requireInvoice
 //         ? "\n\nℹ️ Faktura nie została wygenerowana. Skontaktuj się z obsługą klienta w sprawie faktury."
 //         : "\n\nℹ️ Zamówienie zostało złożone bez faktury.";
-
 //     const billingInfo = billingDetails?.companyName
 //       ? `\n\nDane do faktury:\nFirma: ${billingDetails.companyName}\nNIP: ${billingDetails.taxId || "brak"}\nAdres: ${billingDetails.address || "brak"}`
 //       : "";
-
 //     const text = `
 // Dziękujemy za złożenie zamówienia w Kurs MT!
-
 // 📋 Numer zamówienia: ${orderId}
 // 📅 Data zamówienia: ${new Date(data.createdAt).toLocaleDateString("pl-PL")}
 // 💰 Kwota całkowita: ${totalAmount.toFixed(2)} PLN
-
 // 🛒 Produkty:
 // ${productList}
 // ${billingInfo}
 // ${invoiceSection}
-
 // ✅ Dostęp do zakupionych kursów otrzymasz natychmiast po zalogowaniu na swoje konto.
-
 // 📞 W razie pytań skontaktuj się z nami.
-
 // Pozdrawiamy,
 // Zespół Kurs MT
 //     `.trim();
-
 //     const html = `
 // <!DOCTYPE html>
 // <html>
@@ -395,7 +309,6 @@ Zespół Kurs MT
 //         </div>
 //         <div class="content">
 //             <p>Twoje zamówienie zostało pomyślnie przyjęte i jest w trakcie realizacji.</p>
-
 //             <div class="order-details">
 //                 <h3>📋 Szczegóły zamówienia</h3>
 //                 <p><strong>Numer zamówienia:</strong> ${orderId}</p>
@@ -408,7 +321,6 @@ Zespół Kurs MT
 //                   hour: "2-digit",
 //                   minute: "2-digit",
 //                 })}</p>
-
 //                 <h4>🛒 Produkty:</h4>
 //                 ${products
 //                   .map(
@@ -420,12 +332,10 @@ Zespół Kurs MT
 //                 `,
 //                   )
 //                   .join("")}
-
 //                 <div style="text-align: right; margin-top: 15px;">
 //                     <div class="total">Suma: ${totalAmount.toFixed(2)} PLN</div>
 //                 </div>
 //             </div>
-
 //             ${
 //               billingDetails?.companyName
 //                 ? `
@@ -438,7 +348,6 @@ Zespół Kurs MT
 //             `
 //                 : ""
 //             }
-
 //             ${
 //               invoiceUrl
 //                 ? `
@@ -460,15 +369,12 @@ Zespół Kurs MT
 //             `
 //                   : ""
 //             }
-
 //             <div style="background-color: #e8f5e9; border: 1px solid #c8e6c9; padding: 15px; border-radius: 5px; margin: 15px 0;">
 //                 <h3>✅ Dostęp do kursów</h3>
 //                 <p>Dostęp do zakupionych kursów otrzymasz natychmiast po zalogowaniu na swoje konto w sekcji "Moje kursy".</p>
 //             </div>
-
 //             <p style="margin-top: 20px;">📞 Jeśli masz pytania dotyczące zamówienia, skontaktuj się z nami.</p>
 //         </div>
-
 //         <div class="footer">
 //             <p>Z pozdrowieniami,<br><strong>Zespół Kurs MT</strong></p>
 //             <p style="font-size: 12px;">To jest automatyczna wiadomość, prosimy nie odpowiadać na ten email.</p>
@@ -477,7 +383,6 @@ Zespół Kurs MT
 // </body>
 // </html>
 //     `;
-
 //     // Wysłanie emaila
 //     const result = await mg.messages.create(
 //       process.env.MAILGUN_DOMAIN as string,
@@ -489,7 +394,6 @@ Zespół Kurs MT
 //         html: html,
 //       },
 //     );
-
 //     console.log(
 //       `✅ Order confirmation email sent to ${email} for order ${orderId}, ID: ${result.id}`,
 //     );

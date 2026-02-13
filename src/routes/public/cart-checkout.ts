@@ -7,7 +7,10 @@ import Product from "../../models/product.js";
 import Resource from "../../models/resource.js";
 import Discount from "../../models/discount.js";
 import { userAuth } from "../../middleware/auth.js";
-import { sendOrderConfirmation } from "../../services/emailService.js";
+import {
+  sendOrderConfirmationEmail,
+  sendInvoiceEmail,
+} from "../../services/emailService.js";
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -406,15 +409,6 @@ router.post(
         sessionConfig.billing_address_collection = "auto";
       }
 
-      // Kupon - OPCJA 1: Użyj Stripe Promotion Codes (jeśli masz skonfigurowane w Stripe)
-      // Kupon - OPCJA 2: Zastosuj zniżkę po stronie serwera (my już obliczyliśmy)
-      // Dla uproszczenia używamy metadata i obliczamy po swojej stronie
-
-      // Jeśli chcesz używać Stripe Promotion Codes, odkomentuj poniższą linijkę:
-      // if (couponCode) {
-      //   sessionConfig.allow_promotion_codes = true;
-      // }
-
       // Custom text
       sessionConfig.custom_text = {
         submit: {
@@ -697,24 +691,24 @@ router.get(
           createdAt: new Date(session.created * 1000),
         });
 
-        console.log("Invoice debug:", {
-          hasInvoice: !!session.invoice,
-          invoiceType: typeof session.invoice,
-          invoiceValue: session.invoice,
-          sessionId: session.id,
-          paymentStatus: session.payment_status,
-        });
+        // console.log("Invoice debug:", {
+        //   hasInvoice: !!session.invoice,
+        //   invoiceType: typeof session.invoice,
+        //   invoiceValue: session.invoice,
+        //   sessionId: session.id,
+        //   paymentStatus: session.payment_status,
+        // });
 
-        if (session.invoice) {
-          console.log(
-            "Invoice object keys:",
-            Object.keys(session.invoice as any),
-          );
-          console.log(
-            "Invoice object:",
-            JSON.stringify(session.invoice, null, 2),
-          );
-        }
+        // if (session.invoice) {
+        //   console.log(
+        //     "Invoice object keys:",
+        //     Object.keys(session.invoice as any),
+        //   );
+        //   console.log(
+        //     "Invoice object:",
+        //     JSON.stringify(session.invoice, null, 2),
+        //   );
+        // }
 
         // DODAJ FAKTURĘ JEŚLI ISTNIEJE
         if (session.invoice) {
@@ -771,14 +765,13 @@ router.get(
 
       // 5. WYŚLIJ EMAIL POTWIERDZAJĄCY
       // Używamy setTimeout aby nie blokować odpowiedzi do frontendu
+      // 5. WYŚLIJ EMAIL POTWIERDZAJĄCY I FAKTURĘ
       setTimeout(async () => {
         try {
-          console.log(
-            `📧 Preparing to send confirmation email for order ${order._id}`,
-          );
+          console.log(`📧 Preparing to send emails for order ${order._id}`);
 
-          // Przygotuj dane do emaila
-          const emailData = {
+          // Przygotuj wspólne dane
+          const baseEmailData = {
             orderId: order._id.toString(),
             email: order.user.email,
             userName: order.user.name || order.user.email.split("@")[0],
@@ -788,35 +781,51 @@ router.get(
               quantity: p.quantity,
               price: p.discountedPrice || p.price,
             })),
-            invoiceUrl: order.invoiceId
-              ? `https://dashboard.stripe.com/invoices/${order.invoiceId}`
-              : null,
             requireInvoice: order.requireInvoice || false,
             createdAt: order.paidAt || order.createdAt,
             billingDetails: order.billingDetails || null,
           };
 
-          // Wywołaj endpoint
-          const response = await fetch(
-            "http://localhost:3000/api/email/send-order-confirmation",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(emailData),
-            },
-          );
+          // 1. 📧 EMAIL POTWIERDZAJĄCY ZAMÓWIENIE
+          const invoiceUrl =
+            order.invoiceDetails?.hostedInvoiceUrl ||
+            order.invoiceDetails?.invoicePdf ||
+            (order.invoiceId
+              ? `https://dashboard.stripe.com/invoices/${order.invoiceId}`
+              : null);
 
-          const result = await response.json();
+          await sendOrderConfirmationEmail({
+            ...baseEmailData,
+            invoiceUrl: invoiceUrl,
+          });
 
-          if (result.success) {
-            console.log(
-              `✅ Order confirmation email sent to ${order.user.email}`,
-            );
-          } else {
-            console.log(`⚠️ Email sending failed: ${result.error}`);
+          // 2. 📄 OSOBNY EMAIL Z FAKTURĄ (jeśli istnieje)
+          if (order.invoiceDetails) {
+            const invoiceLink =
+              order.invoiceDetails.hostedInvoiceUrl ||
+              order.invoiceDetails.invoicePdf;
+
+            if (invoiceLink) {
+              console.log(
+                `📧 Sending separate invoice email for order ${order._id}`,
+              );
+              await sendInvoiceEmail(
+                order.user.email,
+                order._id.toString(),
+                invoiceLink,
+                order.invoiceDetails.invoiceNumber,
+              );
+              console.log(`✅ Invoice email sent for order ${order._id}`);
+            }
           }
+
+          console.log(`✅ All emails sent successfully for order ${order._id}`);
         } catch (emailError) {
-          console.error("❌ Error in email sending process:", emailError);
+          console.error("❌ Error in email sending process:", {
+            error: emailError,
+            orderId: order._id,
+            email: order.user.email,
+          });
         }
       }, 500);
 
