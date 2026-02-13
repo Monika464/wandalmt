@@ -35,6 +35,10 @@ export const adminAuth = async (req, res, next) => {
         next();
     }
     catch (error) {
+        if (error instanceof jwt.TokenExpiredError) {
+            res.status(401).json({ error: "Token expired" });
+            return;
+        }
         console.error("Auth error:", error);
         res.status(401).json({ error: "Unauthorized" });
         return;
@@ -59,8 +63,15 @@ export const userAuth = async (req, res, next) => {
         req.user = user;
         req.token = token;
         next();
+        // } catch (error) {
+        //   res.status(401).send({ error: "Please authenticate" });
+        // }
     }
     catch (error) {
-        res.status(401).send({ error: "Please authenticate" });
+        if (error instanceof jwt.TokenExpiredError) {
+            res.status(401).json({ error: "Token expired" });
+            return;
+        }
+        res.status(401).json({ error: "Invalid token" });
     }
 };

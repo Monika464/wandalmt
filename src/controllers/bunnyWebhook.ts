@@ -115,8 +115,11 @@ export const checkVideoStatus = async (
   }
 };
 
-// Nowy endpoint do pobierania statusu video
-export const getVideoStatus = async (req: Request, res: Response) => {
+//  endpoint do pobierania statusu video
+export const getVideoStatus = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   try {
     const { videoId } = req.params;
 
@@ -131,7 +134,8 @@ export const getVideoStatus = async (req: Request, res: Response) => {
     }
 
     if (!video) {
-      return res.status(404).json({ error: "Video not found" });
+      res.status(404).json({ error: "Video not found" });
+      return;
     }
 
     // Opcjonalnie: sprawdź bezpośrednio w Bunny, jeśli potrzebujemy najświeższych danych

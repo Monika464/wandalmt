@@ -1,102 +1,7 @@
-// src/controllers/emailController.ts
-// controllers/emailController.ts
-import { Request, Response } from "express";
-import {
-  sendOrderConfirmationEmail,
-  sendInvoiceEmail,
-  OrderConfirmationData,
-} from "../services/emailService.js";
-
-// 🔧 KONTROLER - tylko do obsługi requestów HTTP
-export const sendOrderConfirmation = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  try {
-    const orderData: OrderConfirmationData = req.body;
-
-    const result = await sendOrderConfirmationEmail(orderData);
-
-    res.json({
-      success: true,
-      message: "Email potwierdzający został wysłany",
-      messageId: result.id,
-    });
-  } catch (error: any) {
-    console.error("❌ Error sending order confirmation email:", {
-      message: error.message,
-      status: error.status,
-      details: error.details,
-      stack: error.stack,
-    });
-
-    res.status(500).json({
-      success: false,
-      error: "Błąd przy wysyłaniu emaila",
-      details: error.message,
-    });
-  }
-};
-
-// 🔧 KONTROLER do wysyłania faktury przez HTTP
-export const sendInvoice = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  try {
-    const { email, orderId, invoiceUrl, invoiceNumber } = req.body;
-
-    if (!email || !orderId || !invoiceUrl || !invoiceNumber) {
-      res.status(400).json({ error: "Brak wymaganych pól" });
-      return;
-    }
-
-    const result = await sendInvoiceEmail(
-      email,
-      orderId,
-      invoiceUrl,
-      invoiceNumber,
-    );
-
-    res.json({
-      success: true,
-      message: "Faktura została wysłana",
-      messageId: result.id,
-    });
-  } catch (error: any) {
-    console.error("❌ Error sending invoice email:", error);
-    res.status(500).json({
-      success: false,
-      error: "Błąd przy wysyłaniu faktury",
-      details: error.message,
-    });
-  }
-};
-
-// Testowa funkcja do wysyłki maili
-// export const sendMail = async (req: Request, res: Response): Promise<void> => {
-//   try {
-//     const result = await mg.messages.create(
-//       process.env.MAILGUN_DOMAIN as string,
-//       {
-//         from: "Mailgun Sandbox <postmaster@boxingonline.eu>",
-//         to: "muaythaikrakow@gmail.com",
-//         subject: "✅ Test Mailgun działa!",
-//         text: "Gratulacje, Twój backend potrafi wysyłać e-maile 🚀",
-//       },
-//     );
-
-//     console.log("mailgun response sent", result);
-
-//     res.status(200).json({ success: true, message: "Email sent!" });
-//   } catch (error: any) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
-// import { Request, Response } from "express";
-// import { mg } from "../utils/mailgunClient.js";
-
-// ////
+// // services/emailService.ts
+// import formData from "form-data";
+// import {mg} from "../utils/mailgunClient.js"; // Import klienta Mailgun z utils
+export {};
 // interface OrderConfirmationData {
 //   orderId: string;
 //   email: string;
@@ -116,21 +21,17 @@ export const sendInvoice = async (
 //     address?: string;
 //   };
 // }
-
-// export const sendOrderConfirmation = async (
-//   req: Request,
-//   res: Response,
-// ): Promise<void> => {
+// export async function sendOrderConfirmation(
+//   data: OrderConfirmationData,
+// ): Promise<boolean> {
 //   try {
-//     const orderData: OrderConfirmationData = req.body;
-
-//     console.log("🔧 sendOrderConfirmation called with data:", {
-//       orderId: orderData.orderId,
-//       email: orderData.email,
-//       totalAmount: orderData.totalAmount,
-//       productsCount: orderData.products.length,
-//     });
-
+//     console.log("🔧 EmailService starting...");
+//     // Sprawdź zmienne środowiskowe
+//     if (!process.env.MAILGUN_API_KEY || !process.env.MAILGUN_DOMAIN) {
+//       console.error("❌ Missing Mailgun environment variables");
+//       return false;
+//     }
+//     console.log("🔧 Sending email to:", data.email);
 //     const {
 //       orderId,
 //       email,
@@ -139,43 +40,33 @@ export const sendInvoice = async (
 //       invoiceUrl,
 //       requireInvoice,
 //       billingDetails,
-//     } = orderData;
-
+//     } = data;
 //     // Tworzenie treści emaila
 //     const productList = products
 //       .map((p) => `- ${p.name} x${p.quantity}: ${p.price.toFixed(2)} PLN`)
 //       .join("\n");
-
 //     const invoiceSection = invoiceUrl
 //       ? `\n\n📄 Faktura została wygenerowana i jest dostępna pod linkiem:\n${invoiceUrl}`
 //       : requireInvoice
 //         ? "\n\nℹ️ Faktura nie została wygenerowana. Skontaktuj się z obsługą klienta w sprawie faktury."
 //         : "\n\nℹ️ Zamówienie zostało złożone bez faktury.";
-
 //     const billingInfo = billingDetails?.companyName
 //       ? `\n\nDane do faktury:\nFirma: ${billingDetails.companyName}\nNIP: ${billingDetails.taxId || "brak"}\nAdres: ${billingDetails.address || "brak"}`
 //       : "";
-
 //     const text = `
 // Dziękujemy za złożenie zamówienia w Kurs MT!
-
 // 📋 Numer zamówienia: ${orderId}
-// 📅 Data zamówienia: ${new Date(orderData.createdAt).toLocaleDateString("pl-PL")}
+// 📅 Data zamówienia: ${new Date(data.createdAt).toLocaleDateString("pl-PL")}
 // 💰 Kwota całkowita: ${totalAmount.toFixed(2)} PLN
-
 // 🛒 Produkty:
 // ${productList}
 // ${billingInfo}
 // ${invoiceSection}
-
 // ✅ Dostęp do zakupionych kursów otrzymasz natychmiast po zalogowaniu na swoje konto.
-
 // 📞 W razie pytań skontaktuj się z nami.
-
 // Pozdrawiamy,
 // Zespół Kurs MT
 //     `.trim();
-
 //     const html = `
 // <!DOCTYPE html>
 // <html>
@@ -200,12 +91,11 @@ export const sendInvoice = async (
 //         </div>
 //         <div class="content">
 //             <p>Twoje zamówienie zostało pomyślnie przyjęte i jest w trakcie realizacji.</p>
-
 //             <div class="order-details">
 //                 <h3>📋 Szczegóły zamówienia</h3>
 //                 <p><strong>Numer zamówienia:</strong> ${orderId}</p>
 //                 <p><strong>Data:</strong> ${new Date(
-//                   orderData.createdAt,
+//                   data.createdAt,
 //                 ).toLocaleDateString("pl-PL", {
 //                   day: "2-digit",
 //                   month: "2-digit",
@@ -213,7 +103,6 @@ export const sendInvoice = async (
 //                   hour: "2-digit",
 //                   minute: "2-digit",
 //                 })}</p>
-
 //                 <h4>🛒 Produkty:</h4>
 //                 ${products
 //                   .map(
@@ -225,12 +114,10 @@ export const sendInvoice = async (
 //                 `,
 //                   )
 //                   .join("")}
-
 //                 <div style="text-align: right; margin-top: 15px;">
 //                     <div class="total">Suma: ${totalAmount.toFixed(2)} PLN</div>
 //                 </div>
 //             </div>
-
 //             ${
 //               billingDetails?.companyName
 //                 ? `
@@ -243,7 +130,6 @@ export const sendInvoice = async (
 //             `
 //                 : ""
 //             }
-
 //             ${
 //               invoiceUrl
 //                 ? `
@@ -265,15 +151,12 @@ export const sendInvoice = async (
 //             `
 //                   : ""
 //             }
-
 //             <div style="background-color: #e8f5e9; border: 1px solid #c8e6c9; padding: 15px; border-radius: 5px; margin: 15px 0;">
 //                 <h3>✅ Dostęp do kursów</h3>
 //                 <p>Dostęp do zakupionych kursów otrzymasz natychmiast po zalogowaniu na swoje konto w sekcji "Moje kursy".</p>
 //             </div>
-
 //             <p style="margin-top: 20px;">📞 Jeśli masz pytania dotyczące zamówienia, skontaktuj się z nami.</p>
 //         </div>
-
 //         <div class="footer">
 //             <p>Z pozdrowieniami,<br><strong>Zespół Kurs MT</strong></p>
 //             <p style="font-size: 12px;">To jest automatyczna wiadomość, prosimy nie odpowiadać na ten email.</p>
@@ -282,9 +165,7 @@ export const sendInvoice = async (
 // </body>
 // </html>
 //     `;
-
-//     console.log("🔧 Sending email via Mailgun EU endpoint...");
-
+//     // Wysłanie emaila
 //     const result = await mg.messages.create(
 //       process.env.MAILGUN_DOMAIN as string,
 //       {
@@ -295,57 +176,16 @@ export const sendInvoice = async (
 //         html: html,
 //       },
 //     );
-
 //     console.log(
 //       `✅ Order confirmation email sent to ${email} for order ${orderId}, ID: ${result.id}`,
 //     );
-
-//     res.json({
-//       success: true,
-//       message: "Email potwierdzający został wysłany",
-//       messageId: result.id,
-//     });
+//     return true;
 //   } catch (error: any) {
 //     console.error("❌ Error sending order confirmation email:", {
 //       message: error.message,
-//       status: error.status,
+//       statusCode: error.status,
 //       details: error.details,
-//       stack: error.stack,
 //     });
-
-//     res.status(500).json({
-//       success: false,
-//       error: "Błąd przy wysyłaniu emaila",
-//       details: error.message,
-//     });
+//     return false;
 //   }
-// };
-
-/////////
-
-// export const sendMail = async (req: Request, res: Response): Promise<void> => {
-//   try {
-//     const { to, subject, text } = req.body;
-
-//     if (!to || !subject || !text) {
-//       res.status(400).json({ error: "Missing required fields" });
-//       return;
-//     }
-
-//     const data = await mg.messages.create(
-//       process.env.MAILGUN_DOMAIN as string,
-//       {
-//         from: "Mailgun Sandbox <postmaster@boxingonline.eu>",
-//         to: "muaythaikrakow@gmail.com",
-//         subject: "✅ Test Mailgun działa!",
-//         text: "Gratulacje, Twój backend potrafi wysyłać e-maile 🚀",
-//       },
-//     );
-
-//     console.log("mailgun response sent", data);
-
-//     res.status(200).json({ success: true, message: "Email sent!" });
-//   } catch (error: any) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
+// }

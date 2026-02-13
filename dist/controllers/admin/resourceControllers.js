@@ -1,5 +1,13 @@
 //RESOURCE CONTROLLERS
 import Resource from "../../models/resource.js";
+import axios from "axios";
+import Video from "../../models/video.js";
+// env
+const BUNNY_API_KEY = process.env.BUNNY_API_KEY;
+const BUNNY_LIBRARY_ID = process.env.BUNNY_LIBRARY_ID;
+if (!BUNNY_API_KEY || !BUNNY_LIBRARY_ID) {
+    console.warn("Bunny: missing BUNNY_API_KEY or BUNNY_LIBRARY_ID");
+}
 //FETCH ALL RESOURCES
 export const fetchResources = async (req, res) => {
     try {
@@ -41,12 +49,11 @@ export const fetchResources = async (req, res) => {
 // CREATE Resource
 export const createResource = async (req, res) => {
     try {
-        const { productId, title, content, videoUrl } = req.body;
+        const { productId, title, content } = req.body;
         const resource = new Resource({
             productId,
             title,
             content,
-            videoUrl,
             chapters: [],
         });
         //console.log("resource", resource);
@@ -80,18 +87,85 @@ export const updateResource = async (req, res) => {
 // DELETE /api/resources/:id
 export const deleteResource = async (req, res) => {
     try {
-        const deleted = await Resource.findByIdAndDelete(req.params.id);
-        // if (!deleted) return res.status(404).json({ error: "Resource not found" });
-        if (!deleted)
+        const { id } = req.params;
+        // 1. Znajdź resource razem z jego chapterami
+        const resource = await Resource.findById(id);
+        if (!resource) {
+            res.status(404).json({ error: "Resource not found" });
             return;
-        res.json({ message: "Resource deleted" });
+        }
+        // 2. Zbierz wszystkie bunnyVideoId z chapterów
+        const bunnyVideoIds = [];
+        if (resource.chapters && resource.chapters.length > 0) {
+            resource.chapters.forEach((chapter) => {
+                if (chapter.bunnyVideoId) {
+                    bunnyVideoIds.push(chapter.bunnyVideoId);
+                }
+            });
+        }
+        // 3. Usuń wszystkie video z BunnyStream (równolegle dla wydajności)
+        if (bunnyVideoIds.length > 0) {
+            const deletePromises = bunnyVideoIds.map(async (bunnyVideoId) => {
+                try {
+                    // Usuń z BunnyStream
+                    await axios.delete(`https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${bunnyVideoId}`, {
+                        headers: {
+                            AccessKey: BUNNY_API_KEY,
+                            Accept: "application/json",
+                        },
+                    });
+                    console.log("✅ Video removed from Bunny:", bunnyVideoId);
+                    // Usuń z bazy danych Video
+                    await Video.findOneAndDelete({ bunnyGuid: bunnyVideoId });
+                    console.log("✅ Video removed from database:", bunnyVideoId);
+                    return { success: true, videoId: bunnyVideoId };
+                }
+                catch (err) {
+                    console.warn(`Error deleting video ${bunnyVideoId} from Bunny:`, err);
+                    // Kontynuuj nawet jeśli pojawi się błąd - usuwamy dalej
+                    return { success: false, videoId: bunnyVideoId, error: err };
+                }
+            });
+            // Poczekaj na wszystkie operacje usuwania video
+            await Promise.all(deletePromises);
+        }
+        // 4. Usuń wszystkie video z bazy danych Video, które są powiązane z resource
+        // (na wypadek, jeśli jakieś video nie ma bunnyVideoId w chapterze)
+        await Video.deleteMany({
+            $or: [{ resourceId: id }, { relatedResource: id }],
+        });
+        // 5. Usuń sam resource z bazy danych
+        await Resource.findByIdAndDelete(id);
+        console.log(`✅ Resource deleted: ${id}, removed ${bunnyVideoIds.length} videos`);
+        res.json({
+            success: true,
+            message: "Resource and associated videos deleted successfully",
+            deletedResourceId: id,
+            deletedVideosCount: bunnyVideoIds.length,
+        });
     }
     catch (error) {
+        console.error("Error deleting resource:", error);
         res.status(500).json({
             error: error instanceof Error ? error.message : "Unknown error",
         });
     }
 };
+// export const deleteResource = async (
+//   req: Request,
+//   res: Response
+// ): Promise<void> => {
+//   try {
+//     const deleted = await Resource.findByIdAndDelete(req.params.id);
+//     // if (!deleted) return res.status(404).json({ error: "Resource not found" });
+//     if (!deleted) return;
+//     res.json({ message: "Resource deleted" });
+//   } catch (error) {
+//     res.status(500).json({
+//       error: error instanceof Error ? error.message : "Unknown error",
+//     });
+//   }
+// };
 ///resources/:productId
 export const getResourceByProductId = async (req, res) => {
     const { productId } = req.params;
