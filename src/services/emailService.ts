@@ -24,13 +24,13 @@ export interface OrderConfirmationData {
 export const sendOrderConfirmationEmail = async (
   orderData: OrderConfirmationData,
 ): Promise<{ id: string; message: string }> => {
-  console.log("🔧 sendOrderConfirmationEmail called with data:", {
-    orderId: orderData.orderId,
-    email: orderData.email,
-    totalAmount: orderData.totalAmount,
-    productsCount: orderData.products.length,
-    hasInvoice: !!orderData.invoiceUrl,
-  });
+  // console.log("🔧 sendOrderConfirmationEmail called with data:", {
+  //   orderId: orderData.orderId,
+  //   email: orderData.email,
+  //   totalAmount: orderData.totalAmount,
+  //   productsCount: orderData.products.length,
+  //   hasInvoice: !!orderData.invoiceUrl,
+  // });
 
   const {
     orderId,
