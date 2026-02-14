@@ -10,17 +10,6 @@ import axios from "axios";
 const BUNNY_API_KEY = process.env.BUNNY_API_KEY || "";
 const BUNNY_LIBRARY_ID = process.env.BUNNY_LIBRARY_ID || "";
 
-interface ChapterDocument {
-  _id: Types.ObjectId;
-  number?: number;
-  title: string;
-  description?: string;
-  bunnyVideoId?: string;
-  videoId?: Types.ObjectId | string;
-  deleteOne(): Promise<void>;
-  toObject(): any;
-}
-
 // ADD Chapter
 export const addChapter = async (
   req: Request,
@@ -31,6 +20,7 @@ export const addChapter = async (
 
   try {
     const resource = await Resource.findById(id);
+
     if (!resource) {
       res.status(404).json({ error: "Resource not found" });
       return;
@@ -243,30 +233,39 @@ export const deleteChapterVideo = async (
     const bunnyVideoId = chapter.bunnyVideoId;
 
     // 1. Usuń video z Bunny
-    try {
-      await axios.delete(
-        `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${bunnyVideoId}`,
-        {
-          headers: {
-            AccessKey: BUNNY_API_KEY,
-            Accept: "application/json",
-          },
-        },
-      );
-      console.log("✅ Video removed from Bunny:", bunnyVideoId);
-    } catch (bunnyErr: any) {
-      console.warn(
-        "⚠️ Bunny delete failed (continuing):",
-        bunnyErr?.response?.data ?? bunnyErr?.message,
-      );
-    }
 
-    // 2. Usuń video z bazy danych
-    try {
-      await Video.findOneAndDelete({ bunnyGuid: bunnyVideoId });
-      console.log("✅ Video removed from database:", bunnyVideoId);
-    } catch (dbErr) {
-      console.warn("⚠️ Could not delete video from database:", dbErr);
+    if (bunnyVideoId) {
+      try {
+        await axios.delete(
+          `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${bunnyVideoId}`,
+          {
+            headers: {
+              AccessKey: BUNNY_API_KEY,
+              Accept: "application/json",
+            },
+          },
+        );
+        console.log("✅ Video removed from Bunny:", bunnyVideoId);
+      } catch (bunnyErr: any) {
+        // Jeśli błąd to 404 (video nie istnieje), to OK - kontynuuj
+        if (bunnyErr.response?.status === 404) {
+          console.log(
+            "ℹ️ Video already removed from Bunny (404):",
+            chapter.bunnyVideoId,
+          );
+        } else {
+          // Inny błąd - zaloguj ale kontynuuj
+          console.warn("⚠️ Error deleting video from Bunny:", err.message);
+        }
+      }
+
+      // 2. Usuń video z bazy danych
+      try {
+        await Video.findOneAndDelete({ bunnyGuid: bunnyVideoId });
+        console.log("✅ Video removed from database:", bunnyVideoId);
+      } catch (dbErr) {
+        console.warn("⚠️ Could not delete video from database:", dbErr);
+      }
     }
 
     // 3. Wyczyść pola video w chapterze
@@ -280,10 +279,10 @@ export const deleteChapterVideo = async (
       chapterId,
       removedBunnyVideoId: bunnyVideoId,
     });
-  } catch (err) {
-    console.error("Error deleting chapter video:", err);
+  } catch (bunnyErr: any) {
+    console.error("Error deleting chapter video:", bunnyErr);
     res.status(500).json({
-      error: err instanceof Error ? err.message : "Server error",
+      error: bunnyErr instanceof Error ? bunnyErr.message : "Server error",
     });
   }
 };
@@ -394,14 +393,33 @@ export const deleteChapter = async (
     }
 
     // Usuń chapter
-    chapter.deleteOne();
+    // Usuń chapter
+    if (typeof chapter.deleteOne === "function") {
+      await chapter.deleteOne();
+    } else {
+      resource.chapters = resource.chapters.filter(
+        (ch: any) => ch._id.toString() !== chapterId,
+      );
+    }
     await resource.save();
+
+    const resourceObject = (resource as any).toObject
+      ? (resource as any).toObject()
+      : resource;
 
     res.json({
       success: true,
       message: "Chapter deleted",
-      resource,
+      resource: resourceObject,
     });
+    // chapter.deleteOne();
+    // await resource.save();
+
+    // res.json({
+    //   success: true,
+    //   message: "Chapter deleted",
+    //   resource,
+    // });
   } catch (error) {
     console.error("Error deleting chapter:", error);
     res.status(500).json({

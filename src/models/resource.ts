@@ -2,7 +2,7 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 import type { IUser } from "../models/user.js";
 
-interface Chapter {
+export interface Chapter {
   _id?: Types.ObjectId;
   number?: number;
   title: string;
@@ -39,7 +39,7 @@ const ResourceSchema = new Schema<IResource>(
     chapters: [ChapterSchema],
     users: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 ResourceSchema.pre("save", function (next) {
