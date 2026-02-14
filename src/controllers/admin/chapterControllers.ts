@@ -255,7 +255,7 @@ export const deleteChapterVideo = async (
           );
         } else {
           // Inny błąd - zaloguj ale kontynuuj
-          console.warn("⚠️ Error deleting video from Bunny:", err.message);
+          console.warn("⚠️ Error deleting video from Bunny:", bunnyErr.message);
         }
       }
 
@@ -393,13 +393,14 @@ export const deleteChapter = async (
     }
 
     // Usuń chapter
-    // Usuń chapter
     if (typeof chapter.deleteOne === "function") {
       await chapter.deleteOne();
     } else {
-      resource.chapters = resource.chapters.filter(
-        (ch: any) => ch._id.toString() !== chapterId,
-      );
+      if (resource.chapters) {
+        resource.chapters = resource.chapters.filter(
+          (ch: any) => ch._id.toString() !== chapterId,
+        );
+      }
     }
     await resource.save();
 
