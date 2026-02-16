@@ -1,6 +1,6 @@
 import express from "express";
 import Stripe from "stripe";
-import Order from "../models/order.js"; // lub purchase.js – zależnie co zapisujesz
+import Order from "../models/order.js";
 import mongoose from "mongoose";
 
 const router = express.Router();
@@ -51,7 +51,7 @@ router.post(
 
         // Pobierz szczegóły zakupionych produktów
         const lineItems = await stripe.checkout.sessions.listLineItems(
-          session.id
+          session.id,
         );
 
         const userId = session.metadata?.userId;
@@ -91,7 +91,7 @@ router.post(
     }
 
     res.status(200).send("Received");
-  }
+  },
 );
 
 // Webhook dla faktur
@@ -145,7 +145,7 @@ router.post(
 
             await order.save();
             console.log(
-              `✅ Invoice updated via webhook for order ${order._id}`
+              `✅ Invoice updated via webhook for order ${order._id}`,
             );
           }
         } catch (error) {
@@ -158,7 +158,7 @@ router.post(
     }
 
     res.json({ received: true });
-  }
+  },
 );
 
 export default router;
