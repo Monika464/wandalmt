@@ -7,9 +7,9 @@ const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-router.get("/test", (req, res) => {
-  res.send("Webhook router działa!");
-});
+// router.get("/test", (req, res) => {
+//   res.send("Webhook router działa!");
+// });
 
 router.post(
   "/webhook",
@@ -98,12 +98,17 @@ router.post(
 router.post(
   "/stripe-invoice-webhook",
   express.raw({ type: "application/json" }),
-  async (req: Request, res: Response): Promise<void> => {
+  async (req, res) => {
     const sig = req.headers["stripe-signature"] as string;
 
     let event;
 
     try {
+      if (!sig || !endpointSecret) {
+        console.error("❌ Missing Stripe signature or secret");
+        res.status(400).send("Missing Stripe signature or secret");
+        return;
+      }
       event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
     } catch (err: any) {
       console.error(`⚠️ Webhook signature verification failed:`, err.message);
