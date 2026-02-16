@@ -1,8 +1,9 @@
 // utils/invoice-fixer.js
 import Stripe from "stripe";
 import Order from "../models/order.js";
+import { AnyARecord } from "dns";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 export async function fixMissingInvoices() {
   try {
@@ -27,10 +28,14 @@ export async function fixMissingInvoices() {
 
       try {
         // Szukaj faktur dla tego payment_intent
-        const invoices = await stripe.invoices.list({
+        const invoices = await (stripe.invoices.list as any)({
           payment_intent: order.stripePaymentIntentId,
           limit: 1,
         });
+        // const invoices = await stripe.invoices.list({
+        //   payment_intent: order.stripePaymentIntentId,
+        //   limit: 1,
+        // });
 
         if (invoices.data.length > 0) {
           const invoice = invoices.data[0];
@@ -55,10 +60,10 @@ export async function fixMissingInvoices() {
         } else {
           console.log(`⚠️ No invoice found for order ${order._id}`);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(
           `Error fixing invoice for order ${order._id}:`,
-          error.message
+          error.message,
         );
       }
     }

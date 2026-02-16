@@ -200,7 +200,7 @@ Zespół Kurs MT
   );
 
   return {
-    id: result.id,
+    id: result.id as string,
     message: "Email wysłany pomyślnie",
   };
 };
@@ -283,7 +283,7 @@ Zespół Kurs MT
   );
 
   return {
-    id: result.id,
+    id: result.id as string,
     message: "Faktura wysłana pomyślnie",
   };
 };
