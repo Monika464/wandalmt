@@ -9,6 +9,7 @@ export interface IProduct extends Document {
   status: "draft" | "published" | "archived";
   userId: mongoose.Types.ObjectId;
   resourceId?: mongoose.Types.ObjectId;
+  language: "pl" | "en";
 }
 
 const productSchema = new Schema<IProduct>(
@@ -44,8 +45,14 @@ const productSchema = new Schema<IProduct>(
       ref: "Resource",
       required: false,
     },
+    language: {
+      type: String,
+      enum: ["pl", "en"],
+      default: "pl",
+      required: true,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 const Product = model<IProduct>("Product", productSchema);
 

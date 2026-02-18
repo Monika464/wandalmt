@@ -17,6 +17,7 @@ export interface IResource extends Document {
   productId: mongoose.Types.ObjectId;
   chapters?: Chapter[];
   users?: IUser[];
+  language: "pl" | "en";
 }
 
 const ChapterSchema = new Schema<Chapter>({
@@ -38,7 +39,14 @@ const ResourceSchema = new Schema<IResource>(
     productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
     chapters: [ChapterSchema],
     users: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    language: {
+      type: String,
+      enum: ["pl", "en"],
+      default: "pl",
+      required: true,
+    },
   },
+
   { timestamps: true },
 );
 
