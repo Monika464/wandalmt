@@ -3,72 +3,26 @@ import { validationResult } from "express-validator";
 import { Request, Response, NextFunction } from "express";
 import Resource from "../../models/resource.js";
 
-//FETCH PRODUCTS
-// export const fetchProducts = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<void> => {
-//   try {
-//     const page = parseInt(req.query.page as string) || 1;
-//     const pageSize = parseInt(req.query.pageSize as string) || 20;
-//     const q = (req.query.q as string) || "";
-//     const sortField = (req.query.sortField as string) || "createdAt";
-//     const sortOrder = (req.query.sortOrder as string) === "asc" ? 1 : -1;
-
-//     const filter: any = {};
-//     if (q) {
-//       filter.$or = [
-//         { name: new RegExp(q, "i") }, // wyszukiwanie po nazwie
-//         { description: new RegExp(q, "i") },
-//       ];
-//     }
-
-//     const total = await Product.countDocuments(filter);
-
-//     const items = await Product.find(filter)
-//       .sort({ [sortField]: sortOrder })
-//       .skip((page - 1) * pageSize)
-//       .limit(pageSize)
-//       .lean();
-
-//     res.status(200).json({
-//       items,
-//       total,
-//       page,
-//       pageSize,
-//     });
-//   } catch (error) {
-//     console.error("❌ Error fetching products:", error);
-//     res.status(500).json({ error: "Błąd serwera" });
-//   }
-// };
-
-// export const fetchProducts = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<void> => {
-//   try {
-//     const products = await Product.find();
-//     res.status(200).send(products);
-//     //console.log("products", products);
-//   } catch (error) {
-//     console.error("Error fetching products:", error);
-//     res.status(500).send({ error: "Błąd serwera" });
-//   }
-// };
 export const fetchProducts = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
-    const { q } = req.query; // np. ?q=sword
+    const { q, language } = req.query; //
 
-    let filter = {};
+    interface Filter {
+      language?: string;
+      title?: { $regex: string; $options: string };
+    }
+
+    let filter: Filter = {};
+
+    if (language && typeof language === "string") {
+      filter.language = language;
+    }
+
     if (q && typeof q === "string") {
-      // dopasowanie po nazwie (np. "sword") – case-insensitive
       filter = { title: { $regex: q, $options: "i" } };
     }
 
@@ -85,7 +39,7 @@ export const fetchProducts = async (
 export const fetchProduct = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { id } = req.params;
@@ -108,12 +62,12 @@ export const fetchProduct = async (
 export const fetchUserProducts = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { userId } = req.params;
     const resources = await Resource.find({ userIds: userId }).populate(
-      "productId"
+      "productId",
     );
     res.status(200).send(resources);
   } catch (error) {
@@ -125,12 +79,12 @@ export const fetchUserProducts = async (
 //CREATE PRODUCT
 export const createProduct = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
-    const { title, description, price, imageUrl } = req.body;
+    const { title, description, price, imageUrl, language } = req.body;
 
-    if (!title || !description || !price || !imageUrl) {
+    if (!title || !description || !price || !imageUrl || !language) {
       res.status(400).json({
         error: "Missing required fields",
         missingFields: {
@@ -138,6 +92,7 @@ export const createProduct = async (
           description: !description,
           price: !price,
           imageUrl: !imageUrl,
+          language: !language,
         },
       });
       return;
@@ -149,6 +104,7 @@ export const createProduct = async (
       description,
       price,
       imageUrl,
+      language,
       status: "draft",
     });
 
@@ -193,7 +149,7 @@ export const getEditProduct = async (req: Request, res: Response) => {
 //EDIT PRODUCT
 export const postEditProduct = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const errors = validationResult(req);
@@ -205,7 +161,7 @@ export const postEditProduct = async (
     }
 
     const prodId = req.params.productId;
-    const { title, price, description, imageUrl } = req.body;
+    const { title, price, description, imageUrl, language } = req.body;
 
     const product = await Product.findById(prodId);
     if (!product) {
@@ -216,6 +172,7 @@ export const postEditProduct = async (
     product.title = title;
     product.price = price;
     product.description = description;
+    product.language = language;
     product.imageUrl = imageUrl;
 
     await product.save();
@@ -232,7 +189,7 @@ export const postEditProduct = async (
 export const deleteProduct = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { productId } = req.params;
