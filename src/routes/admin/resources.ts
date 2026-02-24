@@ -21,11 +21,9 @@ import { adminAuth } from "../../middleware/auth.js";
 
 // Fetch all resources
 router.get("/resources", adminAuth, fetchResources);
-
 router.post("/resources", adminAuth, createResource);
 router.put("/resources/:id", adminAuth, updateResource);
 router.delete("/resources/:id", adminAuth, deleteResource);
-//router.get("/resources/:productId", getResourceByProduct);
 router.get("/resources/id/:id", adminAuth, getResourceById);
 router.get("/resources/product/:productId", adminAuth, getResourceByProductId);
 

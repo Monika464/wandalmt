@@ -23,9 +23,15 @@ export const fetchResources = async (req: Request, res: Response) => {
     const q = (req.query.q as string) || "";
     const sortField = (req.query.sortField as string) || "createdAt";
     const sortOrder = (req.query.sortOrder as string) === "asc" ? 1 : -1;
+    const language = req.query.language as string;
 
     // --- 2️⃣ Zbuduj filtr wyszukiwania ---
     const filter: any = {};
+
+    if (language) {
+      filter.language = language;
+    }
+
     if (q) {
       filter.$or = [
         { title: new RegExp(q, "i") }, // wyszukiwanie po nazwie (case-insensitive)
@@ -41,7 +47,7 @@ export const fetchResources = async (req: Request, res: Response) => {
       .sort({ [sortField]: sortOrder })
       .skip((page - 1) * pageSize)
       .limit(pageSize)
-      .lean(); // .lean() = szybsze, zwraca zwykłe obiekty JS
+      .lean();
 
     // --- 5️⃣ Zwróć dane ---
     res.status(200).json({
@@ -62,14 +68,22 @@ export const createResource = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const { productId, title, content } = req.body;
+    const { productId, title, content, language } = req.body;
+
+    // Walidacja języka
+    if (language !== "pl" && language !== "en") {
+      res.status(400).json({ error: "Language must be either 'pl' or 'en'" });
+      return;
+    }
+
     const resource = new Resource({
       productId,
       title,
       content,
+      language,
       chapters: [],
     });
-    //console.log("resource", resource);
+
     await resource.save();
     res.status(201).json(resource);
   } catch (error) {
@@ -85,11 +99,31 @@ export const updateResource = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const updated = await Resource.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-    // if (!updated) return res.status(404).json({ error: "Resource not found" });
-    if (!updated) return;
+    const { title, content, language } = req.body; // 🔥 DODAJEMY language
+
+    // Walidacja języka jeśli podano
+    if (language && language !== "pl" && language !== "en") {
+      res.status(400).json({ error: "Language must be either 'pl' or 'en'" });
+      return;
+    }
+
+    const updateData: any = { title, content };
+    if (language) {
+      updateData.language = language; // 🔥 DODAJEMY
+    }
+
+    const updated = await Resource.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      {
+        new: true,
+      },
+    );
+    if (!updated) {
+      res.status(404).json({ error: "Resource not found" });
+      return;
+    }
+
     res.json(updated);
   } catch (error) {
     res.status(500).json({
@@ -204,9 +238,14 @@ export const deleteResource = async (
 ///resources/:productId
 export const getResourceByProductId = async (req: Request, res: Response) => {
   const { productId } = req.params;
+  const { language } = req.query;
   //console.log("getResourceByProductId", productId);
   try {
-    const resource = await Resource.findOne({ productId });
+    const filter: any = { productId };
+    if (language) {
+      filter.language = language;
+    }
+    const resource = await Resource.findOne(filter);
     if (!resource) {
       res.status(404).json({ error: "Resource not found for this product" });
       return;
