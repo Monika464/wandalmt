@@ -4,6 +4,7 @@ import { Request, Response } from "express";
 import Resource from "../../models/resource.js";
 import axios from "axios";
 import Video from "../../models/video.js";
+import mongoose from "mongoose";
 
 // env
 const BUNNY_API_KEY = process.env.BUNNY_API_KEY!;
@@ -236,28 +237,42 @@ export const deleteResource = async (
 // };
 
 ///resources/:productId
+///resources/:productId
 export const getResourceByProductId = async (req: Request, res: Response) => {
   const { productId } = req.params;
-  const { language } = req.query;
-  //console.log("getResourceByProductId", productId);
+  // const { language } = req.query; - tymczasowo ignoruj język
+
+  console.log("🔍 getResourceByProductId called with:", productId);
+
   try {
-    const filter: any = { productId };
-    if (language) {
-      filter.language = language;
-    }
-    const resource = await Resource.findOne(filter);
+    // Szukaj bez filtra języka
+    let resource = await Resource.findOne({
+      $or: [
+        { productId: productId },
+        {
+          productId: mongoose.Types.ObjectId.isValid(productId)
+            ? new mongoose.Types.ObjectId(productId)
+            : productId,
+        },
+      ],
+    });
+
     if (!resource) {
-      res.status(404).json({ error: "Resource not found for this product" });
-      return;
+      console.log("❌ No resource found for productId:", productId);
+      return res
+        .status(404)
+        .json({ error: "Resource not found for this product" });
     }
+
+    console.log("✅ Found resource:", resource._id);
     res.status(200).json(resource);
   } catch (err) {
+    console.error("❌ Error in getResourceByProductId:", err);
     res
       .status(500)
       .json({ error: err instanceof Error ? err.message : "Server error" });
   }
 };
-
 ///resources/id/:id
 export const getResourceById = async (req: Request, res: Response) => {
   const { id } = req.params;
