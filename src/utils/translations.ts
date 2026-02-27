@@ -37,7 +37,49 @@ type TranslationKey =
   | "checkout.product"
   | "checkout.paymentSuccess"
   | "checkout.paymentAlreadyRegistered"
-  | "checkout.paymentCheckError";
+  | "checkout.paymentCheckError"
+  | "email.currency"
+  | "email.invoiceGenerated"
+  | "email.invoiceNotGenerated"
+  | "email.orderWithoutInvoice"
+  | "email.billingDetails"
+  | "email.company"
+  | "email.taxId"
+  | "email.address"
+  | "email.none"
+  | "email.thankYou"
+  | "email.orderNumber"
+  | "email.orderDate"
+  | "email.totalAmount"
+  | "email.products"
+  | "email.accessInfo"
+  | "email.contactInfo"
+  | "email.regards"
+  | "email.team"
+  | "email.thankYouTitle"
+  | "email.orderReceived"
+  | "email.orderDetails"
+  | "email.quantity"
+  | "email.total"
+  | "email.invoiceReady"
+  | "email.invoiceReadyMessage"
+  | "email.downloadInvoice"
+  | "email.invoiceLinkValidity"
+  | "email.invoiceInfo"
+  | "email.invoiceNotGeneratedMessage"
+  | "email.accessTitle"
+  | "email.accessMessage"
+  | "email.questions"
+  | "email.autoMessage"
+  | "email.fromName"
+  | "email.orderConfirmationSubject"
+  | "email.sentSuccess"
+  | "email.invoiceSalutation"
+  | "email.invoiceReadyForOrder"
+  | "email.invoiceAvailable"
+  | "email.invoiceTitle"
+  | "email.invoiceSubject"
+  | "email.invoiceSentSuccess";
 
 // Definiujemy typ dla tłumaczeń
 type TranslationsType = {
@@ -95,6 +137,60 @@ const translations: Record<string, TranslationsType> = {
     "checkout.paymentAlreadyRegistered":
       "✅ Płatność już została zarejestrowana",
     "checkout.paymentCheckError": "Błąd podczas sprawdzania płatności",
+    // ... inne klucze ...
+    "email.currency": "PLN",
+    "email.invoiceGenerated":
+      "Faktura została wygenerowana i jest dostępna pod linkiem",
+    "email.invoiceNotGenerated":
+      "Faktura nie została wygenerowana. Skontaktuj się z obsługą klienta w sprawie faktury",
+    "email.orderWithoutInvoice": "Zamówienie zostało złożone bez faktury",
+    "email.billingDetails": "Dane do faktury",
+    "email.company": "Firma",
+    "email.taxId": "NIP",
+    "email.address": "Adres",
+    "email.none": "brak",
+    "email.thankYou": "Dziękujemy za złożenie zamówienia w Kurs MT",
+    "email.orderNumber": "Numer zamówienia",
+    "email.orderDate": "Data zamówienia",
+    "email.totalAmount": "Kwota całkowita",
+    "email.products": "Produkty",
+    "email.accessInfo":
+      "Dostęp do zakupionych kursów otrzymasz natychmiast po zalogowaniu na swoje konto",
+    "email.contactInfo": "W razie pytań skontaktuj się z nami",
+    "email.regards": "Pozdrawiamy",
+    "email.team": "Zespół Kurs MT",
+    "email.thankYouTitle": "Dziękujemy za zamówienie!",
+    "email.orderReceived":
+      "Twoje zamówienie zostało pomyślnie przyjęte i jest w trakcie realizacji.",
+    "email.orderDetails": "Szczegóły zamówienia",
+    "email.quantity": "Ilość",
+    "email.total": "Suma",
+    "email.invoiceReady": "Faktura gotowa do pobrania",
+    "email.invoiceReadyMessage":
+      "Twoja faktura została wygenerowana i jest dostępna pod poniższym linkiem:",
+    "email.downloadInvoice": "Pobierz fakturę",
+    "email.invoiceLinkValidity": "Link jest aktywny przez 30 dni.",
+    "email.invoiceInfo": "Informacja o fakturze",
+    "email.invoiceNotGeneratedMessage":
+      "Faktura nie została wygenerowana automatycznie. Skontaktuj się z obsługą klienta w sprawie faktury.",
+    "email.accessTitle": "Dostęp do kursów",
+    "email.accessMessage":
+      'Dostęp do zakupionych kursów otrzymasz natychmiast po zalogowaniu na swoje konto w sekcji "Moje kursy".',
+    "email.questions":
+      "Jeśli masz pytania dotyczące zamówienia, skontaktuj się z nami.",
+    "email.autoMessage":
+      "To jest automatyczna wiadomość, prosimy nie odpowiadać na ten email.",
+    "email.fromName": "Kurs MT",
+    "email.orderConfirmationSubject": "Potwierdzenie zamówienia #{{orderId}}",
+    "email.sentSuccess": "Email wysłany pomyślnie",
+    "email.invoiceSalutation": "Szanowni Państwo",
+    "email.invoiceReadyForOrder":
+      "Faktura VAT nr {{invoiceNumber}} dla zamówienia #{{orderId}} została wygenerowana",
+    "email.invoiceAvailable": "Faktura jest dostępna pod linkiem",
+    "email.invoiceTitle": "Faktura VAT",
+    "email.invoiceSubject":
+      "Faktura VAT #{{invoiceNumber}} dla zamówienia #{{orderId}}",
+    "email.invoiceSentSuccess": "Faktura wysłana pomyślnie",
   },
   en: {
     // ... istniejące klucze ...
@@ -144,6 +240,59 @@ const translations: Record<string, TranslationsType> = {
     "checkout.paymentAlreadyRegistered":
       "✅ Payment has already been registered",
     "checkout.paymentCheckError": "Error checking payment status",
+    // ... inne klucze ...
+    "email.currency": "PLN",
+    "email.invoiceGenerated":
+      "Invoice has been generated and is available at the link",
+    "email.invoiceNotGenerated":
+      "Invoice was not generated. Please contact customer support regarding the invoice",
+    "email.orderWithoutInvoice": "Order was placed without an invoice",
+    "email.billingDetails": "Billing details",
+    "email.company": "Company",
+    "email.taxId": "Tax ID",
+    "email.address": "Address",
+    "email.none": "none",
+    "email.thankYou": "Thank you for your order in Kurs MT",
+    "email.orderNumber": "Order number",
+    "email.orderDate": "Order date",
+    "email.totalAmount": "Total amount",
+    "email.products": "Products",
+    "email.accessInfo":
+      "You will get access to purchased courses immediately after logging into your account",
+    "email.contactInfo": "If you have any questions, please contact us",
+    "email.regards": "Best regards",
+    "email.team": "Kurs MT Team",
+    "email.thankYouTitle": "Thank you for your order!",
+    "email.orderReceived":
+      "Your order has been successfully received and is being processed.",
+    "email.orderDetails": "Order details",
+    "email.quantity": "Quantity",
+    "email.total": "Total",
+    "email.invoiceReady": "Invoice ready for download",
+    "email.invoiceReadyMessage":
+      "Your invoice has been generated and is available at the link below:",
+    "email.downloadInvoice": "Download invoice",
+    "email.invoiceLinkValidity": "The link is valid for 30 days.",
+    "email.invoiceInfo": "Invoice information",
+    "email.invoiceNotGeneratedMessage":
+      "Invoice was not generated automatically. Please contact customer support regarding the invoice.",
+    "email.accessTitle": "Access to courses",
+    "email.accessMessage":
+      'You will get access to purchased courses immediately after logging into your account in the "My Courses" section.',
+    "email.questions":
+      "If you have questions about your order, please contact us.",
+    "email.autoMessage":
+      "This is an automated message, please do not reply to this email.",
+    "email.fromName": "Kurs MT",
+    "email.orderConfirmationSubject": "Order confirmation #{{orderId}}",
+    "email.sentSuccess": "Email sent successfully",
+    "email.invoiceSalutation": "Dear Customer",
+    "email.invoiceReadyForOrder":
+      "Invoice no. {{invoiceNumber}} for order #{{orderId}} has been generated",
+    "email.invoiceAvailable": "Invoice is available at the link",
+    "email.invoiceTitle": "VAT Invoice",
+    "email.invoiceSubject": "Invoice #{{invoiceNumber}} for order #{{orderId}}",
+    "email.invoiceSentSuccess": "Invoice sent successfully",
   },
 };
 

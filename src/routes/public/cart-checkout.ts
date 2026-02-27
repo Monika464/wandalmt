@@ -11,7 +11,7 @@ import {
   sendOrderConfirmationEmail,
   sendInvoiceEmail,
 } from "../../services/emailService.js";
-import { t, TranslationKey } from "../../utils/translations.js"; // 👈 Importuj funkcję t
+import { t } from "../../utils/translations.js"; // 👈 Importuj funkcję t
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -749,6 +749,7 @@ router.get(
             requireInvoice: order.requireInvoice || false,
             createdAt: order.paidAt || order.createdAt,
             billingDetails: order.billingDetails || null,
+            language: lang,
           };
 
           const invoiceUrl =
@@ -777,6 +778,7 @@ router.get(
                 order._id.toString(),
                 invoiceLink,
                 order.invoiceDetails.invoiceNumber,
+                lang,
               );
               console.log(`✅ Invoice email sent for order ${order._id}`);
             }
