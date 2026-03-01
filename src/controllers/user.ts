@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import Product from "../models/product.js";
 
 interface IDeleteCartProductRequest extends Request {
@@ -9,7 +9,7 @@ interface IDeleteCartProductRequest extends Request {
 
 export const addToCartHandler = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     if (!req.user) {
@@ -37,7 +37,7 @@ export const addToCartHandler = async (
 
 export const deleteCartProductHandler = async (
   req: IDeleteCartProductRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     //console.log("req-user", req.user);

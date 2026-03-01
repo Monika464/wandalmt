@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Request, Response } from "express";
 import express from "express";
 import User from "../models/user.js";
 import { userAuth } from "../middleware/auth.js";
