@@ -151,10 +151,23 @@ export const requestPasswordReset = async (
 ): Promise<void> => {
   try {
     const { email } = req.body;
-    const lang = getLanguageFromHeaders(req);
-    const t = getTranslations(lang);
+    // Pobierz język z Accept-Language header
+    const acceptLanguage = req.headers["accept-language"];
+    let lang = "pl";
 
-    console.log("🔑 Request password reset for email:", email, "lang:", lang);
+    if (acceptLanguage && typeof acceptLanguage === "string") {
+      const firstLang = acceptLanguage.split(",")[0].split("-")[0];
+      if (firstLang === "en" || firstLang === "pl") {
+        lang = firstLang;
+      }
+    }
+    const t = getTranslations(lang);
+    console.log(
+      "🔑 Request password reset for email:",
+      email,
+      "lang from headers:",
+      lang,
+    );
 
     // Walidacja emaila
     if (!email || !email.includes("@")) {
