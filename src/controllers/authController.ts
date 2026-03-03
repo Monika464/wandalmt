@@ -125,6 +125,23 @@ const getTranslations = (lang: string = "pl") => {
   return translations[lang as keyof typeof translations] || translations.pl;
 };
 
+// Funkcja pomocnicza do pobierania języka z headers
+const getLanguageFromHeaders = (req: Request): string => {
+  // Sprawdź "Accept-Language" header
+  const acceptLanguage = req.headers["accept-language"];
+
+  if (acceptLanguage && typeof acceptLanguage === "string") {
+    // Może być "en-US,en;q=0.9" - bierzemy pierwszy
+    const lang = acceptLanguage.split(",")[0].split("-")[0];
+    if (lang === "en" || lang === "pl") {
+      return lang;
+    }
+  }
+
+  // Domyślnie polski
+  return "pl";
+};
+
 /**
  * Kontroler do resetowania hasła - wysyłanie linku resetującego
  */
@@ -133,7 +150,8 @@ export const requestPasswordReset = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const { email, lang = "pl" } = req.body;
+    const { email } = req.body;
+    const lang = getLanguageFromHeaders(req);
     const t = getTranslations(lang);
 
     console.log("🔑 Request password reset for email:", email, "lang:", lang);
@@ -206,7 +224,57 @@ ${t.emailFooter}
 Zespół Kurs MT
     `.trim();
 
-    const html = `<!DOCTYPE html>...`; // (HTML jak wcześniej)
+    const html = `
+<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${t.emailSubject}</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .container { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; padding: 40px; color: white; }
+        .content { background: white; border-radius: 10px; padding: 30px; margin-top: 20px; color: #333; }
+        .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+        .button:hover { background: #5a67d8; }
+        .footer { margin-top: 30px; font-size: 12px; color: #999; text-align: center; }
+        .warning { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .link-info { word-break: break-all; background: #f7f7f7; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 ${t.emailHeader}</h1>
+        <p>${t.emailSubheader}</p>
+    </div>
+    
+    <div class="content">
+        <p>${t.emailGreeting}</p>
+        
+        <p>${t.emailRequest} <strong>${user.email}</strong>.</p>
+        
+        <div style="text-align: center;">
+            <a href="${resetLink}" class="button">🔑 ${t.emailButton}</a>
+        </div>
+        
+        <p>${t.emailLinkInfo}</p>
+        <div class="link-info">${resetLink}</div>
+        
+        <div class="warning">
+            <strong>${t.emailWarning}</strong> ${t.emailWarningText}
+        </div>
+        
+        <p>⚠️ ${t.emailIgnore}</p>
+        
+        <p>${t.emailFooter}<br>Zespół Kurs MT</p>
+    </div>
+    
+    <div class="footer">
+        <p>${t.emailFooterText}</p>
+    </div>
+</body>
+</html>
+`.trim();
 
     // Wysłanie emaila
     await mg.messages.create(process.env.MAILGUN_DOMAIN as string, {
@@ -240,10 +308,11 @@ export const resetPassword = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const { token, newPassword, lang = "pl" } = req.body;
+    const { token, newPassword } = req.body;
+    const lang = getLanguageFromHeaders(req);
     const t = getTranslations(lang);
 
-    console.log("🔑 Reset password request received");
+    console.log("🔑 Reset password request received with lang:", lang);
 
     if (!token || !newPassword) {
       res.status(400).json({
@@ -267,7 +336,7 @@ export const resetPassword = async (
         userId: string;
         email: string;
         type: string;
-        lang?: string;
+        //lang?: string;
       };
       console.log("✅ Token decoded successfully");
     } catch (err: any) {
@@ -325,15 +394,15 @@ export const resetPassword = async (
     console.log(`✅ Password successfully reset for user: ${user.email}`);
 
     // Wyślij email potwierdzający
-    const confirmLang = decoded.lang || "pl";
-    const tConfirm = getTranslations(confirmLang);
+    //const confirmLang = decoded.lang || "pl";
+    const tConfirm = getTranslations(lang);
 
     const text = `
 ${tConfirm.confirmHeader} - Kurs MT
 
 ${tConfirm.confirmText}
 
-✅ ${tConfirm.confirmChanged} ${new Date().toLocaleString(confirmLang === "pl" ? "pl-PL" : "en-US")}
+✅ ${tConfirm.confirmChanged} ${new Date().toLocaleString(lang === "pl" ? "pl-PL" : "en-US")}
 📧 ${tConfirm.confirmAccount} ${user.email}
 
 ⚠️ ${tConfirm.confirmWarning}
@@ -460,9 +529,11 @@ export const changeEmail = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const { newEmail, lang = "pl" } = req.body;
+    const { newEmail } = req.body;
+    const lang = getLanguageFromHeaders(req);
     const t = getTranslations(lang);
 
+    console.log("📧 Change email request with lang from headers:", lang);
     const user = req.user; // z authMiddleware
     if (!user) {
       res.status(401).json({
