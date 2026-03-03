@@ -238,7 +238,10 @@ export const deleteResource = async (
 
 ///resources/:productId
 ///resources/:productId
-export const getResourceByProductId = async (req: Request, res: Response) => {
+export const getResourceByProductId = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
   const { productId } = req.params;
   // const { language } = req.query; - tymczasowo ignoruj język
 
@@ -259,9 +262,8 @@ export const getResourceByProductId = async (req: Request, res: Response) => {
 
     if (!resource) {
       console.log("❌ No resource found for productId:", productId);
-      return res
-        .status(404)
-        .json({ error: "Resource not found for this product" });
+      res.status(404).json({ error: "Resource not found for this product" });
+      return;
     }
 
     console.log("✅ Found resource:", resource._id);
