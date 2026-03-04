@@ -497,15 +497,66 @@ router.get(
         return;
       }
 
-      const session = await stripe.checkout.sessions.retrieve(
-        session_id as string,
-        {
-          expand: [
-            "line_items.data.price.product",
-            "total_details.breakdown",
-            "invoice",
-          ],
-        },
+      ////poczatek zminy
+      // Funkcja do pobierania sesji z możliwością ponowienia
+      const fetchSessionWithRetry = async (retries = 3, delay = 2000) => {
+        for (let i = 0; i < retries; i++) {
+          console.log(`🔄 Fetching session (attempt ${i + 1}/${retries})...`);
+
+          const session = await stripe.checkout.sessions.retrieve(
+            session_id as string,
+            {
+              expand: [
+                "line_items.data.price.product",
+                "total_details.breakdown",
+                "invoice",
+              ],
+            },
+          );
+
+          // Jeśli mamy invoice lub to ostatnia próba, zwróć sesję
+          if (session.invoice || i === retries - 1) {
+            if (session.invoice) {
+              console.log(`✅ Invoice found on attempt ${i + 1}`);
+            } else {
+              console.log(`⚠️ No invoice after ${i + 1} attempts`);
+            }
+            return session;
+          }
+
+          // Jeśli nie ma invoice i nie ostatnia próba, czekaj i ponów
+          console.log(`⏳ No invoice yet, waiting ${delay}ms before retry...`);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+      };
+
+      // Użyj funkcji z ponawianiem
+      const session = await fetchSessionWithRetry(5, 2000); // 5 prób co 2 sekundy
+
+      // const session = await stripe.checkout.sessions.retrieve(
+      //   session_id as string,
+      //   {
+      //     expand: [
+      //       "line_items.data.price.product",
+      //       "total_details.breakdown",
+      //       "invoice",
+      //     ],
+      //   },
+      // );
+
+      ///////koniec zmiany
+      console.log("🧾 Session invoice data - full:", session.invoice);
+      console.log(
+        "🧾 Session invoice details - summary:",
+        session.invoice
+          ? {
+              id: (session.invoice as any).id,
+              number: (session.invoice as any).number,
+              status: (session.invoice as any).status,
+              invoice_pdf: (session.invoice as any).invoice_pdf,
+              hosted_invoice_url: (session.invoice as any).hosted_invoice_url,
+            }
+          : "No invoice data",
       );
 
       if (session.payment_status !== "paid") {
@@ -565,6 +616,12 @@ router.get(
 
         if (session.invoice) {
           const invoice = session.invoice as any;
+
+          console.log("✅ Invoice FOUND when updating order:", {
+            id: invoice.id,
+            number: invoice.number,
+          });
+
           order.invoiceId = invoice.id;
 
           order.invoiceDetails = {
@@ -653,6 +710,7 @@ router.get(
               req.user?.email ||
               "unknown@example.com",
           },
+
           products: productsData.map((item) => ({
             productId:
               item.productId !== "unknown"
@@ -681,6 +739,7 @@ router.get(
 
         if (session.invoice) {
           const invoice = session.invoice as any;
+          console.log("✅ Invoice found:", invoice.id, invoice.number);
           newOrder.invoiceId = invoice.id;
 
           newOrder.invoiceDetails = {
@@ -797,7 +856,7 @@ router.get(
       // 6. PRZYGOTUJ ODPOWIEDŹ
       const response: any = {
         status: "complete",
-        message: t(lang, "checkout.paymentSuccess"), // 👈 Tłumaczenie
+        message: t(lang, "checkout.paymentSuccess"),
         orderId: order._id,
         invoiceId: order.invoiceId,
         totalAmount: order.totalAmount,
@@ -805,6 +864,9 @@ router.get(
 
       if (order.invoiceId) {
         response.invoiceUrl = `https://dashboard.stripe.com/invoices/${order.invoiceId}`;
+        console.log(`✅ Returning invoiceUrl: ${response.invoiceUrl}`);
+      } else {
+        console.log(`❌ No invoiceId for order: ${order._id}`);
       }
 
       if (order.discount && order.discount.amount) {

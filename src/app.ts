@@ -13,7 +13,7 @@ import stripeWebhookRouter from "./routes/stripe.js";
 import cartCheckoutRouter from "./routes/public/cart-checkout.js";
 import orderRoutes from "./routes/order/orders.js";
 import bunnyRouter from "./routes/bunny.js";
-import emailRouter from "routes/email.js";
+import emailRouter from "./routes/email.js";
 import discountPublicRouter from "./routes/public/discount-public.js";
 import discountAdminRouter from "./routes/admin/discount.js";
 import progressRouter from "./routes/progress.js";
@@ -21,7 +21,10 @@ import { tokenRefreshMiddleware } from "./middleware/tokenRefreshMiddleware.js";
 
 import dotenv from "dotenv";
 
-import { checkVideoStatus, getVideoStatus } from "controllers/bunnyWebhook.js";
+import {
+  checkVideoStatus,
+  getVideoStatus,
+} from "./controllers/bunnyWebhook.js";
 //import discount from "models/discount.js";
 dotenv.config();
 
