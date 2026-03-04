@@ -57,7 +57,7 @@ router.post(
   async (req: RequestWithLang, res: Response): Promise<void> => {
     try {
       const lang = (req.headers["accept-language"] as string) || "pl"; // 👈 Pobierz język
-      const { items, couponCode, requireInvoice, invoiceData } = req.body;
+      const { items, couponCode, requireInvoice } = req.body;
 
       if (!items || !Array.isArray(items) || items.length === 0) {
         res.status(400).json({ error: t(lang, "checkout.cartEmpty") }); // 👈 Tłumaczenie
@@ -490,6 +490,7 @@ router.get(
     console.log("🔔 /cart-session-status called with query:", req.query);
     try {
       const lang = (req.headers["accept-language"] as string) || "pl"; // 👈 Pobierz język
+
       const { session_id, orderId } = req.query;
 
       if (!session_id) {
@@ -503,31 +504,42 @@ router.get(
         for (let i = 0; i < retries; i++) {
           console.log(`🔄 Fetching session (attempt ${i + 1}/${retries})...`);
 
-          const session = await stripe.checkout.sessions.retrieve(
-            session_id as string,
-            {
-              expand: [
-                "line_items.data.price.product",
-                "total_details.breakdown",
-                "invoice",
-              ],
-            },
-          );
+          try {
+            const session = await stripe.checkout.sessions.retrieve(
+              session_id as string,
+              {
+                expand: [
+                  "line_items.data.price.product",
+                  "total_details.breakdown",
+                  "invoice",
+                ],
+              },
+            );
 
-          // Jeśli mamy invoice lub to ostatnia próba, zwróć sesję
-          if (session.invoice || i === retries - 1) {
-            if (session.invoice) {
-              console.log(`✅ Invoice found on attempt ${i + 1}`);
-            } else {
-              console.log(`⚠️ No invoice after ${i + 1} attempts`);
+            // Jeśli mamy invoice lub to ostatnia próba, zwróć sesję
+            if (session.invoice || i === retries - 1) {
+              if (session.invoice) {
+                console.log(`✅ Invoice found on attempt ${i + 1}`);
+              } else {
+                console.log(`⚠️ No invoice after ${i + 1} attempts`);
+              }
+              return session;
             }
-            return session;
-          }
 
-          // Jeśli nie ma invoice i nie ostatnia próba, czekaj i ponów
-          console.log(`⏳ No invoice yet, waiting ${delay}ms before retry...`);
-          await new Promise((resolve) => setTimeout(resolve, delay));
+            // Jeśli nie ma invoice i nie ostatnia próba, czekaj i ponów
+            console.log(
+              `⏳ No invoice yet, waiting ${delay}ms before retry...`,
+            );
+            await new Promise((resolve) => setTimeout(resolve, delay));
+          } catch (error) {
+            console.error(`❌ Error on attempt ${i + 1}:`, error);
+            if (i === retries - 1) throw error; // Rzuć błąd jeśli ostatnia próba
+            await new Promise((resolve) => setTimeout(resolve, delay));
+          }
         }
+
+        // To nigdy nie powinno się wykonać, ale TypeScript potrzebuje return
+        throw new Error("Failed to fetch session after all retries");
       };
 
       // Użyj funkcji z ponawianiem
