@@ -22,7 +22,7 @@ export interface OrderConfirmationData {
   language?: string; // 👈 Dodaj opcjonalny język
 }
 
-// 🔧 FUNKCJA DO WYSYŁANIA EMAILI
+// 🔧 FUNCTION FOR SENDING EMAILS
 export const sendOrderConfirmationEmail = async (
   orderData: OrderConfirmationData,
 ): Promise<{ id: string; message: string }> => {
@@ -39,7 +39,7 @@ export const sendOrderConfirmationEmail = async (
     billingDetails,
   } = orderData;
 
-  // Tworzenie treści emaila
+  // Creating email content
   const productList = products
     .map(
       (p) =>
@@ -207,13 +207,13 @@ ${t(lang, "email.team")}
   };
 };
 
-// 📧 FUNKCJA DO WYSYŁANIA FAKTURY
+// 📧 FUNCTION FOR SENDING INVOICES
 export const sendInvoiceEmail = async (
   email: string,
   orderId: string,
   invoiceUrl: string,
   invoiceNumber: string,
-  language: string = "pl", // 👈 Dodaj parametr języka
+  language: string = "pl",
 ): Promise<{ id: string; message: string }> => {
   const lang = language;
 

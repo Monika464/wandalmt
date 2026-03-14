@@ -1,5 +1,3 @@
-// // controllers/chapterController.ts
-
 // controllers/chapterController.ts
 import mongoose, { Types } from "mongoose";
 import { Request, Response } from "express";
@@ -10,7 +8,6 @@ import axios from "axios";
 const BUNNY_API_KEY = process.env.BUNNY_API_KEY || "";
 const BUNNY_LIBRARY_ID = process.env.BUNNY_LIBRARY_ID || "";
 
-// ADD Chapter
 export const addChapter = async (
   req: Request,
   res: Response,
@@ -37,10 +34,9 @@ export const addChapter = async (
 
     let video = null;
     let videoDetails = null;
-    //let finalVideoId = undefined;
+
     let finalVideoId: Types.ObjectId | undefined = undefined;
 
-    // Jeśli podano bunnyVideoId, sprawdź czy video istnieje
     if (videoId && mongoose.Types.ObjectId.isValid(videoId)) {
       video = await Video.findById(videoId);
       if (video) {
@@ -127,7 +123,7 @@ export const editChapter = async (
       return;
     }
 
-    // Obsługa bunnyVideoId
+    //  bunnyVideoId
     if (updateData.bunnyVideoId !== undefined) {
       if (updateData.bunnyVideoId === "" || updateData.bunnyVideoId === null) {
         chapter.bunnyVideoId = undefined;
@@ -151,7 +147,7 @@ export const editChapter = async (
       }
     }
 
-    // Aktualizuj inne pola
+    // Update other fields
     if (updateData.number !== undefined) chapter.number = updateData.number;
     if (updateData.title !== undefined) chapter.title = updateData.title;
     if (updateData.description !== undefined)
@@ -159,7 +155,7 @@ export const editChapter = async (
 
     await resource.save();
 
-    // Pobierz szczegóły video jeśli istnieje
+    // Get video details if exists
     let videoDetails = null;
     if (chapter.bunnyVideoId) {
       const video = await Video.findOne({ bunnyGuid: chapter.bunnyVideoId });
@@ -232,7 +228,7 @@ export const deleteChapterVideo = async (
 
     const bunnyVideoId = chapter.bunnyVideoId;
 
-    // 1. Usuń video z Bunny
+    // 1. Delete video from Bunny
 
     if (bunnyVideoId) {
       try {
@@ -247,19 +243,19 @@ export const deleteChapterVideo = async (
         );
         console.log("✅ Video removed from Bunny:", bunnyVideoId);
       } catch (bunnyErr: any) {
-        // Jeśli błąd to 404 (video nie istnieje), to OK - kontynuuj
+        //  If the error is 404 (video does not exist), then OK - continue
         if (bunnyErr.response?.status === 404) {
           console.log(
             "ℹ️ Video already removed from Bunny (404):",
             chapter.bunnyVideoId,
           );
         } else {
-          // Inny błąd - zaloguj ale kontynuuj
+          // Another error - log in but continue
           console.warn("⚠️ Error deleting video from Bunny:", bunnyErr.message);
         }
       }
 
-      // 2. Usuń video z bazy danych
+      // 2. Delete video from database
       try {
         await Video.findOneAndDelete({ bunnyGuid: bunnyVideoId });
         console.log("✅ Video removed from database:", bunnyVideoId);
@@ -268,7 +264,7 @@ export const deleteChapterVideo = async (
       }
     }
 
-    // 3. Wyczyść pola video w chapterze
+    // 3. Clear video fields in chapter
     chapter.bunnyVideoId = undefined;
     chapter.videoId = undefined;
     await resource.save();
@@ -309,7 +305,6 @@ export const getChapterWithVideo = async (
 
     let videoDetails = null;
 
-    // Używamy bunnyVideoId do znalezienia video
     if (chapter.bunnyVideoId) {
       const video = await Video.findOne({ bunnyGuid: chapter.bunnyVideoId });
       if (video) {
@@ -370,7 +365,7 @@ export const deleteChapter = async (
       return;
     }
 
-    // Jeśli chapter ma video, usuń je z Bunny
+    // If the chapter has a video, remove it from Bunny
     if (chapter.bunnyVideoId) {
       try {
         await axios.delete(
@@ -384,7 +379,7 @@ export const deleteChapter = async (
         );
         console.log("✅ Video removed from Bunny:", chapter.bunnyVideoId);
 
-        // Usuń z bazy danych
+        // Delete from database
         await Video.findOneAndDelete({ bunnyGuid: chapter.bunnyVideoId });
         console.log("✅ Video removed from database:", chapter.bunnyVideoId);
       } catch (err) {
@@ -392,7 +387,7 @@ export const deleteChapter = async (
       }
     }
 
-    // Usuń chapter
+    // Delete chapter
     if (typeof chapter.deleteOne === "function") {
       await chapter.deleteOne();
     } else {
@@ -429,7 +424,7 @@ export const deleteChapter = async (
   }
 };
 
-// Ustaw video dla chaptera
+// Setvideo for chapter
 export const setChapterVideo = async (
   req: Request,
   res: Response,
@@ -455,7 +450,7 @@ export const setChapterVideo = async (
       return;
     }
 
-    // Sprawdź czy video istnieje
+    // Check if the video exists
     const video = await Video.findOne({ bunnyGuid: bunnyVideoId });
     if (!video) {
       console.warn(
@@ -463,7 +458,7 @@ export const setChapterVideo = async (
       );
     }
 
-    // Ustaw pola
+    // Delete fields
     chapter.bunnyVideoId = bunnyVideoId;
     chapter.videoId = video ? video._id : undefined;
 

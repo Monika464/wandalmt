@@ -44,15 +44,13 @@ export const fetchProduct = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    //console.log("id product", id);
+
     const product = await Product.findById(id);
     if (!product) {
       res.status(404).json({ message: "Product not found" });
       return;
     }
     res.status(200).send(product);
-    //res.status(200).send(product);
-    //console.log("product", product);
   } catch (error) {
     console.error("Error fetching product:", error);
     res.status(500).send({ error: "Błąd serwera" });
@@ -99,7 +97,7 @@ export const createProduct = async (
       return;
     }
 
-    // 1️⃣ Tworzymy nowy produkt
+    // CREATE NEW PRODUCT
     const newProduct = new Product({
       title,
       description,

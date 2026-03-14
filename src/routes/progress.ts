@@ -4,17 +4,17 @@ import Progress from "../models/progress.js";
 
 const router = Router();
 
-// Pobierz postęp dla kursu
+// Get progress for the course
 router.get("/:productId", userAuth, async (req, res) => {
   try {
     const progress = await Progress.find({
       userId: req.user.id,
       productId: req.params.productId,
-      completed: true, // TYLKO ukończone rozdziały
+      completed: true, // ONLY completed chapters
     });
 
     res.json(progress);
-    console.log("Fetched progress:", progress);
+    //console.log("Fetched progress:", progress);
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
@@ -33,7 +33,7 @@ router.post("/:productId/:chapterId/complete", userAuth, async (req, res) => {
       completedAt: now,
     };
 
-    console.log("Received progress update:", progressData);
+    //console.log("Received progress update:", progressData);
 
     const existingProgress = await Progress.findOne({
       userId: req.user.id,
@@ -63,7 +63,7 @@ router.post("/:productId/:chapterId/complete", userAuth, async (req, res) => {
   }
 });
 
-// Usuń postęp dla rozdziału (oznacz jako nieukończony)
+// Delete progress for chapter (mark as incomplete)
 router.delete("/:productId/:chapterId", userAuth, async (req, res) => {
   try {
     await Progress.deleteOne({
@@ -82,7 +82,7 @@ router.delete("/:productId/:chapterId", userAuth, async (req, res) => {
   }
 });
 
-// Usuń cały postęp dla kursu
+// Delete all progress for a course
 router.delete("/:productId", userAuth, async (req, res) => {
   try {
     await Progress.deleteMany({

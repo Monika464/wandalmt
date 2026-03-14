@@ -14,7 +14,6 @@ type TranslationKey =
   | "payment.genericError"
   | "orders.refundSuccessDiscounted"
   | "orders.partialRefundSuccessWithAmount"
-  // 👇 NOWE KLUCZE DLA CART CHECKOUT
   | "checkout.cartEmpty"
   | "checkout.productsNotFound"
   | "checkout.invalidCoupon"
@@ -81,14 +80,12 @@ type TranslationKey =
   | "email.invoiceSubject"
   | "email.invoiceSentSuccess";
 
-// Definiujemy typ dla tłumaczeń
 type TranslationsType = {
   [K in TranslationKey]: string;
 };
 
 const translations: Record<string, TranslationsType> = {
   pl: {
-    // ... istniejące klucze ...
     "orders.fetchError": "Błąd przy pobieraniu zamówień",
     "orders.notFound": "Nie znaleziono zamówienia",
     "orders.unauthorized": "Brak autoryzacji",
@@ -108,7 +105,6 @@ const translations: Record<string, TranslationsType> = {
     "orders.partialRefundSuccessWithAmount":
       "Częściowy zwrot {{amount}} PLN został wykonany",
 
-    // NOWE KLUCZE DLA CART CHECKOUT - PL
     "checkout.cartEmpty": "Brak produktów w koszyku",
     "checkout.productsNotFound": "Niektóre produkty nie zostały znalezione",
     "checkout.invalidCoupon": "Nieprawidłowy kod kuponu",
@@ -137,7 +133,7 @@ const translations: Record<string, TranslationsType> = {
     "checkout.paymentAlreadyRegistered":
       "✅ Płatność już została zarejestrowana",
     "checkout.paymentCheckError": "Błąd podczas sprawdzania płatności",
-    // ... inne klucze ...
+
     "email.currency": "PLN",
     "email.invoiceGenerated":
       "Faktura została wygenerowana i jest dostępna pod linkiem",
@@ -158,7 +154,7 @@ const translations: Record<string, TranslationsType> = {
       "Dostęp do zakupionych kursów otrzymasz natychmiast po zalogowaniu na swoje konto",
     "email.contactInfo": "W razie pytań skontaktuj się z nami",
     "email.regards": "Pozdrawiamy",
-    "email.team": "Zespół Kurs MT",
+    "email.team": "Zespół Boxing Online",
     "email.thankYouTitle": "Dziękujemy za zamówienie!",
     "email.orderReceived":
       "Twoje zamówienie zostało pomyślnie przyjęte i jest w trakcie realizacji.",
@@ -193,7 +189,6 @@ const translations: Record<string, TranslationsType> = {
     "email.invoiceSentSuccess": "Faktura wysłana pomyślnie",
   },
   en: {
-    // ... istniejące klucze ...
     "orders.fetchError": "Error fetching orders",
     "orders.notFound": "Order not found",
     "orders.unauthorized": "Unauthorized",
@@ -212,7 +207,6 @@ const translations: Record<string, TranslationsType> = {
     "orders.partialRefundSuccessWithAmount":
       "Partial refund of {{amount}} PLN has been processed",
 
-    // NOWE KLUCZE DLA CART CHECKOUT - EN
     "checkout.cartEmpty": "No products in cart",
     "checkout.productsNotFound": "Some products were not found",
     "checkout.invalidCoupon": "Invalid coupon code",
@@ -240,7 +234,7 @@ const translations: Record<string, TranslationsType> = {
     "checkout.paymentAlreadyRegistered":
       "✅ Payment has already been registered",
     "checkout.paymentCheckError": "Error checking payment status",
-    // ... inne klucze ...
+
     "email.currency": "PLN",
     "email.invoiceGenerated":
       "Invoice has been generated and is available at the link",
@@ -261,7 +255,7 @@ const translations: Record<string, TranslationsType> = {
       "You will get access to purchased courses immediately after logging into your account",
     "email.contactInfo": "If you have any questions, please contact us",
     "email.regards": "Best regards",
-    "email.team": "Kurs MT Team",
+    "email.team": "Boxing Online Team",
     "email.thankYouTitle": "Thank you for your order!",
     "email.orderReceived":
       "Your order has been successfully received and is being processed.",
@@ -303,24 +297,19 @@ export const t = (
 ): string => {
   const language = lang === "pl" ? "pl" : "en";
 
-  // Pobierz tłumaczenia dla danego języka lub użyj polskich jako fallback
   const langTranslations = translations[language] || translations.pl;
 
-  // Pobierz wiadomość lub zwróć klucz jeśli nie znaleziono
   let message = langTranslations[key];
 
-  // Jeśli nie znaleziono, spróbuj z polskim
   if (!message) {
     message = translations.pl[key];
   }
 
-  // Jeśli nadal nie znaleziono, zwróć klucz
   if (!message) {
     console.warn(`Missing translation for key: ${key} in language: ${lang}`);
     return key;
   }
 
-  // Podstawianie parametrów
   if (params) {
     Object.keys(params).forEach((param) => {
       message = message.replace(new RegExp(`{{${param}}}`, "g"), params[param]);
