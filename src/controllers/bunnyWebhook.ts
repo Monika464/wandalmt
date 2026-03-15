@@ -25,14 +25,12 @@ export const getDirectBunnyStatus = async (
   try {
     const { videoId } = req.params;
 
-    // Znajdź wideo w bazie, żeby dostać bunnyGuid
     const video = await Video.findById(videoId);
     if (!video) {
       res.status(404).json({ error: "Video not found" });
       return;
     }
 
-    // Pobierz bezpośrednio z API Bunny
     const bunnyVideo = await getBunnyVideo(video.bunnyGuid);
 
     const status = bunnyVideo.status;
@@ -45,30 +43,31 @@ export const getDirectBunnyStatus = async (
     else if (status === 4) mappedStatus = "ready";
     else if (status === 5) mappedStatus = "error";
 
-    // 🔥 ZABEZPIECZENIE: Nie nadpisuj statusu "ready" gorszym statusem
+    // 🔥 SECURITY: Do not overwrite the "ready" status with a worse status
     if (video.status === "ready" && mappedStatus !== "ready") {
       console.log(
         `⚠️ Video already ready, skipping downgrade to ${mappedStatus}`,
       );
-      // Zwróć nowy status frontendowi, ale NIE aktualizuj bazy
+      57;
+      // Return the new status to the frontend, but DO NOT update the database
       res.json({
         success: true,
         video: {
           _id: video._id,
           bunnyGuid: video.bunnyGuid,
           title: video.title,
-          status: mappedStatus, // zwracamy to, co przyszło z Bunny
+          status: mappedStatus,
           processingProgress: progress,
           duration: bunnyVideo.length,
           thumbnailUrl: video.thumbnailUrl,
           errorMessage: video.errorMessage,
-          isComplete: video.status === "ready" || video.status === "error", // isComplete oparte na statusie w bazie
+          isComplete: video.status === "ready" || video.status === "error",
+          // isComplete based on database status
         },
       });
       return;
     }
-
-    // TYLKO jeśli nie mamy statusu "ready" lub nowy status jest lepszy – aktualizuj bazę
+    // ONLY if we don't have the "ready" status or the new status is better - update the database
     await Video.findByIdAndUpdate(videoId, {
       status: mappedStatus,
       processingProgress: progress,
@@ -94,59 +93,6 @@ export const getDirectBunnyStatus = async (
     res.status(500).json({ error: "Failed to get status from Bunny" });
   }
 };
-// export const getDirectBunnyStatus = async (
-//   req: Request,
-//   res: Response,
-// ): Promise<void> => {
-//   try {
-//     const { videoId } = req.params;
-
-//     // Znajdź wideo w bazie, żeby dostać bunnyGuid
-//     const video = await Video.findById(videoId);
-//     if (!video) {
-//       res.status(404).json({ error: "Video not found" });
-//       return;
-//     }
-
-//     // Pobierz bezpośrednio z API Bunny
-//     const bunnyVideo = await getBunnyVideo(video.bunnyGuid);
-
-//     const status = bunnyVideo.status;
-//     let mappedStatus: "uploading" | "processing" | "ready" | "error" =
-//       "processing";
-//     let progress = bunnyVideo.encodeProgress || 0;
-
-//     if (status === 0 || status === 1) mappedStatus = "uploading";
-//     else if (status === 2 || status === 3) mappedStatus = "processing";
-//     else if (status === 4) mappedStatus = "ready";
-//     else if (status === 5) mappedStatus = "error";
-
-//     // Zaktualizuj bazę
-//     await Video.findByIdAndUpdate(videoId, {
-//       status: mappedStatus,
-//       processingProgress: progress,
-//       lastChecked: new Date(),
-//     });
-
-//     res.json({
-//       success: true,
-//       video: {
-//         _id: video._id,
-//         bunnyGuid: video.bunnyGuid,
-//         title: video.title,
-//         status: mappedStatus,
-//         processingProgress: progress,
-//         duration: bunnyVideo.length,
-//         thumbnailUrl: video.thumbnailUrl,
-//         errorMessage: video.errorMessage,
-//         isComplete: mappedStatus === "ready" || mappedStatus === "error",
-//       },
-//     });
-//   } catch (error) {
-//     console.error("Error getting Bunny status:", error);
-//     res.status(500).json({ error: "Failed to get status from Bunny" });
-//   }
-// };
 
 export const checkVideoStatus = async (
   req: Request,
@@ -214,8 +160,8 @@ export const checkVideoStatus = async (
   //       }
   //     }
   //   }
-  //   // ========== KONIEC NOWEJ LOGIKI ==========
-  //   // Sprawdź, czy wideo nie ma już statusu końcowego
+  //   // ========== END OF NEW LOGIC ==========
+  // // Check if the video is no longer in its final state
   //   const existingVideo = await Video.findOne({ bunnyGuid: VideoGuid });
   //   if (
   //     existingVideo &&
@@ -272,7 +218,7 @@ export const checkVideoStatus = async (
   // }
 };
 
-//  🔥 TYLKO JEDNA FUNKCJA getVideoStatus (TA Z isComplete)
+//  🔥 ONLY ONE FUNCTION getVideoStatus (THE ONE WITH isComplete)
 export const getVideoStatus = async (
   req: Request,
   res: Response,
@@ -295,7 +241,7 @@ export const getVideoStatus = async (
       return;
     }
 
-    // 🔥 ZABEZPIECZENIE PRZED undefined
+    // 🔥 PROTECTION AGAINST undefined
     const progress = video.processingProgress ?? 0;
 
     const isFinalStatus =

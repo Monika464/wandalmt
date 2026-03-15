@@ -113,7 +113,7 @@ router.post(
 
       res.json({ success: true, bunnyResponse: resp.data });
     } catch (err: any) {
-      // 🔥🔥🔥 DODAJEMY OBSŁUGĘ BŁĘDU 400 (already uploaded)
+      // 🔥🔥🔥 ADDING HANDLING FOR ERROR 400 (already uploaded)
       if (
         err?.response?.status === 400 &&
         err?.response?.data?.message === "The video has already been uploaded."
@@ -124,7 +124,7 @@ router.post(
         const video = await Video.findOne({ bunnyGuid: videoId });
 
         if (video) {
-          // Opcjonalnie: zaktualizuj status jeśli trzeba
+          // Optional: Update status if needed
           res.json({
             success: true,
             alreadyExists: true,
@@ -165,11 +165,9 @@ router.get(
 
       let video;
 
-      // Sprawdź czy to ObjectId
       if (videoId.match(/^[0-9a-fA-F]{24}$/)) {
         video = await Video.findById(videoId);
       } else {
-        // To prawdopodobnie bunnyGuid
         video = await Video.findOne({ bunnyGuid: videoId });
       }
 
@@ -181,7 +179,7 @@ router.get(
         return;
       }
 
-      // Opcjonalnie: sprawdź w Bunny
+      // Optional: Check with Bunny
       let bunnyStatus = null;
       if (video.bunnyGuid) {
         try {
@@ -252,14 +250,14 @@ router.delete(
     try {
       const { id } = req.params;
 
-      // 1️⃣ znajdź w bazie
+      // 1️⃣ find in the database
       const video = await Video.findById(id);
       if (!video) {
         res.status(404).json({ error: "video-not-found" });
         return;
       }
 
-      // 2️⃣ usuń z Bunny
+      // 2️⃣ remove from Bunny
       try {
         await axios.delete(
           `https://video.bunnycdn.com/library/${BUNNY_LIBRARY_ID}/videos/${video.bunnyGuid}`,
@@ -272,14 +270,14 @@ router.delete(
         );
         console.log("✅ Video removed from Bunny:", video.bunnyGuid);
       } catch (bunnyErr: any) {
-        // Bunny może zwrócić 404 – np. już usunięty
+        // Bunny may return 404 - e.g. already deleted
         console.warn(
           "⚠️ Bunny delete failed (continuing):",
           bunnyErr?.response?.data ?? bunnyErr?.message,
         );
       }
 
-      // 3️⃣ usuń z Mongo
+      // 3️⃣ remove from  Mongo
       await Video.findByIdAndDelete(id);
 
       res.json({
@@ -300,7 +298,7 @@ router.get(
     try {
       const { width = "96", height = "64" } = req.query;
 
-      // Konwersja na liczby z bezpiecznym parsowaniem
+      // Conversion to numbers with safe parsing
       const parsedWidth = parseInt(width as string, 10) || 96;
       const parsedHeight = parseInt(height as string, 10) || 64;
 
@@ -315,7 +313,7 @@ router.get(
 
       const buffer = await response.arrayBuffer();
 
-      // Wymuś resize z Sharp
+      // Force resize with Sharp
       const resized = await sharp(Buffer.from(buffer))
         .resize(parsedWidth, parsedHeight, {
           fit: "cover",

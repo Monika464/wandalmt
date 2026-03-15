@@ -20,7 +20,7 @@ router.get("/:productId", userAuth, async (req, res) => {
   }
 });
 
-// Oznacz rozdział jako ukończony
+// Mark chapter as complete
 router.post("/:productId/:chapterId/complete", userAuth, async (req, res) => {
   try {
     const now = new Date();

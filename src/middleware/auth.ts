@@ -17,18 +17,16 @@ interface DecodedToken {
 export const adminAuth = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const token = req.header("Authorization")?.replace("Bearer ", "");
-    //console.log("Token received by backend:", token);
 
     if (!token) {
       res.status(401).json({ error: "Token is missing" });
       return;
     }
     const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
-    // console.log("Decoded token:", decoded);
 
     const user = await User.findById(decoded._id);
     if (!user) {
@@ -39,7 +37,6 @@ export const adminAuth = async (
       res.status(403).json({ error: "Access denied" });
       return;
     }
-    // console.log("admin", user);
 
     if (user) {
       req.token = token;
@@ -66,7 +63,7 @@ export const adminAuth = async (
 export const userAuth = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const token = req.header("Authorization")?.replace("Bearer ", "");
@@ -77,7 +74,7 @@ export const userAuth = async (
 
     const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
 
-    // Pobieramy pełnego użytkownika z bazy
+    // We retrieve the full user from the database
     const user = await User.findById(decoded._id);
     if (!user) {
       res.status(404).json({ error: "User not found" });

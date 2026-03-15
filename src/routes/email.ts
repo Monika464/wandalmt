@@ -8,7 +8,7 @@ import {
   sendInvoice,
 } from "../controllers/emailController.js";
 
-import { adminAuth } from "../middleware/auth.js"; // jeśli chcesz zabezpieczyć
+import { adminAuth } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -19,7 +19,7 @@ const router = express.Router();
 // ===========================
 router.patch(
   "/change-email",
-  userAuth, // 🔒 WYMAGA bycia zalogowanym
+  userAuth,
   async (req: Request, res: Response): Promise<void> => {
     console.log("change-email called");
     console.log("BODY:", req.body);
@@ -32,7 +32,6 @@ router.patch(
         return;
       }
 
-      // sprawdz, czy email jest wolny
       const exists = await User.findOne({ email: newEmail });
       if (exists) {
         res.status(400).json({ error: "Ten email jest już zajęty" });
@@ -48,21 +47,11 @@ router.patch(
   },
 );
 
-//=====================
-//4 send email after order
-//=====================
-
-// routes/emailRoutes.ts
-
-//router.post("/send-order-confirmation", sendOrderConfirmation);
-
-// routes/emailRoutes.ts
-
-// Publiczne endpointy (używane przez webhook)
+// Public endpoints (used by webhooks)
 router.post("/send-order-confirmation", sendOrderConfirmation);
 router.post("/send-invoice", sendInvoice);
 
-// Opcjonalnie - zabezpieczone endpointy dla admina do ręcznego wysyłania
+// Optional - secured endpoints for admin to send manually
 router.post("/admin/send-order-confirmation", adminAuth, sendOrderConfirmation);
 router.post("/admin/send-invoice", adminAuth, sendInvoice);
 

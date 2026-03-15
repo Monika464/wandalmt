@@ -1,5 +1,5 @@
 // src/controllers/emailController.ts
-// controllers/emailController.ts
+
 import { Request, Response } from "express";
 import {
   sendOrderConfirmationEmail,
@@ -7,7 +7,7 @@ import {
   OrderConfirmationData,
 } from "../services/emailService.js";
 
-// 🔧 KONTROLER - tylko do obsługi requestów HTTP
+// 🔧 CONTROLLER - only for handling HTTP requests
 export const sendOrderConfirmation = async (
   req: Request,
   res: Response,
@@ -38,7 +38,7 @@ export const sendOrderConfirmation = async (
   }
 };
 
-// 🔧 KONTROLER do wysyłania faktury przez HTTP
+// 🔧 CONTROLLER for sending invoices via HTTP
 export const sendInvoice = async (
   req: Request,
   res: Response,

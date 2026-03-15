@@ -40,9 +40,8 @@ export const deleteCartProductHandler = async (
   res: Response,
 ) => {
   try {
-    //console.log("req-user", req.user);
     const prodId = req.body.productId;
-    //console.log("product id do usuniecia", prodId);
+
     if (!req.user) {
       res.status(401).json({ error: "You must be logged in" });
       return;
