@@ -395,12 +395,4 @@ router.get(
   },
 );
 
-console.log("✅ All routes defined, checking stack:");
-console.log(
-  "Router stack:",
-  router.stack.map((layer) => ({
-    path: layer.route?.path,
-    methods: layer.route?.methods ? Object.keys(layer.route.methods) : [],
-  })),
-);
 export default router;
