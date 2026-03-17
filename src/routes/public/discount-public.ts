@@ -224,6 +224,10 @@ router.get(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { code } = req.params;
+      if (!code || Array.isArray(code)) {
+        res.status(400).json({ error: "Nieprawidłowy format kodu kuponu" });
+        return;
+      }
 
       const discount = await Discount.findOne({
         code: code.toUpperCase(),

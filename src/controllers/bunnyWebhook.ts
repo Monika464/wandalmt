@@ -25,6 +25,11 @@ export const getDirectBunnyStatus = async (
   try {
     const { videoId } = req.params;
 
+    if (!videoId || Array.isArray(videoId)) {
+      res.status(400).json({ error: "Invalid video ID format" });
+      return;
+    }
+
     const video = await Video.findById(videoId);
     if (!video) {
       res.status(404).json({ error: "Video not found" });
@@ -225,6 +230,10 @@ export const getVideoStatus = async (
 ): Promise<void> => {
   try {
     const { videoId } = req.params;
+    if (!videoId || Array.isArray(videoId)) {
+      res.status(400).json({ error: "Invalid video ID format" });
+      return;
+    }
 
     let video;
 

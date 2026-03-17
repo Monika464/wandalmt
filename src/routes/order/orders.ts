@@ -159,6 +159,13 @@ router.post(
     try {
       const { id } = req.params;
 
+      if (Array.isArray(id)) {
+        res
+          .status(400)
+          .json({ message: "Nieprawidłowy format identyfikatora" });
+        return;
+      }
+
       if (!mongoose.Types.ObjectId.isValid(id)) {
         res
           .status(400)

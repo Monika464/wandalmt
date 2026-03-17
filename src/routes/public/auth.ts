@@ -59,7 +59,6 @@ router.post("/login", async (req, res): Promise<void> => {
       _id: string; // ID użytkownika
     };
 
-    // expiresAt w milisekundach (JWT exp jest w sekundach)
     const expiresAt = decoded.exp * 1000;
 
     res.status(200).send({

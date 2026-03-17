@@ -81,7 +81,7 @@ const userSchema = new Schema<IUser>({
 
 userSchema.statics.findByCredentials = async function (
   email: string,
-  password: string
+  password: string,
 ): Promise<IUser> {
   const user = await this.findOne({ email });
   if (!user) {
@@ -102,11 +102,20 @@ userSchema.methods.generateAuthToken = async function (): Promise<string> {
   if (!secret) {
     throw new Error("JWT secret is not defined");
   }
-  const token = jwt.sign({ _id: user._id.toString() }, secret, {
-    expiresIn: "7d",
-  });
+  console.log("Generating token for user:", user._id, "role:", user.role);
+
+  const token = jwt.sign(
+    { _id: user._id.toString(), role: user.role },
+    secret,
+    {
+      expiresIn: "7d",
+    },
+  );
+
+  console.log("Token generated:", token.substring(0, 20) + "...");
   user.tokens.push({ token });
   await user.save();
+  console.log("Token saved to DB");
   return token;
 };
 
@@ -121,12 +130,12 @@ userSchema.methods.logoutAll = async function () {
 };
 
 userSchema.methods.addToCart = async function (
-  productId: mongoose.Types.ObjectId
+  productId: mongoose.Types.ObjectId,
 ): Promise<IUser> {
   const user = this as IUser;
 
   const cartProductIndex = user.cart.items.findIndex(
-    (cp) => cp.productId.toString() === productId.toString()
+    (cp) => cp.productId.toString() === productId.toString(),
   );
 
   let updatedCartItems = [...user.cart.items];
@@ -146,11 +155,11 @@ userSchema.methods.addToCart = async function (
 };
 
 userSchema.methods.removeFromCart = async function (
-  productId: mongoose.Types.ObjectId
+  productId: mongoose.Types.ObjectId,
 ): Promise<IUser> {
   const user = this as IUser;
   user.cart.items = user.cart.items.filter(
-    (item) => item.productId.toString() !== productId.toString()
+    (item) => item.productId.toString() !== productId.toString(),
   );
   await user.save();
   return user;

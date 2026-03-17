@@ -2,7 +2,6 @@ import User, { IUser } from "../models/user.js";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import mongoose from "mongoose";
 
 dotenv.config();
 
@@ -19,6 +18,8 @@ export const adminAuth = async (
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
+  console.log("=== ADMIN AUTH START ===");
+  console.log("Token:", req.headers.authorization);
   try {
     const token = req.header("Authorization")?.replace("Bearer ", "");
 

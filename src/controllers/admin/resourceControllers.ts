@@ -210,7 +210,11 @@ export const getResourceByProductId = async (
   const { productId } = req.params;
   // const { language } = req.query; - tymczasowo ignoruj język
 
-  console.log("🔍 getResourceByProductId called with:", productId);
+  //console.log("🔍 getResourceByProductId called with:", productId);
+  if (!productId || typeof productId !== "string") {
+    res.status(400).json({ error: "Invalid productId" });
+    return;
+  }
 
   try {
     // Szukaj bez filtra języka

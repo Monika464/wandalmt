@@ -1,9 +1,14 @@
 // routes/discounts-admin.ts
+console.log("🚨🚨🚨 DISCOUNT.TS IS LOADING 🚨🚨🚨");
 import express, { Request, Response } from "express";
+console.log("✅ Express imported");
 import mongoose from "mongoose";
-import Discount from "../../models/discount.js";
-import Product from "../../models/product.js";
+console.log("✅ Mongoose imported");
 import { adminAuth } from "../../middleware/auth.js";
+console.log("✅ adminAuth middleware imported");
+import Discount from "../../models/discount.js";
+console.log("✅ Discount model imported");
+import Product from "../../models/product.js";
 
 const router = express.Router();
 
@@ -57,10 +62,27 @@ router.get(
 );
 
 // Stwórz nowy kupon (admin)
+console.log("📝 Defining POST route...");
+router.use("/", (req, res, next) => {
+  console.log("    🔥 DISCOUNT LAYER HIT!");
+  console.log("      fullUrl:", req.originalUrl);
+  console.log("      baseUrl:", req.baseUrl);
+  console.log("      path:", req.path);
+  next();
+});
 router.post(
   "/",
   adminAuth,
   async (req: Request, res: Response): Promise<void> => {
+    console.log("🔥🔥🔥 DISCOUNT CREATE ENDPOINT HIT! 🔥🔥🔥");
+    console.log("Request body:", JSON.stringify(req.body, null, 2));
+    console.log("User from auth:", req.user?._id, req.user?.role);
+    console.log(
+      "🔥 Full URL:",
+      req.protocol + "://" + req.get("host") + req.originalUrl,
+    );
+    console.log("🔥 Path:", req.path);
+    console.log("🔥 BaseUrl:", req.baseUrl);
     try {
       const {
         name,
@@ -78,7 +100,9 @@ router.post(
       } = req.body;
 
       // Walidacja
+      console.log("Validating fields...");
       if (!name || !code || !type || !value) {
+        console.log("❌ Missing required fields:", { name, code, type, value });
         res.status(400).json({ error: "Brak wymaganych pól" });
         return;
       }
@@ -96,6 +120,7 @@ router.post(
       }
 
       // Sprawdź czy kupon już istnieje
+      console.log("Checking existing discount with code:", code.toUpperCase());
       const existingDiscount = await Discount.findOne({
         code: code.toUpperCase(),
       });
@@ -117,7 +142,8 @@ router.post(
       let userObjectId = null;
       if (userId) {
         try {
-          userObjectId = new mongoose.Types.ObjectId(userId);
+          userObjectId = mongoose.Types.ObjectId.createFromHexString(userId);
+          //userObjectId = new mongoose.Types.ObjectId(userId);
         } catch (error) {
           res.status(400).json({ error: "Nieprawidłowe ID użytkownika" });
           return;
@@ -125,6 +151,7 @@ router.post(
       }
 
       // Stwórz kupon
+      console.log("✅ Creating new discount...");
       const discount = new Discount({
         name,
         code: code.toUpperCase(),
@@ -143,12 +170,12 @@ router.post(
       });
 
       await discount.save();
-
+      console.log("✅ Discount saved with ID:", discount._id);
       const populatedDiscount = await discount.populate([
         "productId",
         "userId",
       ]);
-
+      console.log("✅ Sending success response");
       res.status(201).json({
         message: "Kupon utworzony pomyślnie",
         discount: populatedDiscount,
@@ -207,7 +234,6 @@ router.put(
         }
       }
 
-      // Konwersja userId jeśli istnieje
       if (updateData.userId) {
         try {
           updateData.userId = new mongoose.Types.ObjectId(updateData.userId);
@@ -369,4 +395,12 @@ router.get(
   },
 );
 
+console.log("✅ All routes defined, checking stack:");
+console.log(
+  "Router stack:",
+  router.stack.map((layer) => ({
+    path: layer.route?.path,
+    methods: layer.route?.methods ? Object.keys(layer.route.methods) : [],
+  })),
+);
 export default router;

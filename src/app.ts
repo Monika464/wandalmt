@@ -13,7 +13,7 @@ import orderRoutes from "./routes/order/orders.js";
 import bunnyRouter from "./routes/bunny.js";
 import emailRouter from "./routes/email.js";
 import discountPublicRouter from "./routes/public/discount-public.js";
-import discountAdminRouter from "./routes/admin/discount.js";
+//import discountAdminRouter from "./routes/admin/discount.js";
 import progressRouter from "./routes/progress.js";
 import { tokenRefreshMiddleware } from "./middleware/tokenRefreshMiddleware.js";
 
@@ -21,6 +21,7 @@ import {
   checkVideoStatus,
   getVideoStatus,
 } from "./controllers/bunnyWebhook.js";
+//import { adminAuth } from "middleware/auth.js";
 
 connectDB();
 const app = express();
@@ -42,6 +43,18 @@ app.options("*", cors());
 app.post("/vbp/stream/webhook/bunny/", checkVideoStatus);
 app.get("/vbp/stream/webhook/bunny/:videoId", getVideoStatus);
 
+app.use(
+  "/admin",
+  (req, res, next) => {
+    console.log("🎯 ADMIN LAYER HIT!");
+    console.log("  fullUrl:", req.originalUrl);
+    console.log("  baseUrl:", req.baseUrl);
+    console.log("  path:", req.path);
+    next();
+  },
+  adminRouter,
+);
+
 app.use("/auth", authRouter);
 app.use(tokenRefreshMiddleware);
 app.use("/users", userRouter);
@@ -54,7 +67,18 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/email", emailRouter);
 app.use("/api/stream", bunnyRouter);
 app.use("/api/discounts", discountPublicRouter);
-app.use("/api/admin/discounts", discountAdminRouter);
+//app.use("/api/admin/discounts", discountAdminRouter);
+// app.use(
+//   "/api/admin/discounts",
+//   adminAuth,
+//   (req, res, next) => {
+//     console.log("⚡⚡⚡ ADMIN ROUTE HIT! ⚡⚡⚡");
+//     console.log("Path:", req.path);
+//     console.log("Method:", req.method);
+//     next();
+//   },
+//   discountAdminRouter,
+// );
 app.use("/api/progress", progressRouter);
 
 const PORT = process.env.PORT || 3000;

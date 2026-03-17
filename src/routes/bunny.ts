@@ -80,7 +80,11 @@ router.post(
   upload.single("file"),
 
   async (req: Request, res: Response): Promise<void> => {
-    let videoId: string | undefined;
+    let videoId;
+    if (!videoId || Array.isArray(videoId)) {
+      res.status(400).json({ error: "Invalid video ID format" });
+      return;
+    }
     try {
       //const { videoId } = req.params;
       videoId = req.params.videoId;
@@ -162,6 +166,10 @@ router.get(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { videoId } = req.params;
+      if (!videoId || Array.isArray(videoId)) {
+        res.status(400).json({ error: "Invalid video ID format" });
+        return;
+      }
 
       let video;
 
