@@ -281,7 +281,7 @@ router.post(
       //console.log("Logout user called", req.user, req.token);
       if (!req.user || !req.token) {
         res.status(401).json({
-          message: "Brak autoryzacji (user lub token nie znaleziony)",
+          message: "No authorization (user or token not found)",
         });
         return;
       }
@@ -298,13 +298,13 @@ router.post(
   },
 );
 
-// Żądanie resetu hasła (wysłanie linku)
+// Password reset request (send link)
 router.post("/forgot-password", requestPasswordReset);
 
-// Ustawienie nowego hasła
+// Set new password
 router.post("/reset-password", resetPassword);
 
-// Walidacja tokena resetującego (dla frontendu)
+// Validate reset token (for frontend)
 router.get("/validate-reset-token", validateResetToken);
 
 router.patch("/change-email", userAuth, changeEmail);

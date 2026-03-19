@@ -19,7 +19,7 @@ export const sendOrderConfirmation = async (
 
     res.json({
       success: true,
-      message: "Email potwierdzający został wysłany",
+      message: "Confirmation email has been sent",
       messageId: result.id,
     });
   } catch (error: any) {
@@ -32,7 +32,7 @@ export const sendOrderConfirmation = async (
 
     res.status(500).json({
       success: false,
-      error: "Błąd przy wysyłaniu emaila",
+      error: "Error sending email",
       details: error.message,
     });
   }
@@ -47,7 +47,7 @@ export const sendInvoice = async (
     const { email, orderId, invoiceUrl, invoiceNumber } = req.body;
 
     if (!email || !orderId || !invoiceUrl || !invoiceNumber) {
-      res.status(400).json({ error: "Brak wymaganych pól" });
+      res.status(400).json({ error: "Missing required fields" });
       return;
     }
 
@@ -60,14 +60,14 @@ export const sendInvoice = async (
 
     res.json({
       success: true,
-      message: "Faktura została wysłana",
+      message: "Invoice has been sent",
       messageId: result.id,
     });
   } catch (error: any) {
     console.error("❌ Error sending invoice email:", error);
     res.status(500).json({
       success: false,
-      error: "Błąd przy wysyłaniu faktury",
+      error: "Error sending invoice",
       details: error.message,
     });
   }

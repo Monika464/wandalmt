@@ -1,18 +1,14 @@
 // routes/discounts-admin.ts
-console.log("🚨🚨🚨 DISCOUNT.TS IS LOADING 🚨🚨🚨");
+
 import express, { Request, Response } from "express";
-console.log("✅ Express imported");
 import mongoose from "mongoose";
-console.log("✅ Mongoose imported");
 import { adminAuth } from "../../middleware/auth.js";
-console.log("✅ adminAuth middleware imported");
 import Discount from "../../models/discount.js";
-console.log("✅ Discount model imported");
 import Product from "../../models/product.js";
 
 const router = express.Router();
 
-// Pobierz wszystkie kupony (admin)
+// Get all coupons (admin)
 router.get(
   "/",
   adminAuth,
@@ -61,28 +57,19 @@ router.get(
   },
 );
 
-// Stwórz nowy kupon (admin)
-console.log("📝 Defining POST route...");
-router.use("/", (req, res, next) => {
-  console.log("    🔥 DISCOUNT LAYER HIT!");
-  console.log("      fullUrl:", req.originalUrl);
-  console.log("      baseUrl:", req.baseUrl);
-  console.log("      path:", req.path);
-  next();
-});
+// Create a new coupon (admin)
+// console.log("📝 Defining POST route...");
+// router.use("/", (req, res, next) => {
+//   console.log("    🔥 DISCOUNT LAYER HIT!");
+//   console.log("      fullUrl:", req.originalUrl);
+//   console.log("      baseUrl:", req.baseUrl);
+//   console.log("      path:", req.path);
+//   next();
+// });
 router.post(
   "/",
   adminAuth,
   async (req: Request, res: Response): Promise<void> => {
-    console.log("🔥🔥🔥 DISCOUNT CREATE ENDPOINT HIT! 🔥🔥🔥");
-    console.log("Request body:", JSON.stringify(req.body, null, 2));
-    console.log("User from auth:", req.user?._id, req.user?.role);
-    console.log(
-      "🔥 Full URL:",
-      req.protocol + "://" + req.get("host") + req.originalUrl,
-    );
-    console.log("🔥 Path:", req.path);
-    console.log("🔥 BaseUrl:", req.baseUrl);
     try {
       const {
         name,
@@ -99,7 +86,7 @@ router.post(
         isActive,
       } = req.body;
 
-      // Walidacja
+      // Validate
       console.log("Validating fields...");
       if (!name || !code || !type || !value) {
         console.log("❌ Missing required fields:", { name, code, type, value });
@@ -119,17 +106,19 @@ router.post(
         return;
       }
 
-      // Sprawdź czy kupon już istnieje
+      // Check if the coupon already exists
       console.log("Checking existing discount with code:", code.toUpperCase());
       const existingDiscount = await Discount.findOne({
         code: code.toUpperCase(),
       });
       if (existingDiscount) {
-        res.status(400).json({ error: "Kupon o tym kodzie już istnieje" });
+        res
+          .status(400)
+          .json({ error: "A coupon with this code already exists" });
         return;
       }
 
-      // Sprawdź produkt jeśli dotyczy
+      // Check product if applicable
       if (productId && type === "product") {
         const product = await Product.findById(productId);
         if (!product) {
@@ -138,14 +127,14 @@ router.post(
         }
       }
 
-      // Sprawdź użytkownika jeśli dotyczy
+      // Check user if applicable
       let userObjectId = null;
       if (userId) {
         try {
           userObjectId = mongoose.Types.ObjectId.createFromHexString(userId);
           //userObjectId = new mongoose.Types.ObjectId(userId);
         } catch (error) {
-          res.status(400).json({ error: "Nieprawidłowe ID użytkownika" });
+          res.status(400).json({ error: "Invalid user ID" });
           return;
         }
       }
@@ -177,17 +166,17 @@ router.post(
       ]);
       console.log("✅ Sending success response");
       res.status(201).json({
-        message: "Kupon utworzony pomyślnie",
+        message: "Coupon created successfully",
         discount: populatedDiscount,
       });
     } catch (error: any) {
       console.error("Error creating discount:", error);
-      res.status(500).json({ error: "Błąd podczas tworzenia kuponu" });
+      res.status(500).json({ error: "Error creating coupon" });
     }
   },
 );
 
-// Pobierz pojedynczy kupon (admin)
+// Get single coupon (admin)
 router.get(
   "/:id",
   adminAuth,
@@ -200,19 +189,19 @@ router.get(
         .populate("userId", "email username");
 
       if (!discount) {
-        res.status(404).json({ error: "Kupon nie znaleziony" });
+        res.status(404).json({ error: "Coupon not found" });
         return;
       }
 
       res.json(discount);
     } catch (error: any) {
       console.error("Error fetching discount:", error);
-      res.status(500).json({ error: "Błąd podczas pobierania kuponu" });
+      res.status(500).json({ error: "Error fetching coupon" });
     }
   },
 );
 
-// Aktualizuj kupon (admin)
+// Update coupon (admin)
 router.put(
   "/:id",
   adminAuth,
@@ -221,7 +210,7 @@ router.put(
       const { id } = req.params;
       const updateData = req.body;
 
-      // Jeśli zmieniamy kod, sprawdź czy nie istnieje już inny kupon z tym kodem
+      // If you change the code, check if there is already another coupon with this code
       if (updateData.code) {
         updateData.code = updateData.code.toUpperCase();
         const existingDiscount = await Discount.findOne({
@@ -229,7 +218,9 @@ router.put(
           _id: { $ne: id },
         });
         if (existingDiscount) {
-          res.status(400).json({ error: "Kupon o tym kodzie już istnieje" });
+          res
+            .status(400)
+            .json({ error: "Coupon with this code already exists" });
           return;
         }
       }
@@ -238,7 +229,7 @@ router.put(
         try {
           updateData.userId = new mongoose.Types.ObjectId(updateData.userId);
         } catch (error) {
-          res.status(400).json({ error: "Nieprawidłowe ID użytkownika" });
+          res.status(400).json({ error: "Invalid user ID" });
           return;
         }
       }
@@ -249,22 +240,22 @@ router.put(
       }).populate(["productId", "userId"]);
 
       if (!discount) {
-        res.status(404).json({ error: "Kupon nie znaleziony" });
+        res.status(404).json({ error: "Coupon not found" });
         return;
       }
 
       res.json({
-        message: "Kupon zaktualizowany pomyślnie",
+        message: "Coupon updated successfully",
         discount,
       });
     } catch (error: any) {
       console.error("Error updating discount:", error);
-      res.status(500).json({ error: "Błąd podczas aktualizacji kuponu" });
+      res.status(500).json({ error: "Error updating coupon" });
     }
   },
 );
 
-// Usuń kupon (admin)
+// Delete coupon (admin)
 router.delete(
   "/:id",
   adminAuth,
@@ -275,19 +266,19 @@ router.delete(
       const discount = await Discount.findByIdAndDelete(id);
 
       if (!discount) {
-        res.status(404).json({ error: "Kupon nie znaleziony" });
+        res.status(404).json({ error: "Coupon not found" });
         return;
       }
 
-      res.json({ message: "Kupon usunięty pomyślnie" });
+      res.json({ message: "Coupon deleted successfully" });
     } catch (error: any) {
       console.error("Error deleting discount:", error);
-      res.status(500).json({ error: "Błąd podczas usuwania kuponu" });
+      res.status(500).json({ error: "Error deleting coupon" });
     }
   },
 );
 
-// Pobierz historię użyć kuponu (admin)
+// Get coupon usage history (admin)
 router.get(
   "/:id/usage",
   adminAuth,
@@ -306,7 +297,7 @@ router.get(
         });
 
       if (!discount) {
-        res.status(404).json({ error: "Kupon nie znaleziony" });
+        res.status(404).json({ error: "Coupon not found" });
         return;
       }
 
@@ -321,12 +312,12 @@ router.get(
       });
     } catch (error: any) {
       console.error("Error fetching discount usage:", error);
-      res.status(500).json({ error: "Błąd podczas pobierania historii użyć" });
+      res.status(500).json({ error: "Error fetching coupon usage history" });
     }
   },
 );
 
-// Generuj raport kuponów (admin)
+// Generate coupon report (admin)
 router.get(
   "/report/summary",
   adminAuth,
@@ -390,7 +381,7 @@ router.get(
       });
     } catch (error: any) {
       console.error("Error generating discount report:", error);
-      res.status(500).json({ error: "Błąd podczas generowania raportu" });
+      res.status(500).json({ error: "Error while generating report" });
     }
   },
 );

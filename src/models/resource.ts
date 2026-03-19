@@ -73,7 +73,7 @@ ResourceSchema.virtual("sortedChapters").get(function () {
 ResourceSchema.set("toJSON", {
   virtuals: true,
   transform: function (doc, ret) {
-    // Ręcznie sortuj chapters w zwracanym obiekcie
+    // Manually sort chapters in the returned object
     if (ret.chapters && Array.isArray(ret.chapters)) {
       ret.chapters.sort((a, b) => {
         const numA = a.number || 0;

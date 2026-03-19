@@ -2,7 +2,6 @@
 import { Document, Schema, model, Types } from "mongoose";
 
 export interface IDiscount extends Document {
-  // Podstawowe informacje
   name: string;
   code: string;
   type: "percentage" | "fixed" | "product";
@@ -25,7 +24,6 @@ export interface IDiscount extends Document {
   createdAt: Date;
   updatedAt: Date;
 
-  // Metody
   isValid(): boolean;
   calculateDiscount(
     amount: number,
@@ -40,80 +38,75 @@ export interface IDiscount extends Document {
 
 const discountSchema = new Schema<IDiscount>(
   {
-    // Podstawowe informacje
     name: {
       type: String,
-      required: [true, "Nazwa kuponu jest wymagana"],
+      required: [true, "Coupon name is required"],
       trim: true,
     },
     code: {
       type: String,
-      required: [true, "Kod kuponu jest wymagany"],
+      required: [true, "Coupon code is required"],
       unique: true,
       uppercase: true,
       trim: true,
     },
 
-    // Typ kuponu
     type: {
       type: String,
       enum: {
         values: ["percentage", "fixed", "product"],
-        message: "Nieprawidłowy typ kuponu",
+        message: "Invalid coupon type",
       },
-      required: [true, "Typ kuponu jest wymagany"],
+      required: [true, "Coupon type is required"],
     },
 
-    // Wartość zniżki
     value: {
       type: Number,
-      required: [true, "Wartość zniżki jest wymagana"],
-      min: [0, "Wartość zniżki nie może być ujemna"],
+      required: [true, "Discount value is required"],
+      min: [0, "Discount value cannot be negative"],
     },
 
-    // Minimalna kwota zamówienia dla kuponu
     minPurchaseAmount: {
       type: Number,
       default: 0,
-      min: [0, "Minimalna kwota zamówienia nie może być ujemna"],
+      min: [0, "The minimum order amount cannot be negative"],
     },
 
-    // Maksymalna kwota zniżki (dla procentów)
     maxDiscountAmount: {
       type: Number,
       default: null,
-      min: [0, "Maksymalna kwota zniżki nie może być ujemna"],
+      min: [0, "The maximum discount amount cannot be negative"],
     },
 
-    // Liczba użyć
+    // Number of allowed uses
     maxUses: {
       type: Number,
       default: null,
-      min: [1, "Liczba użyć musi być większa niż 0"],
+      min: [1, "The number of uses must be greater than 0"],
     },
 
-    // Liczba już użytych
+    // Number of already used
     usedCount: {
       type: Number,
       default: 0,
       min: 0,
     },
 
-    // Użytkownik, który może użyć kuponu (null = każdy)
+    // User who can use the coupon (null = anyone)
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       default: null,
     },
 
-    // Produkt, na który działa kupon (tylko dla type: 'product')
+    // Product that the coupon applies to (only for type: 'product')
     productId: {
       type: Schema.Types.ObjectId,
       ref: "Product",
       default: null,
     },
 
-    // Okres ważności
+    // Validity period
     validFrom: {
       type: Date,
       default: Date.now,
@@ -123,13 +116,13 @@ const discountSchema = new Schema<IDiscount>(
       default: null,
     },
 
-    // Czy aktywny
+    // isActive?
     isActive: {
       type: Boolean,
       default: true,
     },
 
-    // Informacje o użyciach
+    // Usage Information
     usageHistory: [
       {
         userId: {
@@ -155,11 +148,11 @@ const discountSchema = new Schema<IDiscount>(
     ],
   },
   {
-    timestamps: true, // Automatycznie obsługuje createdAt i updatedAt
+    timestamps: true,
   },
 );
 
-// Indeksy dla efektywnego wyszukiwania
+// Indexes for efficient searching
 //discountSchema.index({ code: 1 }, { unique: true });
 discountSchema.index({ isActive: 1, validUntil: 1 });
 discountSchema.index({ productId: 1 });
@@ -167,7 +160,7 @@ discountSchema.index({ userId: 1 });
 discountSchema.index({ type: 1, isActive: 1 });
 discountSchema.index({ validFrom: 1, validUntil: 1 });
 
-// Metoda sprawdzająca czy kupon jest ważny
+// Method checking if the coupon is valid
 discountSchema.methods.isValid = function (this: IDiscount): boolean {
   const now = new Date();
 
@@ -179,7 +172,7 @@ discountSchema.methods.isValid = function (this: IDiscount): boolean {
   return true;
 };
 
-// Metoda obliczająca wysokość zniżki
+// Method of calculating the discount amount
 discountSchema.methods.calculateDiscount = function (
   this: IDiscount,
   amount: number,
@@ -187,10 +180,10 @@ discountSchema.methods.calculateDiscount = function (
 ): number {
   if (!this.isValid()) return 0;
 
-  // Sprawdź minimalną kwotę zamówienia
+  // Check the minimum order amount
   if (amount < this.minPurchaseAmount) return 0;
 
-  // Dla kuponów produktowych sprawdź czy produkt pasuje
+  //For product coupons, check if the product matches
   if (this.type === "product" && productId) {
     if (!this.productId) return 0;
 

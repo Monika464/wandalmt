@@ -1,4 +1,4 @@
-// backend/models/Progress.js - UPROSZCZONY
+// backend/models/Progress.js
 import mongoose, { Document, Schema, model } from "mongoose";
 
 export interface IProgress extends Document {
@@ -45,7 +45,7 @@ const progressSchema = new Schema<IProgress>(
   },
 );
 
-// Indeks - każdy rozdział może być ukończony tylko raz na użytkownika
+// Index - each chapter can only be completed once per user
 progressSchema.index(
   { userId: 1, productId: 1, chapterId: 1 },
   { unique: true },

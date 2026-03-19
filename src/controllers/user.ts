@@ -19,7 +19,6 @@ export const addToCartHandler = async (
 
     const product = await Product.findById(req.body.productId);
 
-    //return res.status(404).json({ error: "Produkt nie znaleziony" });
     if (!product) {
       res.status(404).json({ error: "Product not found" });
       return;

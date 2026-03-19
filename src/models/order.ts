@@ -2,14 +2,13 @@
 import mongoose from "mongoose";
 
 const orderSchema = new mongoose.Schema({
-  // Podstawowe informacje
   stripeSessionId: {
     type: String,
     sparse: true,
     default: null,
   },
   stripePaymentIntentId: String,
-  // Zniżka Stripe
+  // Stripe discount
   stripeDiscount: {
     coupon: String,
     promotion_code: String,
@@ -17,7 +16,7 @@ const orderSchema = new mongoose.Schema({
     percent_off: Number,
   },
 
-  // Zniżka z naszego systemu
+  // Discount from our system
   discountApplied: {
     type: {
       type: String,
@@ -42,7 +41,7 @@ const orderSchema = new mongoose.Schema({
     default: "pending",
   },
 
-  // Użytkownik
+  // User
   user: {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -52,7 +51,7 @@ const orderSchema = new mongoose.Schema({
     email: String,
   },
 
-  // Produkty (pełne dane zapisane w bazie)
+  // Products (full data saved in the database)
   products: [
     {
       productId: {
@@ -71,29 +70,29 @@ const orderSchema = new mongoose.Schema({
     },
   ],
 
-  // Suma
+  // Sum
   totalAmount: Number,
   totalDiscount: {
     type: Number,
     default: 0,
   },
 
-  // Kupon rabatowy
+  // Discount coupon
   couponCode: String,
   discount: {
     amount: Number,
     description: String,
   },
 
-  // Faktura - ZMIENIAMY STRUKTURĘ
+  // Invoice
   requireInvoice: {
     type: Boolean,
     default: false,
   },
 
-  // ID faktury Stripe
+  // ID  Stripe receipt
   invoiceId: String,
-  // Szczegóły faktury Stripe - DODAJEMY NOWE POLE
+
   invoiceDetails: {
     invoiceNumber: String,
     invoicePdf: String,
@@ -103,7 +102,7 @@ const orderSchema = new mongoose.Schema({
     createdAt: Date,
   },
 
-  // Dane billingowe
+  // Billing details ( Stripe)
   billingDetails: {
     name: String,
     email: String,
@@ -118,7 +117,7 @@ const orderSchema = new mongoose.Schema({
     },
   },
 
-  // Zwroty
+  // Returns
   refundId: String,
   refundAmount: Number,
   refundedAt: Date,

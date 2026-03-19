@@ -120,7 +120,7 @@ export const checkVideoStatus = async (
   //   let processingProgress = 0;
   //   let errorMessage = "";
 
-  //   // Mapowanie statusów
+  //   // Map status
   //   if (statusNumber === 0 || statusNumber === 1) {
   //     newStatus = "uploading";
   //   } else if (statusNumber === 2 || statusNumber === 3) {
@@ -140,8 +140,8 @@ export const checkVideoStatus = async (
   //     errorMessage = "Processing failed";
   //   }
 
-  //   // ========== 🔥 NOWA LOGIKA WY MUSZENIA STATUSU ==========
-  //   // Jeśli wciąż mamy status uploadingu, sprawdź czas
+  //   // ========== 🔥 NEW LOGIC FORSE STATUS ==========
+  //   //
   //   if (newStatus === "uploading") {
   //     // Znajdź wideo w bazie
   //     const existingVideo = await Video.findOne({ bunnyGuid: VideoGuid });

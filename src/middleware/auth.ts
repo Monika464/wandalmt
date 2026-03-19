@@ -18,28 +18,22 @@ export const adminAuth = async (
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
-  console.log("=== ADMIN AUTH START ===");
-  console.log("Token:", req.headers.authorization);
   try {
     const token = req.header("Authorization")?.replace("Bearer ", "");
-    console.log(
-      "Extracted token:",
-      token ? token.substring(0, 20) + "..." : "MISSING",
-    );
 
     if (!token) {
       res.status(401).json({ error: "Token is missing" });
       return;
     }
     const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
-    console.log("✅ Step 1 passed, decoded:", decoded);
+
     const user = await User.findById(decoded._id);
-    console.log("User found:", user ? "YES" : "NO");
+
     if (!user) {
       res.status(404).json({ error: "User not found" });
       return;
     }
-    console.log("Step 3: Checking role. User role:", user.role);
+    //console.log("Step 3: Checking role. User role:", user.role);
     if (user.role !== "admin") {
       console.log("❌ Step 3 failed: Not admin");
       res.status(403).json({ error: "Access denied" });

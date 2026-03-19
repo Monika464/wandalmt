@@ -19,7 +19,7 @@ export const fetchProducts = async (
     res.status(200).send(products);
   } catch (error) {
     console.error("Error fetching products:", error);
-    res.status(500).send({ error: "Błąd serwera" });
+    res.status(500).send({ error: "Server error" });
   }
 };
 
@@ -40,6 +40,6 @@ export const fetchProduct = async (
     res.status(200).send(product);
   } catch (error) {
     console.error("Error fetching product:", error);
-    res.status(500).send({ error: "Błąd serwera" });
+    res.status(500).send({ error: "Server error" });
   }
 };

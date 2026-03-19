@@ -102,7 +102,7 @@ userSchema.methods.generateAuthToken = async function (): Promise<string> {
   if (!secret) {
     throw new Error("JWT secret is not defined");
   }
-  console.log("Generating token for user:", user._id, "role:", user.role);
+  //console.log("Generating token for user:", user._id, "role:", user.role);
 
   const token = jwt.sign(
     { _id: user._id.toString(), role: user.role },
@@ -112,10 +112,10 @@ userSchema.methods.generateAuthToken = async function (): Promise<string> {
     },
   );
 
-  console.log("Token generated:", token.substring(0, 20) + "...");
+  //console.log("Token generated:", token.substring(0, 20) + "...");
   user.tokens.push({ token });
   await user.save();
-  console.log("Token saved to DB");
+  //console.log("Token saved to DB");
   return token;
 };
 
@@ -165,7 +165,7 @@ userSchema.methods.removeFromCart = async function (
   return user;
 };
 
-// Hashowanie hasła przed zapisem
+// Hashing the password before saving
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
     this.password = await bcrypt.hash(this.password, 10);

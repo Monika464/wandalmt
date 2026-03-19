@@ -6,7 +6,7 @@ export interface IVideo extends Document {
   thumbnailUrl: { type: String };
   status: "uploading" | "processing" | "ready" | "error";
   processingProgress?: number;
-  duration?: number; // sekundy
+  duration?: number; // seconds
   width?: number;
   height?: number;
   errorMessage?: string;
@@ -36,7 +36,7 @@ const VideoSchema = new Schema<IVideo>(
     },
     processingProgress: { type: Number, default: 0 },
 
-    // metadata – wypełniane gdy Status === 4
+    // metadata – filled when Status === 4
     duration: {
       type: Number,
     },
@@ -53,7 +53,7 @@ const VideoSchema = new Schema<IVideo>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 export default mongoose.model<IVideo>("Video", VideoSchema);
