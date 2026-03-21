@@ -80,14 +80,14 @@ router.post(
   upload.single("file"),
 
   async (req: Request, res: Response): Promise<void> => {
-    let videoId;
-    if (!videoId || Array.isArray(videoId)) {
-      res.status(400).json({ error: "Invalid video ID format" });
-      return;
-    }
+    //let videoId;
+    // if (!videoId || Array.isArray(videoId)) {
+    //   res.status(400).json({ error: "Invalid video ID format" });
+    //   return;
+    // }
     try {
       //const { videoId } = req.params;
-      videoId = req.params.videoId;
+      const videoId = req.params.videoId;
 
       if (!videoId) {
         res.status(400).json({ error: "missing videoId" });
@@ -124,11 +124,16 @@ router.post(
       ) {
         console.log("⚠️ Video already exists in Bunny, treating as success");
 
-        // Znajdź video w bazie po bunnyGuid (videoId)
-        const video = await Video.findOne({ bunnyGuid: videoId });
+        // Find a video in the bunnyGuid database (videoId)
+        //const video = await Video.findOne({ bunnyGuid: videoId });
+        const video = await Video.findOne({ bunnyGuid: req.params.videoId });
 
         if (video) {
-          // Optional: Update status if needed
+          // Update status if needed
+          if (video.status === "uploading") {
+            video.status = "processing";
+            await video.save();
+          }
           res.json({
             success: true,
             alreadyExists: true,
@@ -140,7 +145,7 @@ router.post(
         }
       }
 
-      //normal error
+      //Normal error
       console.error("Bunny upload error", err?.response?.data ?? err?.message);
       res.status(500).json({
         error: "upload-failed",
