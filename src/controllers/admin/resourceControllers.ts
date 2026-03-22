@@ -94,7 +94,7 @@ export const updateResource = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const { title, content, language } = req.body; // 🔥 DODAJEMY language
+    const { title, content, language } = req.body;
 
     if (language && language !== "pl" && language !== "en") {
       res.status(400).json({ error: "Language must be either 'pl' or 'en'" });
@@ -103,7 +103,7 @@ export const updateResource = async (
 
     const updateData: any = { title, content };
     if (language) {
-      updateData.language = language; // 🔥 DODAJEMY
+      updateData.language = language;
     }
 
     const updated = await Resource.findByIdAndUpdate(
@@ -235,7 +235,7 @@ export const getResourceByProductId = async (
       return;
     }
 
-    console.log("✅ Found resource:", resource._id);
+    //console.log("✅ Found resource:", resource._id);
     res.status(200).json(resource);
   } catch (err) {
     console.error("❌ Error in getResourceByProductId:", err);
