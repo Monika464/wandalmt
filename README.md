@@ -1,6 +1,5 @@
 ## 📁 Backend README (Monika464/wandalmt)
 
-`````markdown
 # ⚙️ Wandalmt Backend API
 
 RESTful API for e-commerce platform built with Node.js, Express, and TypeScript.
@@ -40,6 +39,7 @@ RESTful API for e-commerce platform built with Node.js, Express, and TypeScript.
 
 ## 📁 Folder Structure
 
+```
 wandalmt/
 ├── src/
 │ ├── models/ # Mongoose schemas
@@ -79,7 +79,7 @@ wandalmt/
 ├── package.json
 ├── tsconfig.json
 └── README.md
-text
+```
 
 ## 🚀 Getting Started
 
@@ -95,52 +95,59 @@ text
 
 1. **Clone the repository:**
 
-````bash
+```bash
 git clone https://github.com/Monika464/wandalmt
 cd wandalmt
+```
 
-    Install dependencies:
+2. **Install dependencies:**
 
-bash
-
+```bash
 npm install
+```
 
-    Configure environment variables:
+3. **Configure environment variables:**
 
-bash
-
+```bash
 cp .env.example .env
-
 Edit .env with your credentials:
 env
+```
 
 # Server Configuration
+
 PORT=3000
 NODE_ENV=development
 
 # Database
+
 MONGODB_URI=mongodb://localhost:27017/wandalmt
 
 # JWT Authentication
+
 JWT_SECRET=your_jwt_secret_key_min_32_chars
 JWT_EXPIRES_IN=7d
 
 # AWS S3 Configuration
+
 AWS_ACCESS_KEY_ID=your_aws_access_key
 AWS_SECRET_ACCESS_KEY=your_aws_secret_key
 AWS_REGION=eu-central-1
 AWS_S3_BUCKET=your_bucket_name
 
 # Stripe
+
 STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
 
 # Mailgun
+
 MAILGUN_API_KEY=your_mailgun_api_key
 MAILGUN_DOMAIN=your_mailgun_domain
 MAILGUN_FROM_EMAIL=noreply@yourdomain.com
 
 # Frontend URL (for CORS)
+
 FRONTEND_URL=http://localhost:5173
 
     Start the server:
@@ -148,57 +155,59 @@ FRONTEND_URL=http://localhost:5173
 bash
 
 # Development
+
 npm run dev
 
 # Production
+
 npm run build
 npm start
 
 # Available Scripts
 
-Command	Description
+Command Description
 |-------------------|
-| npm run dev |	Start development server with hot reload |
-| npm run build |	Build for production |
-| npm start |	Start production server |
-| npm test |	Run tests |
-| npm run test:coverage	| Run tests with coverage
-| npm run lint |	Run ESLint
+| npm run dev | Start development server with hot reload |
+| npm run build | Build for production |
+| npm start | Start production server |
+| npm test | Run tests |
+| npm run test:coverage | Run tests with coverage
+| npm run lint | Run ESLint
 
 📡 API Endpoints
 
 Authentication
-Method	Endpoint	Description
-POST	/api/auth/register	Register new user
-POST	/api/auth/login	Login user
-POST	/api/auth/logout	Logout user
-GET	/api/auth/me	Get current user
+Method Endpoint Description
+POST /api/auth/register Register new user
+POST /api/auth/login Login user
+POST /api/auth/logout Logout user
+GET /api/auth/me Get current user
 
 Products
-Method	Endpoint	Description
-GET	/api/products	Get all products
-GET	/api/products/:id	Get single product
-POST	/api/products	Create product (admin)
-PUT	/api/products/:id	Update product (admin)
-DELETE	/api/products/:id	Delete product (admin)
+Method Endpoint Description
+GET /api/products Get all products
+GET /api/products/:id Get single product
+POST /api/products Create product (admin)
+PUT /api/products/:id Update product (admin)
+DELETE /api/products/:id Delete product (admin)
 
 Cart
-Method	Endpoint	Description
-GET	/api/cart	Get user cart
-POST	/api/cart	Add item to cart
-PUT	/api/cart/:itemId	Update cart item
-DELETE	/api/cart/:itemId	Remove from cart
-DELETE	/api/cart	Clear cart
+Method Endpoint Description
+GET /api/cart Get user cart
+POST /api/cart Add item to cart
+PUT /api/cart/:itemId Update cart item
+DELETE /api/cart/:itemId Remove from cart
+DELETE /api/cart Clear cart
 
 Payments
-Method	Endpoint	Description
-POST	/api/payment/create-payment-intent	Create Stripe payment intent
-POST	/api/payment/webhook	Stripe webhook handler
+Method Endpoint Description
+POST /api/payment/create-payment-intent Create Stripe payment intent
+POST /api/payment/webhook Stripe webhook handler
 
 Resources
-Method	Endpoint	Description
-POST	/api/upload	Upload file to S3
-DELETE	/api/resources/:id	Delete resource
+Method Endpoint Description
+POST /api/upload Upload file to S3
+DELETE /api/resources/:id Delete resource
 
 🧪 Testing
 
@@ -209,7 +218,9 @@ npm test
 
 # Run tests with coverage
 
+```bash
 npm run test:coverage
+```
 
 📦 API Documentation
 
@@ -242,5 +253,10 @@ ISC © 2026 Monika K.
 📧 Support
 
 For issues or questions, please open an issue on GitHub.
+
 ````
-`````
+
+```
+
+```
+````
