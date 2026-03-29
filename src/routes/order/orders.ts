@@ -707,24 +707,6 @@ router.post(
               // 🔥 STEP 3: Optional - delete the Resource itself (if you want)
               // await Resource.deleteMany({ _id: { $in: resourceIds } });
             }
-
-            // Check out other user resources
-            // const updatedUser = await User.findById(order.user.userId).populate(
-            //   {
-            //     path: "resources",
-            //     populate: { path: "productId" },
-            //   },
-            // );
-
-            // console.log("📦 User remaining resources after cleanup:", {
-            //   count: updatedUser?.resources?.length || 0,
-            //   resources: updatedUser?.resources?.map((r: any) => ({
-            //     id: r._id,
-            //     title: r.title,
-            //     productId:
-            //       r.productId?._id?.toString() || r.productId?.toString(),
-            //   })),
-            // });
           }
         }
 

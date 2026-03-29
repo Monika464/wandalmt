@@ -28,7 +28,7 @@ router.post(
       // Iterate through video files
       for (const file of files) {
         const fileExtension = file.originalname.split(".").pop()?.toLowerCase();
-        const allowedExtensions = ["mp4", "avi", "mov"]; // Dozwolone formaty wideo
+        const allowedExtensions = ["mp4", "avi", "mov"];
 
         if (!allowedExtensions.includes(fileExtension || "")) {
           res.status(400).json({ error: "Unsupported video format" });
@@ -37,13 +37,13 @@ router.post(
 
         const key = `${Date.now()}-${file.originalname}`;
 
-        // Upload video file to B2 (Backblaze or AWS S3)
+        // Upload video file to B2 (AWS S3)
         const command = new PutObjectCommand({
           Bucket: process.env.B2_BUCKET_NAME!,
           Key: key,
           Body: file.buffer,
           ContentType: file.mimetype,
-          ACL: "private" as const, // typ zgodny z v3
+          ACL: "private" as const,
         });
 
         await s3.send(command);

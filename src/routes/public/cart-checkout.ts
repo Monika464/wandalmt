@@ -883,7 +883,7 @@ router.get(
       }
 
       res.status(500).json({
-        error: err.message || t(lang, "checkout.paymentCheckError"), // 👈 Tłumaczenie
+        error: err.message || t(lang, "checkout.paymentCheckError"),
         code: err.code || "UNKNOWN_ERROR",
       });
     }

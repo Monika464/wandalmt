@@ -8,7 +8,6 @@ export const fetchProducts = async (
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
-  console.log("📦 fetchProducts called");
   try {
     const { q, language } = req.query; //
 
@@ -28,7 +27,7 @@ export const fetchProducts = async (
     }
 
     const products = await Product.find(filter);
-    console.log(`✅ Found ${products.length} products`);
+
     res.status(200).send(products);
   } catch (error) {
     console.error("Error fetching products:", error);

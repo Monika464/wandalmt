@@ -1,112 +1,246 @@
-## 📦 E-commerce Backend API
+## 📁 Backend README (Monika464/wandalmt)
 
-This is a Node.js + TypeScript backend API for an e-commerce application.
-The project provides user and admin authentication, resource management, product handling, and shopping cart features.
+`````markdown
+# ⚙️ Wandalmt Backend API
 
-## 🚀 Features
+RESTful API for e-commerce platform built with Node.js, Express, and TypeScript.
 
-    🔐 Authentication & Authorization
-        Login and token-based auth for admin and users
-        Route protection using middleware
-        Logout and token revocation
+[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![Express](https://img.shields.io/badge/Express-4.21.2-000000?logo=express)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-8.13.2-47A248?logo=mongodb)](https://www.mongodb.com/)
+[![License](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
 
-    🛍 Product Management
-        Create, update, delete, and fetch products
-        Products can have multiple associated resources (images/videos)
-        Products are assigned to categories or collections
+## ✨ Features
 
-    📂 Resource Management
-        Upload and manage resources (image/video files) via cloud or B2
-        Add/remove/update resources for each product
-
-    🧺 Cart Functionality
-        Add products to the user’s cart
-        Modify quantity or remove items
-        Clear entire cart
-
-    📦 Database Operations
-        Fetch product data, users, resources
-        Admin view of all users and their data
-        Populate references for nested documents
+- 🔐 **Authentication** - JWT-based auth with bcrypt password hashing
+- 👥 **User Management** - Registration, login, profile management
+- 🛍️ **Product Management** - CRUD operations for products
+- 🖼️ **File Upload** - AWS S3 integration with Multer
+- 🛒 **Shopping Cart** - Persistent cart management
+- 💳 **Payment Processing** - Stripe integration
+- 📧 **Email Notifications** - Mailgun for transactional emails
+- 🛡️ **Security** - Input validation, rate limiting, CORS
+- 📊 **Database** - MongoDB with Mongoose ODM
 
 ## 🛠 Tech Stack
 
-- Node.js + Express
-
-- TypeScript
-
-- MongoDB + Mongoose
-
-- JWT (JSON Web Tokens) for authentication
-
-- Multer / B2 SDK for file uploads
-
-- Postman for API testing
-
-- Backblaze B2 for storing resources
+| Technology         | Purpose              |
+| ------------------ | -------------------- |
+| Node.js            | JavaScript runtime   |
+| Express.js         | Web framework        |
+| TypeScript         | Type safety          |
+| MongoDB + Mongoose | Database             |
+| JWT + bcryptjs     | Authentication       |
+| AWS S3             | File storage         |
+| Stripe             | Payment processing   |
+| Mailgun            | Email service        |
+| Multer             | File upload handling |
+| Sharp              | Image optimization   |
 
 ## 📁 Folder Structure
 
-```
+wandalmt/
 ├── src/
 │ ├── models/ # Mongoose schemas
-│ ├── routes/ # Route controllers
-│ ├── middleware/ # Auth and other middleware
-│ ├── utils/ # Utility functions
+│ │ ├── User.ts
+│ │ ├── Product.ts
+│ │ ├── Resource.ts
+│ │ ├── Cart.ts
+│ │ └── Order.ts
+│ ├── controllers/ # Business logic
+│ │ ├── authController.ts
+│ │ ├── productController.ts
+│ │ ├── cartController.ts
+│ │ └── paymentController.ts
+│ ├── routes/ # API endpoints
+│ │ ├── auth.ts
+│ │ ├── products.ts
+│ │ ├── cart.ts
+│ │ └── payment.ts
+│ ├── middleware/ # Auth & validation
+│ │ ├── auth.ts
+│ │ ├── admin.ts
+│ │ └── validation.ts
+│ ├── services/ # External services
+│ │ ├── s3Service.ts
+│ │ ├── stripeService.ts
+│ │ └── emailService.ts
+│ ├── utils/ # Helpers
+│ │ ├── logger.ts
+│ │ └── errorHandler.ts
+│ ├── config/ # Configuration
+│ │ ├── database.ts
+│ │ └── aws.ts
+│ ├── types/ # TypeScript types
 │ └── app.ts # App configuration
-├── public/ # Static files (if any)
-├── uploads/ # Temporarily stored uploads
+├── uploads/ # Temporary uploads
+├── .env.example # Environment variables example
 ├── package.json
-└── tsconfig.json
-```
+├── tsconfig.json
+└── README.md
+text
 
-## Run Locally
-
-Clone the project
-
-```
-  git clone https://github.com/Monika464/wandalmt
-  cd wandalmt
-```
-
-Install dependencies
-
-```
-  npm install
-```
-
-Configure your .env file
-
-`PORT=3000`
-`MONGODB_URL`
-`JWT_SECRET`
-`B2_APPLICATION_KEY`
-
-Run the server
-
-```
-  npm run dev
-```
+## 🚀 Getting Started
 
 ### Prerequisites
 
-Before you begin, make sure you have the following installed on your machine:
+- **Node.js** >= 18.0.0
+- **MongoDB** (local or Atlas)
+- **AWS Account** (for S3 storage)
+- **Stripe Account** (for payments)
+- **Mailgun Account** (for emails)
 
-- **Node.js** (version >= 16.0.0)  
-  Install from [Node.js official website](https://nodejs.org/).
-- **npm** (Node Package Manager)  
-  It comes installed with Node.js, but if needed, you can install it separately from [npm official website](https://www.npmjs.com/get-npm).
-- **MongoDB** (for database management)  
-  You can install it locally from [MongoDB official website](https://www.mongodb.com/try/download/community) or use a hosted solution like [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
+### Installation
 
-- **Postman** (for API testing)  
-  Download it from [Postman website](https://www.postman.com/downloads/).
+1. **Clone the repository:**
 
-Once these prerequisites are installed, you can proceed with setting up and running the project.
+````bash
+git clone https://github.com/Monika464/wandalmt
+cd wandalmt
 
-### Postman Collection for API Testing
+    Install dependencies:
 
-To make it easier to test the API endpoints, a **Postman collection** is included. This collection contains pre-configured requests for:
-[Postman Test Set](https://elements.getpostman.com/redirect?entityId=16542142-5a86d7a6-aef1-4cd7-b98e-5e26335f7c0e&entityType=collection)
+bash
 
-###### Wandalmt e-commerce App © 2025 by MK
+npm install
+
+    Configure environment variables:
+
+bash
+
+cp .env.example .env
+
+Edit .env with your credentials:
+env
+
+# Server Configuration
+PORT=3000
+NODE_ENV=development
+
+# Database
+MONGODB_URI=mongodb://localhost:27017/wandalmt
+
+# JWT Authentication
+JWT_SECRET=your_jwt_secret_key_min_32_chars
+JWT_EXPIRES_IN=7d
+
+# AWS S3 Configuration
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+AWS_REGION=eu-central-1
+AWS_S3_BUCKET=your_bucket_name
+
+# Stripe
+STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+
+# Mailgun
+MAILGUN_API_KEY=your_mailgun_api_key
+MAILGUN_DOMAIN=your_mailgun_domain
+MAILGUN_FROM_EMAIL=noreply@yourdomain.com
+
+# Frontend URL (for CORS)
+FRONTEND_URL=http://localhost:5173
+
+    Start the server:
+
+bash
+
+# Development
+npm run dev
+
+# Production
+npm run build
+npm start
+
+# Available Scripts
+
+Command	Description
+|-------------------|
+| npm run dev |	Start development server with hot reload |
+| npm run build |	Build for production |
+| npm start |	Start production server |
+| npm test |	Run tests |
+| npm run test:coverage	| Run tests with coverage
+| npm run lint |	Run ESLint
+
+📡 API Endpoints
+
+Authentication
+Method	Endpoint	Description
+POST	/api/auth/register	Register new user
+POST	/api/auth/login	Login user
+POST	/api/auth/logout	Logout user
+GET	/api/auth/me	Get current user
+
+Products
+Method	Endpoint	Description
+GET	/api/products	Get all products
+GET	/api/products/:id	Get single product
+POST	/api/products	Create product (admin)
+PUT	/api/products/:id	Update product (admin)
+DELETE	/api/products/:id	Delete product (admin)
+
+Cart
+Method	Endpoint	Description
+GET	/api/cart	Get user cart
+POST	/api/cart	Add item to cart
+PUT	/api/cart/:itemId	Update cart item
+DELETE	/api/cart/:itemId	Remove from cart
+DELETE	/api/cart	Clear cart
+
+Payments
+Method	Endpoint	Description
+POST	/api/payment/create-payment-intent	Create Stripe payment intent
+POST	/api/payment/webhook	Stripe webhook handler
+
+Resources
+Method	Endpoint	Description
+POST	/api/upload	Upload file to S3
+DELETE	/api/resources/:id	Delete resource
+
+🧪 Testing
+
+```bash
+# Run all tests
+npm test
+```
+
+# Run tests with coverage
+
+npm run test:coverage
+
+📦 API Documentation
+
+https://run.pstmn.io/button.svg
+Postman Collection
+
+Import the Postman collection from docs/Wandalmt.postman_collection.json
+🔗 Related Repositories
+
+    Frontend Application: Wandalmt Frontend
+
+    Live Demo: https://club.boxingonline.eu
+
+📄 License
+
+ISC © 2026 Monika K.
+
+🤝 Contributing
+
+    Fork the repository
+
+    Create your feature branch (git checkout -b feature/amazing)
+
+    Commit your changes (git commit -m 'Add amazing feature')
+
+    Push to the branch (git push origin feature/amazing)
+
+    Open a Pull Request
+
+📧 Support
+
+For issues or questions, please open an issue on GitHub.
+````
+`````
