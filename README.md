@@ -209,25 +209,13 @@ Method Endpoint Description
 POST /api/upload Upload file to S3
 DELETE /api/resources/:id Delete resource
 
-🧪 Testing
-
-```bash
-# Run all tests
-npm test
-```
-
-# Run tests with coverage
-
-```bash
-npm run test:coverage
-```
-
 📦 API Documentation
 
 https://run.pstmn.io/button.svg
 Postman Collection
 
 Import the Postman collection from docs/Wandalmt.postman_collection.json
+
 🔗 Related Repositories
 
     Frontend Application: Wandalmt Frontend
