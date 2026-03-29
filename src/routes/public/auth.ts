@@ -36,12 +36,14 @@ router.post("/login", async (req, res): Promise<void> => {
     //   req.body.password
     // );
     if (!user) {
-      res.status(400).send({ error: "Niepoprawny email lub hasło" });
+      res.status(400).send({ error: "Incorrect email or password" });
       return;
     }
     // Sprawdzamy rolę, jeśli podano
     if (role && user.role !== role) {
-      res.status(403).send({ error: "Nie masz odpowiednich uprawnień" });
+      res
+        .status(403)
+        .send({ error: "You do not have the required permissions" });
       return;
     }
 
@@ -50,7 +52,7 @@ router.post("/login", async (req, res): Promise<void> => {
     // Dekoduj token, aby pobrać czas wygaśnięcia
     const secret = process.env.JWT_SECRET;
     if (!secret) {
-      throw new Error("JWT_SECRET nie jest zdefiniowany");
+      throw new Error("JWT_SECRET is not defined");
     }
 
     const decoded = jwt.verify(token, secret) as {
@@ -92,10 +94,10 @@ router.post("/register", async (req, res): Promise<void> => {
   try {
     const { email, password, name, surname, role } = req.body;
 
-    // Sprawdzenie, czy email już istnieje
+    // Check if email already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      res.status(400).send({ error: "Użytkownik z tym emailem już istnieje" });
+      res.status(400).send({ error: "User with this email already exists" });
       return;
     }
 
@@ -110,7 +112,6 @@ router.post("/register", async (req, res): Promise<void> => {
     await user.save();
     const token = await user.generateAuthToken();
 
-    // WERYFIKACJA DLA REJESTRACJI
     const secret = process.env.JWT_SECRET;
     if (!secret) {
       throw new Error("JWT_SECRET nie jest zdefiniowany");
@@ -129,7 +130,7 @@ router.post("/register", async (req, res): Promise<void> => {
         role: user.role,
       },
       token,
-      expiresAt, // ← kluczowe!
+      expiresAt,
     });
     //res.status(201).send({ message: "User created", user, token });
   } catch (error) {
@@ -168,8 +169,6 @@ router.post(
         role: "admin",
       });
 
-      //console.log("Creating admin:", user);
-
       await user.save();
       res.status(201).send({ message: "Admin created", user });
     } catch (error) {
@@ -178,7 +177,6 @@ router.post(
   },
 );
 
-// Refresh token - Z WERYFIKACJĄ
 router.post(
   "/refresh-token",
   userAuth,
@@ -189,15 +187,12 @@ router.post(
         return;
       }
 
-      // Usuń stary token z bazy danych
       req.user.tokens = req.user.tokens.filter(
         (t: { token: string }) => t.token !== req.token,
       );
 
-      // Wygeneruj nowy token
       const newToken = await req.user.generateAuthToken();
 
-      // WERYFIKACJA NOWEGO TOKENA
       const secret = process.env.JWT_SECRET;
       if (!secret) {
         throw new Error("JWT_SECRET nie jest zdefiniowany");
