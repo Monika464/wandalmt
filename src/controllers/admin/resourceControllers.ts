@@ -142,15 +142,22 @@ export const deleteResource = async (
     }
 
     const bunnyVideoIds: string[] = [];
+    const videoDbIds: string[] = [];
 
     if (resource.chapters && resource.chapters.length > 0) {
       resource.chapters.forEach((chapter: any) => {
         if (chapter.bunnyVideoId) {
           bunnyVideoIds.push(chapter.bunnyVideoId);
         }
+        if (chapter.videoId) {
+          videoDbIds.push(chapter.videoId);
+        }
       });
     }
-
+    console.log(
+      `📦 Znaleziono ${bunnyVideoIds.length} wideo do usunięcia z Bunny`,
+    );
+    console.log(`📦 Znaleziono ${videoDbIds.length} wideo do usunięcia z bazy`);
     if (bunnyVideoIds.length > 0) {
       const deletePromises = bunnyVideoIds.map(async (bunnyVideoId) => {
         try {
@@ -167,11 +174,9 @@ export const deleteResource = async (
 
           await Video.findOneAndDelete({ bunnyGuid: bunnyVideoId });
           console.log("✅ Video removed from database:", bunnyVideoId);
-
           return { success: true, videoId: bunnyVideoId };
         } catch (err) {
           console.warn(`Error deleting video ${bunnyVideoId} from Bunny:`, err);
-
           return { success: false, videoId: bunnyVideoId, error: err };
         }
       });
@@ -179,9 +184,17 @@ export const deleteResource = async (
       await Promise.all(deletePromises);
     }
 
-    await Video.deleteMany({
-      $or: [{ resourceId: id }, { relatedResource: id }],
-    });
+    // ✅ USUŃ TYLKO WIDEO Z BAZY, KTÓRE SĄ POWIĄZANE Z CHAPTERAMI TEGO RESOURCA
+    if (videoDbIds.length > 0) {
+      await Video.deleteMany({
+        _id: { $in: videoDbIds }, // ✅ TYLKO te konkretne ID!
+      });
+      console.log(`✅ Usunięto ${videoDbIds.length} wideo z kolekcji Video`);
+    }
+
+    // await Video.deleteMany({
+    //   $or: [{ resourceId: id }, { relatedResource: id }],
+    // });
 
     await Resource.findByIdAndDelete(id);
 
