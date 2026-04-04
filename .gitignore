@@ -1,9 +1,46 @@
+# Dependencies
 node_modules/
-.env*
+package-lock.json
+yarn.lock
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Build
 dist/
+build/
 .VSCodeCounter/
 
-# Archiwa
-*.tar.gz
-*.gz
-*.zip
+# Backups (ważne!)
+backups/
+*.backup
+*.bson
+*.bson.gz
+dump/
+mongodump-*/
+test-backup-*/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Temp
+tmp/
+temp/
+*.tmp
