@@ -8,6 +8,7 @@ RESTful API for e-commerce platform built with Node.js, Express, and TypeScript.
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 [![Express](https://img.shields.io/badge/Express-4.21.2-000000?logo=express)](https://expressjs.com/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-8.13.2-47A248?logo=mongodb)](https://www.mongodb.com/)
+[![Backup](https://img.shields.io/badge/Backup-Automated-green)](scripts/backup-cron.ts)
 [![License](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
 
 ## ✨ Features
@@ -41,6 +42,8 @@ RESTful API for e-commerce platform built with Node.js, Express, and TypeScript.
 
 ```
 wandalmt/
+├── scripts/
+   ├── backup.ts
 ├── src/
 │ ├── models/ # Mongoose schemas
 │ │ ├── User.ts
@@ -174,12 +177,43 @@ Command Description
 | npm test | Run tests |
 | npm run test:coverage | Run tests with coverage
 | npm run lint | Run ESLint
+| npm run backup | Start automatic backup (daily at 2:00 AM) |
+| npm run backup:now | Run manual backup immediately |
+| npm run backup:list | List all backups |
+| npm run restore:latest | Restore latest backup |
 
 ## 📡 API Endpoints Testing
 
 Postman Collection
 
 [![Node.js](https://run.pstmn.io/button.svg)](https://www.postman.com/gold-crescent-341970/workspace/apptest/collection/16542142-5a86d7a6-aef1-4cd7-b98e-5e26335f7c0e?action=share&creator=16542142)
+
+## 📦 Backup & Restore
+
+Database Backup System
+
+Automatic MongoDB backup system with rotation and logging.
+Features
+
+    🤖 Automatic Backups - Daily backups at 2:00 AM
+
+    💾 Retention Policy - Only stores the last 7 backups
+
+    📝 Logging - Detailed logs in backups/backup.log
+
+    🔄 Easy Restore - Quickly restore data from backup
+
+Restoring the entire database:
+
+```bash
+mongorestore --uri="your_mongodb_uri" --drop --dir=backups/backup-YYYY-MM-DDThh-mm-ss/wandaldatabaseprod"
+```
+
+Restoring a single collection:
+
+```bash
+mongorestore --uri="your_mongodb_uri" --collection=products --dir=backups/backup-YYYY-MM-DDThh-mm-ss/wandaldatabaseprod/products.bson"
+```
 
 ## 🔗 Related Repositories
 
