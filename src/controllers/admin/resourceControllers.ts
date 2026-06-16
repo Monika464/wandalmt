@@ -154,10 +154,8 @@ export const deleteResource = async (
         }
       });
     }
-    console.log(
-      `📦 Znaleziono ${bunnyVideoIds.length} wideo do usunięcia z Bunny`,
-    );
-    console.log(`📦 Znaleziono ${videoDbIds.length} wideo do usunięcia z bazy`);
+    console.log(`📦 Found ${bunnyVideoIds.length} videos to delete from Bunny`);
+    console.log(`📦 Found ${videoDbIds.length} videos to delete from database`);
     if (bunnyVideoIds.length > 0) {
       const deletePromises = bunnyVideoIds.map(async (bunnyVideoId) => {
         try {
@@ -184,10 +182,10 @@ export const deleteResource = async (
       await Promise.all(deletePromises);
     }
 
-    // ✅ USUŃ TYLKO WIDEO Z BAZY, KTÓRE SĄ POWIĄZANE Z CHAPTERAMI TEGO RESOURCA
+    // ✅ ONLY REMOVE VIDEOS FROM THE DATABASE THAT ARE RELATED TO CHAPTERS OF THIS RESOURCE
     if (videoDbIds.length > 0) {
       await Video.deleteMany({
-        _id: { $in: videoDbIds }, // ✅ TYLKO te konkretne ID!
+        _id: { $in: videoDbIds },
       });
       console.log(`✅ Usunięto ${videoDbIds.length} wideo z kolekcji Video`);
     }
