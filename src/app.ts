@@ -1,5 +1,26 @@
 import express from "express";
 import cors from "cors";
+
+import dotenv from "dotenv";
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+// ========== LOADING .env ==========
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const envFile = process.env.NODE_ENV === 'production' 
+  ? '.env' 
+  : '.env.development.local';
+
+dotenv.config({ 
+  path: join(__dirname, '..', envFile) 
+});
+
+console.log(`📁 load file: ${envFile}`);
+console.log(`🚀 Mode: ${process.env.NODE_ENV || 'development'}`);
+// =====================================
+
 import { connectDB } from "./db.js";
 import authRouter from "./routes/public/auth.js";
 import adminRouter from "./routes/admin/index.js";
@@ -32,7 +53,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://club.boxingonline.eu"],
+    origin: ["http://localhost:5173","http://localhost:3001", "https://club.boxingonline.eu"],
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,

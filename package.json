@@ -5,9 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "tsx src/app.ts",
+    "dev": "NODE_ENV=development tsx src/app.ts",
     "build": "tsc && tsc-alias",
-    "start": "node dist/app.js",
+    "start": "NODE_ENV=production node dist/app.js",
     "backup": "tsx scripts/backup.ts",
     "backup:list": "ls -la backups/ | grep backup-",
     "backup:size": "du -sh backups/backup-*",
@@ -40,6 +40,7 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/form-data": "^2.2.1",
     "@types/jsonwebtoken": "^9.0.9",
