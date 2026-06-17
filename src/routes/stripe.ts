@@ -5,7 +5,10 @@ import mongoose from "mongoose";
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+//const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET; 
+const invoiceWebhookSecret = process.env.STRIPE_INVOICE_WEBHOOK_SECRET; 
 
 router.post(
   "/webhook",
@@ -13,7 +16,8 @@ router.post(
   async (req, res): Promise<void> => {
     console.log("🔔 Stripe webhook received");
     const sig = req.headers["stripe-signature"];
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    //const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     // 🔹 Security - no signature = reject
     if (!sig || !webhookSecret) {
@@ -51,6 +55,14 @@ router.post(
         );
 
         const userId = session.metadata?.userId;
+
+
+        if (!userId) {
+     console.error('❌ No userId in session metadata!');
+     res.status(200).send('Missing userId - skipping');
+    return;
+      }
+
         const productIds = session.metadata?.productIds
           ? session.metadata.productIds.split(",")
           : [session.metadata?.productId];
@@ -100,12 +112,12 @@ router.post(
     let event;
 
     try {
-      if (!sig || !endpointSecret) {
+      if (!sig || !invoiceWebhookSecret) {
         console.error("❌ Missing Stripe signature or secret");
         res.status(400).send("Missing Stripe signature or secret");
         return;
       }
-      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+      event = stripe.webhooks.constructEvent(req.body, sig, invoiceWebhookSecret);
     } catch (err: any) {
       console.error(`⚠️ Webhook signature verification failed:`, err.message);
       res.status(400).send(`Webhook Error: ${err.message}`);
